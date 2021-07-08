@@ -1,0 +1,75 @@
+---
+title: "Population modelling \n for census support"
+subtitle: "Tutorial 1: Bayesian simple linear regression in R and Stan"
+author: "Edith Darin and Douglas Leasure"
+date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    theme: yeti
+    number_sections: false
+    css: css/index_custom.css
+---
+
+```{r logo, echo=FALSE}
+###LOAD WP LOGO##
+htmltools::img(src = knitr::image_uri("../assets/pic/320px-UNFPA_logo.svg.png"),
+               alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
+```
+
+![](../assets/pic/wp_logotype_gray_low.png)
+
+# Introduction
+
+## Goals
+
+1.  Simulate data for a simple regression with a single covariate
+
+2.  Fit a linear regression using a maximum likelihood approach
+
+3.  Fit the same model in `stan`:
+
+    1.  Format data for `stan`
+
+    2.  Specify a model in `stan` language
+
+    3.  Initialize the model
+
+    4.  MCMC sampler to fit the model
+
+    5.  Evaluate results
+
+## Pre-requisites
+
+-   Know these concepts (... just a quick Wikipedia search):
+
+    -   [Linear regression](https://en.wikipedia.org/wiki/Linear_regression)
+
+    -   [Markov chain Monte Carlo (MCMC)](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) (chains, convergence, etc.)
+
+    -   Software: [Just Another Gibbs Sampler (JAGS)](https://en.wikipedia.org/wiki/Just_another_Gibbs_sampler)
+
+    -   [Prior probability distributions](https://en.wikipedia.org/wiki/Prior_probability)
+
+-   Install [JAGS software](http://mcmc-jags.sourceforge.net/)
+
+-   Install the runjags and the coda packages in R
+
+# Model
+
+Standard linear regression (for i=1,..,n): $$ Y_i = \alpha  + \beta X_i + \epsilon_i $$ $$ \epsilon_i 〜 Normal(mean=0,sd=\sigma)$$
+
+This model can be rewritten as: $$Y_i 〜 Normal(mean=\mu_i, sd=\sigma)$$ $$ \mu_i=\alpha + \beta X_i$$
+
+This format is more flexible when we start working with non-normal error structures and customized deterministic models. Our linear regression can also be represented using a directed acyclic graph (DAG):
+
+![](../assets/pic/dag.png)
+
+Squares represent data and circles represent parameters. Directions of arrows indicate dependence. Solid lines represent deterministic relationships (represented by = in equations above) and dashed lines represent stochastic relationships (represented by \~ in equations above). For example, the response variable Yi is dependent on iand , and this is a stochastic relationship.
+
+In a Bayesian model, all root node parameters (those with no arrows pointing towards them) need priors to be specified: $$ \alpha 〜 Normal(mean=0, sd=1000)$$ $$ \beta 〜 Normal(mean=0, sd=1000)$$ $$ \sigma 〜 Uniform(min=0, max=1000)$$
+
+These are examples of weakly informative priors (i.e. because the means are zero and the variances are large relative to the data). Weakly informative priors should not have any noticeable effect on the final parameter estimates.
+
+## Test 2
