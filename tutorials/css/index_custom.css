@@ -1,0 +1,10 @@
+a:link{
+  color: #ff8000;
+}
+
+.list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
+    z-index: 2;
+    color: #fff;
+    background-color: #ff8000;
+    border-color: #ff8000;
+}

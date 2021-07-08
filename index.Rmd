@@ -1,0 +1,34 @@
+---
+title: "Statistical population modelling for census support"
+author: "Edith Darin, Douglas Leasure"
+---
+
+![](assets/pic/wp_logotype_gray_low.png)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This website contains the teaching materials for the **Statistical Population Modelling for Census Support workshop,** funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developped at the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
+
+It has been first taught to the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
+
+## Material
+
+-   [Presentation](tutorials/day1_presentation.html)
+-   [Tutorial 1](tutorials/tutorial1_linearRegression.html)
+
+## Raw code
+
+The raw code of the website and tutorials can be found [here](<https://github.com/wpgp/bottom-up-tutorial>).
+
+<br>
+
+<br>
+
+```{r, echo=F, figures-side, fig.show="hold", out.width="20%"}
+knitr::include_graphics('assets/pic/320px-UNFPA_logo.svg.png')
+knitr::include_graphics('assets/pic/wp_logo_gray_low.png')
+```
+
+

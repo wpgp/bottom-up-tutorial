@@ -1,0 +1,11 @@
+name: "Statistical population modelling for census support"
+output_dir: "."
+navbar:
+  title: "Statistical population modelling for census support"
+left:
+  - text: "Home"
+    href: index.html
+output:
+  html_document:
+    theme: yeti
+    css: tutorials/css/index_custom.css
