@@ -1,0 +1,11 @@
+.title-slide {
+  background-image: url(../../assets/pic/wp_logo_gray_low.png);
+  /* background-image: url(https://sydney.edu.au/etc/designs/corporate-commons/bower_components/corporate-frontend/dist/assets/img/USydLogo.svg); */
+  background-position: 50% 95%;
+  background-size: 160px;
+  text-align:left;
+  vertical-align: top;
+  text-shadow: none;
+  /*text-shadow: 0 0 5px #333;*/
+  /*padding-left: 100px;   delete this for 4:3 aspect ratio */
+}

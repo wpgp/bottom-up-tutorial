@@ -1,0 +1,45 @@
+---
+title: "Statistical population modelling for census support"
+subtitle: "Day 1"
+author: "Edith Darin, Douglas Leasure"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    css: [default, css/xaringan-themer.css, css/presentation_custom.css]
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_light(base_color = "#ff8000")
+#style_duo_accent(primary_color = "#ff8000", secondary_color = "#4db3ff")
+```
+
+```{r xaringanExtra-scribble, echo=FALSE}
+xaringanExtra::use_scribble()
+```
+
+```{r xaringan-logo, echo=FALSE}
+xaringanExtra::use_logo(
+  image_url = "../assets/pic/320px-UNFPA_logo.svg.png",
+  position = xaringanExtra::css_position(bottom = "-3.5em", left = "0.5em")
+)
+```
+
+
+
+# Introduction
+---
+class: inverse, left, middle
+
+# Population modelling
+
+
+---
+class:inverse, left, middle
+
+# Bayesian modelling
