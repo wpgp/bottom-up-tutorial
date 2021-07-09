@@ -9,16 +9,16 @@ output:
     toc_float: true
     theme: yeti
     number_sections: false
-    css: css/index_custom.css
+    css: [../css/index_custom.css, ../css/tutorial_custom.css]
 ---
 
 ```{r logo, echo=FALSE}
 ###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("../assets/pic/320px-UNFPA_logo.svg.png"),
+htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
 ```
 
-![](../assets/pic/wp_logotype_gray_low.png)
+![](../../assets/pic/wp_logotype_gray_low.png)
 
 # Introduction
 
@@ -64,7 +64,7 @@ This model can be rewritten as: $$Y_i 〜 Normal(mean=\mu_i, sd=\sigma)$$ $$ \mu
 
 This format is more flexible when we start working with non-normal error structures and customized deterministic models. Our linear regression can also be represented using a directed acyclic graph (DAG):
 
-![](../assets/pic/dag.png)
+
 
 Squares represent data and circles represent parameters. Directions of arrows indicate dependence. Solid lines represent deterministic relationships (represented by = in equations above) and dashed lines represent stochastic relationships (represented by \~ in equations above). For example, the response variable Yi is dependent on iand , and this is a stochastic relationship.
 
@@ -72,4 +72,18 @@ In a Bayesian model, all root node parameters (those with no arrows pointing tow
 
 These are examples of weakly informative priors (i.e. because the means are zero and the variances are large relative to the data). Weakly informative priors should not have any noticeable effect on the final parameter estimates.
 
-## Test 2
+# Let's try with data
+
+# Install required packages
+
+# Modelling
+
+## Population count as a normal distribution
+
+
+::: {.question }
+**Question**: Can you see if changing the parameters as recommended by stan output message can help the model convergence?
+:::
+
+## Population count as a Poisson lognormal compound
+
