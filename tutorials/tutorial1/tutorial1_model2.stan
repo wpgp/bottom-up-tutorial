@@ -16,7 +16,7 @@ parameters{
   vector<lower=0>[n] pop_density;
     
   // intercept
-  real alpha; 
+  real<lower=0> alpha; 
   
   // variance
   real<lower=0> sigma; 
@@ -29,9 +29,24 @@ model{
   pop_density ~ lognormal( alpha, sigma );
 
   // intercept
-  alpha ~ normal(0, 10);
+  alpha ~ normal(0, 15);
 
   // variance
   sigma ~ uniform(0, 5);
 }
+
+generated quantities{
+  
+   int<lower=0> population_hat[n];
+   real<lower=0> density_hat[n];
+
+   for(idx in 1:n){
+     density_hat[idx] = lognormal_rng( alpha, sigma );
+     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
+
+   }
+  
+}
+
+
 

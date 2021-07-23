@@ -7,6 +7,27 @@ options(mc.cores = parallel::detectCores()-1)
 rstan::rstan_options(auto_write = TRUE)
 rstan::rstan_options(javascript = FALSE)
 seed <- 1789
+
+
+# DAG of a linear regression ----------------------------------------------
+
+dagify(
+  Y ~ mu,
+  Y ~ sigma,
+  mu ~ alpha,
+  mu ~ beta,
+  mu ~ X,
+  outcome = 'Y'
+) %>%
+  tidy_dagitty(seed=11) %>% 
+  mutate(color=c('data','parameter',  'parameter','parameter',  'parameter','data')) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+  geom_dag_point() +
+  geom_dag_edges() +
+  geom_dag_text(col = "grey20") +
+  scale_shape_manual(values=c(15,19))+
+  theme_dag()+ labs(title = 'Graph of a linear regression', color='', shape='')
+
 # Data --------------------------------------------------------------------
 
 
@@ -18,7 +39,11 @@ download.file(
 )
 
 data <- readxl::read_excel('tutorials/data/nga_demo_data.xls')
-
+data <- data %>% 
+  mutate(
+    id= paste0('cluster_',(1:n())), # compute cluster id,
+    pop_density = N/A
+  )
 
 # Descriptive stats -------------------------------------------------------
 
@@ -81,21 +106,16 @@ fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model.stan'),
                    iter = warmup + iter, 
                    chains = chains,
                    warmup = warmup, 
-                   #init = init,
+                   init = 'random',
                    pars = pars,
-                   control = list(max_treedepth=10, adapt_delta=0.8),
                    seed = seed)
 
 print(fit)
-stan_trace(fit)
+stan_trace(fit, inc_warmup = T)
 
 
 # Model 2: Population count as a poisson-lognormal compound ----------------
-data <- data %>% 
-  mutate(
-    pop_density = N/A,
-    id= paste0('cluster_',(1:n()))
-  )
+
 
 ggplot(data %>% 
          select(id, N, pop_density) %>% 
@@ -156,9 +176,7 @@ fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan')
                    iter = warmup + iter, 
                    chains = chains,
                    warmup = warmup, 
-                   #init = init,
                    pars = pars,
-                   control = list(max_treedepth=10, adapt_delta=0.8),
                    seed = seed)
 
 print(fit)
@@ -169,14 +187,14 @@ param_plot <- stan_plot(fit)
 median_pop_density <- log(median(data$pop_density))
 geosd_pop_density <- log(EnvStats::geoSD(data$pop_density))
 
-alpha_plot <- stan_plot(fit, 'alpha',fill_color='orange')+
+alpha_plot <- stan_plot(fit_model2, 'alpha',fill_color='orange')+
   scale_x_continuous(limits=c(4.65,4.85))+
   annotate('segment',x=median_pop_density, xend=median_pop_density, 
            y=0.95, yend=1.05,col='grey40', size=1.5)+
   annotate('text',x=median_pop_density, 
            y=1.2, col='grey40',label= paste0('Observed median (log)\n',round(median_pop_density,2)), fontface =2, size=4.5)
 
-sigma_plot <- stan_plot(fit, 'sigma', fill_color='orange')+
+sigma_plot <- stan_plot(fit_model2, 'sigma', fill_color='orange')+
   annotate('segment',x=geosd_pop_density, xend=geosd_pop_density, 
            y=0.95, yend=1.05,col='grey40', size=1.5)+
   annotate('text',x=geosd_pop_density, 
@@ -188,45 +206,108 @@ gridExtra::grid.arrange(alpha_plot, sigma_plot, nrow=2)
 
 
 # Model goodness of fit ---------------------------------------------------
-pars <- c('alpha','sigma', 'people_hat')
+pars <- c('alpha','sigma', 'population_hat', 'density_hat')
 
 
 # mcmc
-fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2bis.stan'), 
+tic()
+fit_model2 <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
                    data = stan_data_model2,
                    iter = warmup + iter, 
                    chains = chains,
                    warmup = warmup, 
-                   #init = init,
                    pars = pars,
-                   control = list(max_treedepth=10, adapt_delta=0.8),
                    seed = seed)
+toc()
+# mcmc
+tic()
+fit_model1 <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model1bis.stan'), 
+                          data = stan_data,
+                          iter = warmup + iter, 
+                          chains = chains,
+                          warmup = warmup, 
+                          pars = pars,
+                          seed = seed)
+toc()
 
-predicted_pop <- as_tibble(extract(fit, 'people_hat')$people_hat)
-colnames(predicted_pop) <- data$id
+predicted_pop_model2 <- as_tibble(extract(fit_model2, 'population_hat')$population_hat)
+predicted_pop_model1 <- as_tibble(extract(fit_model1, 'population_hat')$population_hat)
+predicted_dens_model2 <- as_tibble(extract(fit_model2, 'density_hat')$density_hat)
+
+colnames(predicted_pop_model2) <- data$id
+colnames(predicted_pop_model1) <- data$id
+colnames(predicted_dens_model2) <- data$id
 
 predicted_pop[,1:10]
 
-comparison_df <- predicted_pop %>% 
-  pivot_longer(everything(),names_to = 'id', values_to = 'predicted_N') %>% 
+comparison_df <- predicted_pop_model2 %>% 
+  pivot_longer(everything(),names_to = 'id', values_to = 'predicted') %>% 
   group_by(id) %>% 
   summarise(across(everything(), list(mean=~mean(.), 
-                                      lower=~quantile(., probs=0.975), 
-                                      upper=~quantile(., probs=0.025)))) %>% 
+                                      upper=~quantile(., probs=0.975), 
+                                      lower=~quantile(., probs=0.025)))) %>% 
+  mutate(source= 'Poisson-Lognormal model') %>% 
+  rbind(
+    predicted_pop_model1 %>% 
+      pivot_longer(everything(),names_to = 'id', values_to = 'predicted') %>% 
+      group_by(id) %>% 
+      summarise(across(everything(), list(mean=~mean(.), 
+                                          upper=~quantile(., probs=0.975), 
+                                          lower=~quantile(., probs=0.025)))) %>% 
+      mutate(source= 'Normal model') 
+      
+  ) %>% 
   left_join(data %>% 
               select(id, N))
 
 ggplot(comparison_df) +
-  geom_pointrange(aes(x=N, y=predicted_N_mean, ymin=predicted_N_lower, ymax=predicted_N_upper
+  geom_pointrange(aes(x=N, y=predicted_mean, ymin=predicted_lower, ymax=predicted_upper
                       ),
                    fill='grey50', color='grey70', shape=21
                   )+
   geom_abline(slope=1, intercept = 0, color='orange', size=1)+
   theme_minimal()+
-  labs(title = 'Observed vs Predicted Check', x='Observed population count', y='Predicted population')
-  
-  
-  
+  labs(title = 'Observed vs Predicted Check', x='Observed population count', y='Predicted population')+
+  facet_grid(.~source)
+
+ comparison_df %>% 
+  mutate(residual = predicted_mean-N,
+         residual_abs = abs(residual),
+         residual_percentage = residual/N*100,
+         ci = predicted_upper - predicted_lower,
+         in_CI = ifelse(N>predicted_lower &N<predicted_upper, T, F))%>% 
+  group_by(source) %>% 
+  summarise(
+    `Bias`= mean(residual),
+    `Median` = median(residual_abs),
+    median(ci),
+    `Imprecision` = sd(residual),
+    `Inaccuracy` = mean(residual_abs),
+    `Mean absolute residual (in %)` = round(mean(residual_percentage)),
+    `Correct credible interval (in %)` = round(sum(in_CI)/n()*100,1),
+    R2 = cor(predicted_mean, N)^2
+    
+  ) 
+# density
+ comparison_df <- predicted_dens_model2 %>% 
+   pivot_longer(everything(),names_to = 'id', values_to = 'predicted') %>% 
+   group_by(id) %>% 
+   summarise(across(everything(), list(mean=~mean(.), 
+                                       upper=~quantile(., probs=0.975), 
+                                       lower=~quantile(., probs=0.025)))) %>% 
+   mutate(source= 'Poisson-Lognormal model') %>% 
+   left_join(data %>% 
+               select(id, pop_density))
+ 
+ ggplot(comparison_df) +
+   geom_pointrange(aes(x=pop_density, y=predicted_mean, ymin=predicted_lower, ymax=predicted_upper
+   ),
+   fill='grey50', color='grey70', shape=21
+   )+
+   geom_abline(slope=1, intercept = 0, color='orange', size=1)+
+   theme_minimal()+
+   labs(title = 'Observed vs Predicted Check', x='Observed population count', y='Predicted population')+
+   facet_grid(.~source)
   
   
   
