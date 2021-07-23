@@ -16,6 +16,7 @@ IBGE bottom-up population model tutorial funded by UNFPA
 - [BDA - Ari Vehtari](https://avehtari.github.io/BDA_course_Aalto/gsu2021.html)
   - [slides](https://github.com/avehtari/BDA_course_Aalto/tree/master/slides)
 - [Bayesian Data Analysis for Cognitive Science](https://vasishth.github.io/bayescogsci/book/)
+- [Intro to Stan - Boulder](http://bechtel.colorado.edu/~bracken/tutorials/stan/stan-tutorial.pdf)
 
 
 ## UNFPA branding
