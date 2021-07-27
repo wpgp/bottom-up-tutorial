@@ -1,0 +1,178 @@
+---
+title: "Population modelling \n for census support"
+subtitle: "Tutorial 2: How to represent spatial variations with a hierarchichal structure?"
+author: "Edith Darin and Douglas Leasure"
+date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    theme: yeti
+    number_sections: false
+    css: [../css/index_custom.css, ../css/tutorial_custom.css]
+    code_folding: show
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+```{r logo, echo=FALSE}
+###LOAD WP LOGO##
+htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
+               alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
+```
+
+![](../../assets/pic/wp_logotype_gray_low.png)
+
+```{r, include=T}
+# 1 Set-up ---
+
+# load libraries
+library(tidyverse) # managing data
+library(ggdag) # drawing DAG
+library(kableExtra) # visualising table
+library(here) # handling path
+library(rstan) # running Bayesian models
+```
+
+# Introduction
+
+In tutorial 1 we model population count of the surveyed clusters in
+Nigeria as belonging to the same distribution with the same parameter.
+We saw however that population counts have a lot of variation. Tutorial
+2 will explore the spatial patterns of this variation. We will then see
+how Bayesian models offer a great modelling toolbox to represent grouped
+data or *hierarchical* data. We will then try different hierarchical
+structures to see which one fits the best our data.
+
+## Accompanying readings
+
+-   [Hierarchical models
+    visualised](http://mfviz.com/hierarchical-models/)
+
+## Grouped structure in the data
+
+Figure \@ref(fig:pop-map) shows the spatial variation of population
+density across Nigeria. We can see that the spatial patterns are
+clustered.
+
+```{r pop-map, fig.cap='Map of cluster population densities', purl=F}
+knitr::include_graphics("../../assets/pic/tuto2_nga_pop_map.png")
+
+```
+
+Let's dig further in the clustered patterns. We plot the population
+density distribution by regions represented in Figure
+\@ref(fig:pop-map):
+
+```{r popDens-boxplot, fig.cap=''}
+# prepare data
+data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
+data <- data %>% 
+  mutate(
+    pop_density=N/A
+  )
+
+# plot population density per region
+ggplot(data %>% 
+         group_by(
+           region
+         ) %>% 
+         mutate(mean_popDens = mean(pop_density)) %>% 
+         ungroup(), aes(fill=mean_popDens, x=pop_density, y=as.factor(region)))+
+  geom_boxplot()+
+  theme_minimal()+
+  scale_fill_viridis_b()+
+  labs(fill='Population density \n(mean)', x='', y='Region')
+```
+
+In the dataset provided, there are three administrative scales: state
+(3), region (11) and local (standing for local government areas, 30),
+which gives extra flexibility for grouping the clusters.
+
+The motivation is to approximate the spatial pattern of population
+density. We are exploring the assumption that the administrative
+structure of a country has a direct impact on population density.
+
+Another key grouping is the `type` attribute indicated in the data. It
+refers to a settlement map classifying satellite imagery (Pleiades,
+Airbus and WorldView2, DigitalGlobe) into six settlement type
+represented in Figure \@ref(fig:sett-map ) @weber2018.
+
+```{r sett-map, fig.cap=Exemplars of the urban residential (A–F), rural residential (M), and non-residential (Z) types for Kano and Kaduna states, Nigeria, from Weber et al (2018)}
+knitr::include_graphics(here('./assets/pic/tuto2_settlement.jpg'))
+```
+
+```{r}
+# plot population density per region
+ggplot(data %>% 
+         group_by(
+           type
+         ) %>% 
+         mutate(mean_popDens = mean(pop_density)) %>% 
+         ungroup(), aes(fill=mean_popDens, x=pop_density, y=as.factor(type)))+
+  geom_boxplot()+
+  theme_minimal()+
+  scale_fill_viridis_b()+
+  labs(fill='Population density \n(mean)', x='', y='Settlement type')
+```
+
+We see that settlement type clearly stratifies the population density.
+Note that there's a settlement type not represented -non-residential -
+where no cluster were sampled from.
+
+## Modelling grouped structure
+
+When observations are treated together and indistinctly, it is called
+**complete pooling**. This is the path that was chosen in tutorial 1. It
+violates the assumption of independence between the observations and
+might produce spurious conclusions that are valid at global level but
+invalid at group level by diluting group-specific patterns (cf. the
+[ecological fallacy](https://en.wikipedia.org/wiki/Ecological_fallacy)).
+
+When a model is fit for each data grouping independently , it is called
+**no pooling** . It reduces drastically the sample size and makes it
+impossible to extrapolate for a grouping that is not present in the
+observations sample.
+
+Hierarchical data modelled with **partial pooling** information to be
+shared between group while keeping the hierarchical structure. It
+provides insights on:
+
+-   *between group variability*: population densities differ from one
+    region to the other
+
+-   *within group variability*: some regions have a greater variability
+    than other (cf region 9 in Figure @ref(fig:popDens-boxplot))
+
+```{r, include=F, purl = FALSE}
+# convert rmd code to normal r script
+knitr::purl("tutorial2_hierarchicalModel.Rmd", documentation = 0)
+```
+
+## Hierarchical Population Model
+
+Let's recall our previous model:
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+
+pop\_density 〜 Lognormal( \alpha, \sigma) \\
+
+\\
+
+\alpha 〜 Normal( 0, 15 ) \\
+
+\sigma 〜 Uniform( 0, 5 )(\#eq:model2)
+
+\end{equation}
+```
+### A hierarchical intercept
+
+A first modelling assumption is that the intercept of the Lognromal
+should be hierarchically
+
+# References
