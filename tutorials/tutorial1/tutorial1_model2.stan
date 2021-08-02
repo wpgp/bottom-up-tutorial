@@ -1,20 +1,20 @@
 // This script contains the Stan code for the Bayesian model 1
-// Model 1: Population count as a normal distribution 
+// Model 1: Population count as a lognormal distribution 
 
 data{
   
   int<lower=0> n; // number of microcensus clusters
-
+  
   int<lower=0> population[n]; // count of people
   
   vector<lower=0>[n] area; // settled area
-
+  
 }
 
 parameters{
   // population density
   vector<lower=0>[n] pop_density;
-    
+  
   // intercept
   real<lower=0> alpha; 
   
@@ -27,24 +27,24 @@ model{
   // population totals
   population ~ poisson(pop_density .* area);
   pop_density ~ lognormal( alpha, sigma );
-
+  
   // intercept
-  alpha ~ normal(0, 15);
-
+  alpha ~ normal(0, 100);
+  
   // variance
-  sigma ~ uniform(0, 5);
+  sigma ~ uniform(0, 100);
 }
 
 generated quantities{
   
-   int<lower=0> population_hat[n];
-   real<lower=0> density_hat[n];
-
-   for(idx in 1:n){
-     density_hat[idx] = lognormal_rng( alpha, sigma );
-     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-
-   }
+  int<lower=0> population_hat[n];
+  real<lower=0> density_hat[n];
+  
+  for(idx in 1:n){
+    density_hat[idx] = lognormal_rng( alpha, sigma );
+    population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
+  } 
+  
   
 }
 
