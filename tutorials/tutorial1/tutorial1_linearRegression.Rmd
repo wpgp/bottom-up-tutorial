@@ -207,7 +207,7 @@ Next, install the following packages within RStudio:
 
 ```{r}
 # stan setup
-options(mc.cores = parallel::detectCores()-1)
+options(mc.cores = 4)
 rstan::rstan_options(auto_write = TRUE) # speed up running time 
 ```
 
@@ -406,11 +406,14 @@ A `stan` model is composed of code blocks. The fundamentals ones are:
     distribution
 
 The `stan` software requires to declare all variable, both parameters
-and data, with their type (int or real) and size (as indicated with
-`[n]`) . It is possible to incorporate constraints on the variable
+and data, with their type (int, real) and size (as indicated with
+`[n]`)[^1] . It is possible to incorporate constraints on the variable
 support, e.g. it is not possible to have a negative `population`
-(`real<lower=0> population[n]`), and a negative $\sigma$ $\sigma$
+(`real<lower=0> population[n]`), and a negative $\sigma$
 (`real<lower=0> sigma`).
+
+[^1]: More details
+    [here](https://mc-stan.org/docs/2_27/reference-manual/overview-of-data-types.html).
 
 Note: `stan` requires to leave one blank line at the end of the script.
 
@@ -576,6 +579,16 @@ We define the parameter `population_hat` as a draw (as represented by
 the suffix `rng` for *random number generator*) from a Normal
 distribution with the estimated $\hat\alpha$ and $\hat\sigma$ at each
 iteration.
+
+Note: the `stan` code for this model mixes two approaches: vectorized
+(in the model block) and unvectorized, that is based on a for loop (in
+the generated quantities block). This is due to the format of
+`normal_rng` draws that are scalars. For more details, please have a
+look at
+[here](https://mc-stan.org/docs/2_27/stan-users-guide/linear-regression.html#vectorization.section)
+and
+[here](https://mc-stan.org/docs/2_27/functions-reference/vectorization.html)
+in the `stan` manual.
 
 We rerun the model:
 
@@ -793,6 +806,7 @@ population 〜 Poisson( \lambda ) \\
 \end{equation}
 ```
 Note that this equation is equivalent to:
+
 ```{=tex}
 \begin{equation}
 
@@ -802,8 +816,8 @@ log(\lambda)  〜 Normal( \alpha, \sigma)
 
 \end{equation}
 ```
-Under this form we see that the model is not linear, but log-linear.
-It can be rewritten as:
+Under this form we see that the model is not linear, but log-linear. It
+can be rewritten as:
 
 ```{=tex}
 \begin{equation}
@@ -814,7 +828,6 @@ population 〜 Poisson( \lambda ) \\
 
 \end{equation}
 ```
-
 In our particular case, we decompose $\lambda$ as the
 $population\_density * settled\_area$ which introduces a continuous
 variable, $population\_density$.
@@ -837,9 +850,9 @@ pop\_density 〜 Lognormal( \alpha, \sigma) \\
 
 \\
 
-\alpha 〜 Normal( 0, 15 ) \\
+\alpha 〜 Normal( 0, 100 ) \\
 
-\sigma 〜 Uniform( 0, 5 )(\#eq:model2)
+\sigma 〜 Uniform( 0, 100 )(\#eq:model2)
 
 \end{equation}
 ```
@@ -866,9 +879,9 @@ model{
   population ~ poisson(pop_density .* area);
   pop_density ~ lognormal( alpha, sigma );
   // intercept
-  alpha ~ normal(0, 15);
+  alpha ~ normal(0, 100);
   // variance
-  sigma ~ uniform(0, 5);
+  sigma ~ uniform(0, 100);
 }
 
 generated quantities{
@@ -913,6 +926,30 @@ fit_model2 <- rstan::stan(file = file.path('tutorial1_model2.stan'),
                    seed = seed)
 ```
 
+Warnings are thrown stating that the Poisson rate is too large. This is
+because `stan` enforces a upper bound for the Poisson rate. Our model is
+likely to overcome this upper bound during the warm-up period when
+exploring the parameter space. We could enforce constrains on the
+parameter but since this issue is arising only in the *generated
+quantities block* that is a side model block we will implement a little
+trick:
+
+```{stan output.var="simpleCode", eval=F }
+// Model 2: Population count as a Poisson-Lognormal distribution 
+
+generated quantities{
+   int<lower=0> population_hat[n];
+   real<lower=0> density_hat[n];
+
+   for(idx in 1:n){
+     density_hat[idx] = lognormal_rng( alpha, sigma );
+     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
+   }
+  
+}
+
+```
+
 No warnings were shown.
 
 ::: {.question}
@@ -945,6 +982,10 @@ We plot the predicted density and the predicted count:
 ```{r, class.source = 'fold-hide',}
 # extract posterior predictions
 predicted_pop_model2 <- as_tibble(extract(fit_model2, 'population_hat')$population_hat)
+
+# check our implemented logic
+any(predicted_pop_model2==-1)
+
 predicted_dens_model2 <- as_tibble(extract(fit_model2, 'density_hat')$density_hat)
 colnames(predicted_pop_model2) <- data$id
 colnames(predicted_dens_model2) <- data$id
@@ -1012,6 +1053,12 @@ comparison_df %>%
 
 It will require further refinements that will be introduced in the next
 tutorials.
+
+And for that purpose we will stoe this last model:
+```{r, eval=F}
+saveRDS(fit_model2, 'tutorial1_model2_fit.rds')
+```
+
 
 ## Bonus: What happens with a wrong prior specification?
 
