@@ -1,6 +1,6 @@
 ---
 title: "Population modelling \n for census support"
-subtitle: "Tutorial 2: How to represent spatial variations with a hierarchichal structure?"
+subtitle: "Tutorial 2: How to represent spatial variations \nwith a hierarchichal structure?"
 author: "Edith Darin and Douglas Leasure"
 date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
 output: 
@@ -21,11 +21,13 @@ bibliography: references.bib
 ###LOAD WP LOGO##
 htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
+
+knitr::opts_chunk$set(fig.align = "center") 
 ```
 
 ![](../../assets/pic/wp_logotype_gray_low.png)
 
-```{r, include=T}
+```{r, include=T, warning=F, message=F}
 # 1 Set-up ---
 
 # load libraries
@@ -34,43 +36,79 @@ library(ggdag) # drawing DAG
 library(kableExtra) # visualising table
 library(here) # handling path
 library(rstan) # running Bayesian models
+library(plotly) # interactive plot
+library(extraDistr) # for additional probability distributions
+
+# stan setup
+options(mc.cores = parallel::detectCores()-1)
+rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled model
 ```
 
 # Introduction
 
-In tutorial 1 we model population count of the surveyed clusters in
-Nigeria as belonging to the same distribution with the same parameter.
-We saw however that population counts have a lot of variation. Tutorial
-2 will explore the spatial patterns of this variation. We will then see
-how Bayesian models offer a great modelling toolbox to represent grouped
-data or *hierarchical* data. We will then try different hierarchical
-structures to see which one fits the best our data.
+In tutorial 1, we modelled population count with a compound
+Poisson-Lognormal. This modelling assumes however that the observations
+are independent and identically distributed.
+
+Tutorial 2 will explore the spatial patterns of population counts and
+how they are clustered across space.
+
+We will analyse the grouping of our observations and unravel their
+hierarchical structure. We will then see how Bayesian models offer a
+great modelling toolbox to represent hierarchical data. We will finally
+try different hierarchical modelling structures to see which one fits
+the best our data.
+
+Hierarchical models define complex parameter space. We will thus start
+discussing about efficiency in model coding and how to tune the Markov
+Chains Monte Carlo algorithm.
 
 ## Accompanying readings
 
 -   [Hierarchical models
-    visualised](http://mfviz.com/hierarchical-models/)
+    visualised](http://mfviz.com/hierarchical-models/) by Michael
+    Freeman
 
-## Grouped structure in the data
+-   [Bayes rules Book on hierarchical
+    model](https://www.bayesrulesbook.com/chapter-15.html) by Alicia A.
+    Johnson, Miles Ott, Mine Dogucu: good introduction to hierarchically
+    modelling in `stan` with many examples
 
-Figure \@ref(fig:pop-map) shows the spatial variation of population
-density across Nigeria. We can see that the spatial patterns are
-clustered.
+-   [Brief guide to stan's
+    warning](https://mc-stan.org/misc/warnings.html): Tuning Parameters
+    for Hamiltonian Monte Carlo in `stan`
 
-```{r pop-map, fig.cap='Map of cluster population densities', purl=F}
+## Extra package
+
+We will use the `bayesplot` package that offers more flexibility in
+evaluating Bayesian estimations.
+
+```{r, eval=F}
+install.packages('bayesplot')
+```
+
+# Hierarchical structure in the data
+
+Let's unravel the clustering patterns in population count. Figure
+\@ref(fig:pop-map) shows the spatial variation of population density
+across Nigeria. We can already observed clustered patterns with some
+regions that have a higher population density in average.
+
+```{r pop-map, echo=F,fig.cap='Map of cluster population densities overlaid with Nigeria region boundaries', purl=F}
 knitr::include_graphics("../../assets/pic/tuto2_nga_pop_map.png")
 
 ```
 
-Let's dig further in the clustered patterns. We plot the population
-density distribution by regions represented in Figure
-\@ref(fig:pop-map):
+Let's plot the population density distribution by regions:
 
-```{r popDens-boxplot, fig.cap=''}
+```{r popDens-boxplot, class.source = 'fold-hide', fig.cap='Boxplot of population densities per region'}
+library(RColorBrewer)
+
 # prepare data
 data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
 data <- data %>% 
   mutate(
+    id = as.character(1:nrow(data)),
     pop_density=N/A
   )
 
@@ -83,29 +121,27 @@ ggplot(data %>%
          ungroup(), aes(fill=mean_popDens, x=pop_density, y=as.factor(region)))+
   geom_boxplot()+
   theme_minimal()+
-  scale_fill_viridis_b()+
-  labs(fill='Population density \n(mean)', x='', y='Region')
+  scale_fill_stepsn( colours = brewer.pal(6, "YlOrRd"))+
+  labs(fill='Mean \npopulation \ndensity', x='Population density', y='Region')
 ```
 
-In the dataset provided, there are three administrative scales: state
-(3), region (11) and local (standing for local government areas, 30),
-which gives extra flexibility for grouping the clusters.
-
-The motivation is to approximate the spatial pattern of population
-density. We are exploring the assumption that the administrative
-structure of a country has a direct impact on population density.
+In addition to the 11 regions, the data provides two other **Nigerian
+administrative divisions**: state (15) and local (standing for local
+government areas, 223), which gives extra flexibility for grouping the
+clusters. The underlying assumption: the administrative structure of a
+country gives information on the population density variation.
 
 Another key grouping is the `type` attribute indicated in the data. It
-refers to a settlement map classifying satellite imagery (Pleiades,
-Airbus and WorldView2, DigitalGlobe) into six settlement type
-represented in Figure \@ref(fig:sett-map ) @weber2018.
+refers to a settlement map based on satellite imagery (Pleiades, Airbus
+and WorldView2, DigitalGlobe) classified into six **settlement types**
+pictured in Figure \@ref(fig:sett-map) @weber2018.
 
-```{r sett-map, fig.cap=Exemplars of the urban residential (A–F), rural residential (M), and non-residential (Z) types for Kano and Kaduna states, Nigeria, from Weber et al (2018)}
+```{r sett-map, echo=F, fig.cap='Exemplars of the urban residential (A–F), rural residential (M), and non-residential (Z) types for Kano and Kaduna states, Nigeria, from Weber et al (2018)'}
 knitr::include_graphics(here('./assets/pic/tuto2_settlement.jpg'))
 ```
 
-```{r}
-# plot population density per region
+```{r popDens-boxplot-type, class.source = 'fold-hide', fig.cap='Boxplot of population densities per settlement type'}
+# plot population density per settlement type
 ggplot(data %>% 
          group_by(
            type
@@ -114,44 +150,174 @@ ggplot(data %>%
          ungroup(), aes(fill=mean_popDens, x=pop_density, y=as.factor(type)))+
   geom_boxplot()+
   theme_minimal()+
-  scale_fill_viridis_b()+
+  scale_fill_stepsn( colours = brewer.pal(6, "YlOrRd"))+
   labs(fill='Population density \n(mean)', x='', y='Settlement type')
 ```
 
-We see that settlement type clearly stratifies the population density.
-Note that there's a settlement type not represented -non-residential -
-where no cluster were sampled from.
+We see that settlement type clearly stratifies the clusters.
 
-## Modelling grouped structure
+Note that out of the six settlement types displayed in Figure
+\@ref(fig:sett-map), only five types are actually present in the data.
+No clusters were surveyed in the non-residential type area.
 
-When observations are treated together and indistinctly, it is called
-**complete pooling**. This is the path that was chosen in tutorial 1. It
-violates the assumption of independence between the observations and
-might produce spurious conclusions that are valid at global level but
-invalid at group level by diluting group-specific patterns (cf. the
-[ecological fallacy](https://en.wikipedia.org/wiki/Ecological_fallacy)).
+## Full picture of the data grouping
 
-When a model is fit for each data grouping independently , it is called
-**no pooling** . It reduces drastically the sample size and makes it
-impossible to extrapolate for a grouping that is not present in the
-observations sample.
+Figure \@ref(fig:group-schema) shows the full structure of the surveyed
+clusters, with the following nesting: settlement type, region, state and
+local government area. When hovering on the schema, you can see how many
+survey clusters are in each grouping. You can access the detailed
+structure by clicking on a specific group.
 
-Hierarchical data modelled with **partial pooling** information to be
-shared between group while keeping the hierarchical structure. It
-provides insights on:
+```{r group-schema, message=F, warning=F,class.source = 'fold-hide', fig.cap='Full grouping structure of the survey'}
+library(plotly)
+# create unique id for the nested admin level
+data1 <- data %>% 
+  mutate(state= paste0(state,region),
+         local = paste0(state, local))
 
--   *between group variability*: population densities differ from one
-    region to the other
+# create data for sunburst plot
+d1 <- rbind(
+  # first layer
+  data1 %>% 
+    group_by(type) %>% 
+    summarise(n=n()) %>% 
+    mutate(
+      ids = paste0('settlement', type),
+      labels = paste0('settlement <br>', type),
+      parents = '') %>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n),
+  # second layer
+  data1 %>% 
+    group_by(type, region) %>% 
+    summarise(n=n()) %>% 
+    mutate(
+      ids = paste('settlement', type, '-', 'region', region),
+      labels = paste0('region ', region),
+      parents = paste0('settlement', type))%>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n),
+  # third layer
+  data1 %>% 
+    group_by(type, region, state) %>% 
+    summarise(n=n()) %>% 
+    mutate(
+      ids = paste('settlement', type, '-', 'region', region, '-', 'state', state, '-', 'region', region),
+      labels = paste0('state ', state),
+      parents = paste('settlement', type, '-', 'region', region))%>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n),
+  # fourth layer
+  data1 %>% 
+    group_by(type, region, state, local) %>% 
+    summarise(n=n()) %>% 
+    mutate(
+      ids = paste('settlement', type, '-', 'region', region, '-', 'state', state,  '-', local),
+      labels = paste0('local ', local),
+      parents = paste('settlement', type, '-', 'region', region, '-', 'state', state, '-', 'region', region))%>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n)
+) %>% 
+  mutate(
+    hover= paste(ids, '\n sample size', n)
+  )
 
--   *within group variability*: some regions have a greater variability
-    than other (cf region 9 in Figure @ref(fig:popDens-boxplot))
-
-```{r, include=F, purl = FALSE}
-# convert rmd code to normal r script
-knitr::purl("tutorial2_hierarchicalModel.Rmd", documentation = 0)
+plot_ly(d1, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', 
+        hovertext=~hover, insidetextorientation='radial')
 ```
 
-## Hierarchical Population Model
+Note that:
+
+1.  not every state and local government area are present in the data
+    due to sampling limitations
+
+2.  not every group combination is represented in the data. Some
+    region/state/local governmental area do not have clusters belonging
+    to all settlement types. Figure \@ref(fig:group-complete-schema)
+    shows the regions with missing settlement type. We can't assess from
+    this analysis if those settlement types are missing because they
+    have not being sampled in our survey or they don't exist (for
+    example a remote region that does not contain any highly urban
+    settlement type).
+
+```{r group-complete-schema, message=F, warning=F,class.source = 'fold-hide', fig.cap='Full grouping structure of the survey with missing combination in yellow'}
+makeSunburst2layer <- function(data){
+  layers <- rbind(
+  # first layer
+  data %>% 
+    group_by(type) %>% 
+    summarise(n=sum(!is.na(N))) %>% 
+    mutate(
+      ids = paste0('settlement', type),
+      labels = paste0('settlement <br>', type),
+      parents = '') %>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n),
+  # second layer
+  data %>% 
+    group_by(type, region) %>% 
+    summarise(n=sum(!is.na(N))) %>% 
+    mutate(
+      ids = paste('settlement', type, '-', 'region', region),
+      labels = paste0('region ', region),
+      parents = paste0('settlement', type))%>% 
+    ungroup() %>% 
+    select(ids,labels, parents,n)) %>%
+    mutate(
+      hover= paste(ids, '\n sample size', n),
+      color= ifelse(n==0, 'yellow','')
+    )
+  
+ return(layers)
+}
+
+# create missing combinations
+data1_complete <- data1 %>% 
+  complete(region, nesting(type)) 
+
+
+plot_ly() %>% 
+   add_trace(data=makeSunburst2layer(data1), 
+             ids = ~ids, labels = ~labels, parents = ~parents, 
+             type = 'sunburst', 
+             hovertext=~hover, marker= list(colors=~color),  
+             insidetextorientation='radial',
+             domain = list(column = 0)) %>% 
+     add_trace(data=makeSunburst2layer(data1_complete), 
+             ids = ~ids, labels = ~labels, parents = ~parents, 
+             type = 'sunburst', 
+             hovertext=~hover, marker= list(colors=~color),  
+             insidetextorientation='radial',
+             domain = list(column = 1))  %>%  
+  layout(
+      grid = list(columns =2, rows = 1),
+      margin = list(l = 0, r = 0, b = 0, t = 0))
+```
+
+# Hierarchical structure in the model
+
+When all observations are treated together and indistinctly in the
+model, it is called **complete pooling**. This is how we modelled
+population count in tutorial 1. It violates the assumption of
+independence between the observations and it might produce spurious
+conclusions that are valid at global level but invalid at group level,
+through diluting group-specific patterns (cf. the [ecological
+fallacy](https://en.wikipedia.org/wiki/Ecological_fallacy)).
+
+When a model is fit for each data grouping independently, it is called
+**no pooling** and create a model per grouping. It reduces drastically
+the sample size and makes it impossible to extrapolate for a grouping
+that is not present in the observations sample.
+
+The purpose of hierarchical modelling is to aim at **partial pooling**
+where information is shared between group while accounting for the
+hierarchical structure of the data. It provides insights on:
+
+-   between-group variability: population densities differ from one
+    region to the other
+
+-   within-group variability: some regions have a greater variability
+    than others (cf region 9 in Figure @ref(fig:popDens-boxplot))
 
 Let's recall our previous model:
 
@@ -162,17 +328,858 @@ population 〜 Poisson( pop\_density * settled\_area) \\
 
 pop\_density 〜 Lognormal( \alpha, \sigma) \\
 
-\\
 
-\alpha 〜 Normal( 0, 15 ) \\
+\\\\
 
-\sigma 〜 Uniform( 0, 5 )(\#eq:model2)
+
+\alpha 〜 Normal( 0, 100 ) \\
+
+\sigma 〜 Uniform( 0, 100 )
 
 \end{equation}
 ```
-### A hierarchical intercept
+## A hierarchical intercept by settlement type
 
-A first modelling assumption is that the intercept of the Lognromal
-should be hierarchically
+We want to differentiate the parameters according to the hierarchical
+structure of the data.
+
+A first parameter is $\alpha$, that is the median on the log scale of
+the population density distribution (c.f. the moment of order 1 of a
+[lognormal](https://en.wikipedia.org/wiki/Log-normal_distribution#Properties)).
+Modelling $\alpha$ hierarchically means acknowledging that the median
+differs depending on the grouping, for example different for settlement
+type 1 from settlement type 4.
+
+Let's see the different scenarios for setting up $\alpha$ (we will show
+only for three settlement types for sake of simplicity):
+
+```{r, class.source = 'fold-hide'}
+d1 <- dagify(
+    Y ~ alpha,
+    outcome = 'Y'
+  ) %>%
+    tidy_dagitty(seed=1) %>% 
+    mutate(color=c('parameter','data')) %>% 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+    geom_dag_point() +
+    geom_dag_edges() +
+    geom_dag_text(col = "grey20",size=4,  parse=T) +
+    scale_shape_manual(values=c(15,19))+
+    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'Complete pooling', color='', shape='')
+
+d2 <- dagify(
+    Y ~ alpha_1+alpha_2+ alpha_3,
+    outcome = 'Y'
+  ) %>%
+    tidy_dagitty(seed=1) %>% 
+    mutate(color=c('parameter','parameter','parameter','data')) %>% 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+    geom_dag_point() +
+    geom_dag_edges() +
+    geom_dag_text(col = "grey20",size=4,  parse=T) +
+    scale_shape_manual(values=c(15,19))+
+    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'No pooling', color='', shape='')
+
+d3 <- dagify(
+    Y ~ alpha_1+alpha_2+ alpha_3,
+    alpha_1 ~ alpha,
+    alpha_2 ~ alpha,
+    alpha_3 ~ alpha,
+    outcome = 'Y',
+    latent = 'alpha'
+  ) %>%
+    tidy_dagitty(seed=7) %>% 
+    mutate(color=c('parameter','parameter','parameter','parameter','parameter','parameter','data')) %>% 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+    geom_dag_point() +
+    geom_dag_edges() +
+    geom_dag_text(col = "grey20",size=4,  parse=T) +
+    scale_shape_manual(values=c(15,19))+
+    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'Partial pooling', color='', shape='')
+
+gridExtra::grid.arrange(d1,d2,d3, ncol=3)
+```
+
+Tutorial 1 build a model based on complete pooling.
+
+### No-pooling
+
+Let's implement a no-pooling framework, that is $\alpha$ **will be
+estimated independently for each settlement type** $t$. Equation
+\@ref(eq:model1) represents its formal model, whereby $\alpha$ is
+indexed by $t$ the settlement type and each $\alpha_t$ has a identical
+but independent prior.
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+
+pop\_density 〜 Lognormal( \alpha_t, \sigma) \\[5pt]
+
+
+\alpha_t 〜 Normal( 0, 100 ) \\
+
+\sigma 〜 Uniform( 0, 100 )(\#eq:model1)
+
+\end{equation}
+```
+How do you write it in Stan? We will show only the code that is
+impacted.
+
+```{stan output.var="simpleCode", eval=F }
+// Model 1: Independent alpha by settlement type
+
+data{
+  ...
+
+  int<lower=0> type[n]; // settlement type
+  int<lower=0> ntype; // number of settlement types
+
+}
+
+parameters{
+  ...
+    
+  // independent intercept by settlement type
+  vector[ntype] alpha_t; 
+
+}
+
+model{
+  // population totals
+  ...
+  pop_density ~ lognormal( alpha_t[type], sigma );
+  
+  // independent intercept by settlement type
+  alpha_t ~ normal(0, 100);
+  ...
+}
+
+generated quantities{
+  ...
+   for(idx in 1:n){
+     density_hat[idx] = lognormal_rng( alpha_t[type[idx]], sigma );
+     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
+
+   }
+  
+}
+
+```
+
+We first declare the observation structure of settlement type.
+
+Then $\alpha$ becomes a vector of size 5, the number of settlement type
+in the data.
+
+We choose the same prior for every $\alpha_t$, five normal distribution
+centered on zero and with standard deviation 100.
+
+Notice how the indexing works in the *generated quantities* block.
+
+Once the model is written, we prepare the corresponding data, that is
+adding the settlement type:
+
+```{r}
+# prepare data for stan
+stan_data_model1 <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A,
+  type = data$type,
+  ntype= n_distinct(data$type))
+
+```
+
+And run the model is a similar fashion as in tutorial 1:
+
+```{r}
+# mcmc settings
+chains <- 4
+warmup <- 250
+iter <- 500
+seed <- 1789
+
+# parameters to monitor
+pars <- c('alpha_t','sigma', 'population_hat', 'density_hat')
+
+# mcmc
+fit1 <- rstan::stan(file = file.path('tutorial2_model1.stan'), 
+                   data = stan_data_model1,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+No warnings is spit by `stan` , the model has converged.
+
+Figure \@ref(fig:model1-alpha-t) shows that the estimated $\hat\alpha_t$
+vary by settlement type. We also see how the previously estimated
+$\alpha$ was averaging between the different patterns.
+
+```{r model1-alpha-t, message=F, warning=F, fig.cap='Intercept estimated independantly by settlement type'}
+
+# plot estimated parameter
+stan_plot(fit1, pars='alpha_t', fill_color='orange')+
+  geom_vline(xintercept=4.755109, size=1.5, linetype=2)+
+  annotate('text', x=5, y=5.7, label="alpha estimated \nin tutorial 1' ")
+```
+
+We can draw the observed vs predicted plot to see the impact of
+estimating $\alpha$ by settlement type:
+
+```{r, class.source = 'fold-hide', message=F, fig.cap='Comparison of observations with predictions from model 1'}
+# write function to extract posterior predictions and summarise them in a table
+getPopPredictions <- function(model_fit, 
+                              estimate='population_hat',
+                              obs='N', reference_data=data){
+  # extract predictions
+  predicted_pop <- as_tibble(extract(model_fit, estimate)[[estimate]])
+  colnames(predicted_pop) <- reference_data$id
+  
+  # check if the trick used for poissong_rng in stan worked
+  if(any(predicted_pop==-1)){
+    print('-1 in predicted population')
+  }
+  
+  # summarise predictions
+  predicted_pop <- predicted_pop %>% 
+    pivot_longer(everything(),names_to = 'id', values_to = 'predicted') %>% 
+    group_by(id) %>% 
+    summarise(across(everything(), list(mean=~mean(.), 
+                                        upper=~quantile(., probs=0.975), 
+                                        lower=~quantile(., probs=0.025)))) %>% 
+    left_join(reference_data %>% 
+                rename('reference'=all_of(obs)) %>% 
+                select(id, reference), by = 'id')%>% 
+    mutate(
+      residual= predicted_mean - reference,
+      ci_size = predicted_upper- predicted_lower,
+      estimate = estimate
+      )
+
+return(predicted_pop)
+}
+
+# plot posterior predictions
+ggplot(
+  rbind(
+    getPopPredictions(fit1) %>% 
+      mutate(type='Population count'),
+    getPopPredictions(fit1, estimate = 'density_hat', obs='pop_density') %>% 
+      mutate(type='Population density')
+  )  %>% 
+         mutate(type= factor(type, levels=c('Population density', 'Population count')))) +
+  geom_pointrange(aes(x=reference, y=predicted_mean, ymin=predicted_lower, ymax=predicted_upper
+                      ),
+                   fill='grey50', color='grey70', shape=21
+                  )+
+  geom_abline(slope=1, intercept = 0, color='orange', size=1)+
+  theme_minimal()+
+  labs(title = '', x='Observations', y='Predictions')+ 
+  facet_wrap(.~type, scales = 'free')
+
+```
+
+We know see that the predicted population density has five modes that
+corresponds to the five settlement types.
+
+### Partial pooling
+
+Let's try now **partial pooling**. Partial-pooling involves a
+hierarchical set-up for the priors, that is, each $\alpha_t$ prior
+distribution will depend on an overarching $\alpha$ prior distribution.
+In other words $\alpha$ define athe country-wide distribution that
+constrain each $\alpha_t$ to be in the same range.
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+
+pop\_density 〜 Lognormal( \alpha_t, \sigma) \\[5pt]
+
+
+\alpha_t 〜 Normal( \alpha, \nu_\alpha  ) \\[5pt]
+\alpha 〜 Normal( 0, 100 ) \\
+\nu_\alpha 〜 Uniform( 0, 100 ) \\
+\sigma 〜 Uniform( 0, 100 )(\#eq:model2)
+
+\end{equation}
+```
+In `stan` we will write the mode like that:
+
+```{stan output.var="simpleCode", eval=F }
+// Model 2: Hierarchical alpha by settlement type
+
+data{
+  ...
+}
+parameters{
+  ...
+    
+  // hierarchical intercept by settlement
+  vector[ntype] alpha_t; 
+  real alpha;
+  real<lower=0> nu_alpha;
+}
+model{
+  ...
+
+  // hierarchical intercept by settlement
+  alpha_t ~ normal(alpha, nu_alpha);
+  alpha ~ normal(0, 100);
+  nu_alpha ~ uniform(0, 100);
+}
+generated quantities{
+  ...
+}
+
+```
+
+We add the new parameters to the parameters to monitor and we run the
+model:
+
+```{r}
+pars <- c('alpha_t','alpha', 'nu_alpha', 'population_hat', 'density_hat')
+
+# mcmc
+fit2 <- rstan::stan(file = file.path('tutorial2_model2.stan'), 
+                   data = stan_data_model1,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+We get a warning about the Tail Effective Samples Size. For more
+information read
+[here](%5B%3Chttps://mc-stan.org/misc/warnings.html#tail-ess%3E%5D(https://mc-stan.org/misc/warnings.html#tail-es)).
+A simple answer is to run the algorithm for longer by tweaking `warmup`
+and `iter` options for more iterations:
+
+```{r}
+warmup <- 500
+iter <-1000
+
+# mcmc
+fit2 <- rstan::stan(file = file.path('tutorial2_model2.stan'), 
+                   data = stan_data_model1,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed=seed)
+    
+```
+
+Tuning the Markov chains did result in the model convergence.
+
+We can now compare the estimated parameters between a no pooling and a
+partial pooling framework.
+
+```{r comp-alpha-t, fig.cap='Comparison between alpha_t estimated independently and hierarchically',class.source = 'fold-hide'}
+fit2_alpha_t <- summary(fit2, pars=c('alpha_t'))$summary
+fit1_alpha_t <-  summary(fit1, pars=c('alpha_t'))$summary
+data_plot <- rbind(
+  as_tibble(fit1_alpha_t, rownames='param') %>% 
+    mutate(model='No pooling'),
+    as_tibble(fit2_alpha_t, rownames='param') %>% 
+    mutate(model='Partial pooling')
+) %>% 
+  mutate(
+    model = factor(model, levels=c('No pooling','Partial pooling')),
+    param_ = paste(param,model),
+    labels = ifelse(model=='Partial pooling', param, '')) %>% 
+arrange(param_)
+
+ggplot(data_plot, aes(mean,param_, color=model, fill=model,label=labels))+
+  geom_point()+
+  geom_linerange(aes(xmin=`2.5%`, xmax=`97.5%`))+
+  theme_minimal()+
+  labs(y='')+
+    scale_y_discrete(labels=data_plot$labels)
+
+```
+
+There are not striking differences between the two models. Table
+\@ref(tab:metrics-comp-pooling) shows how incorporating the settlement
+type grouping has a direct effect on the prediction.
+
+```{r metrics-comp-pooling,class.source = 'fold-hide'}
+# load previous model for complete pooling
+fit_tuto1_model2 <- readRDS('../tutorial1/tutorial1_model2_fit.rds')
+
+# build comprehensive dataframe
+comparison_df <- rbind(
+ getPopPredictions(fit1) %>% 
+   mutate(model='No pooling'),
+ getPopPredictions(fit2) %>% 
+   mutate(model='Partial pooling'),
+ getPopPredictions(fit_tuto1_model2) %>% 
+   mutate(model='Complete pooling'))
+
+
+# compute goodness-of-fit metrics
+comparison_df %>% group_by(model) %>% 
+  summarise( `Bias`= mean(residual),
+    `Inaccuracy` = mean(abs(residual)),
+        `Imprecision` = sd(residual),
+    `Mean Confidence Interval Size` =mean(ci_size)
+) %>%  kbl(caption = 'Goodness-of-metrics comparison between complete pooling, no pooling, and partial pooling') %>% kable_minimal()
+```
+
+Estimating $\alpha$ by settlement type does improve the model as shown
+by smaller residuals (*Bias* and *Imprecision*) and less variation
+(*Inaccuracy*). The hierarchical model does reduce slightly *Bias* but
+not strikingly, which indicates that the number of clusters per
+settlement type was big enough to estimate the $\alpha_t$ independently.
+
+We will see however in the next section what is a second advantage of
+hierarchical modelling.
+
+## A hierarchical intercept by settlement type and region
+
+Taking into account the settlement type stratification of population
+count leads to more accurate predictions and reduces prediction
+uncertainty (see *Mean Confidence Interval Size*).
+
+We can include further grouping in the modelling, such as administrative
+divisions.
+
+Let's include region in the modelling:
+
+\$\$ \begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+
+pop\_density 〜 Lognormal( \alpha_{t,r}, \sigma) \\[5pt]
+
+
+
+\alpha_{t,r} \sim Normal(\alpha_t, \nu_\alpha_t)
+\alpha_t 〜 Normal( \alpha, \nu_\alpha  ) \\[5pt]
+
+\alpha 〜 Normal( 0, 100 ) \\
+\nu_\alpha_t \sim Uniform( 0, 100 ) \\
+\nu_\alpha 〜 Uniform( 0, 100 ) \\
+\sigma 〜 Uniform( 0, 100 )(\#eq:model3)
+
+\end{equation} \$\$
+
+Which would be translated in `stan` as :
+
+```{stan output.var="simpleCode", eval=F }
+// Model 3: Hierarchical alpha by settlement type and region
+
+data{
+  ...
+  int<lower=1> nregion; //number of regions
+  int<lower=1,upper=nregion> region[n]; // region
+}
+parameters{
+  ...
+    
+  // hierarchical intercept by settlement and region
+  real alpha;
+  
+  vector[ntype] alpha_t; 
+  vector[nregion] alpha_t_r[ntype];
+  
+  real<lower=0> nu_alpha;
+  real<lower=0> nu_alpha_t;
+}
+
+transformed parameters{
+  vector[n] pop_density_mean;
+  
+  for(idx in 1:n){
+    pop_density_mean[idx] = alpha_t_r[type[idx],region[idx]];
+  }
+  
+}
+model{
+  ...
+  pop_density ~ lognormal(pop_density_mean, sigma );
+
+  // hierarchical intercept by settlement and region
+  alpha ~ normal(0, 100);
+  nu_alpha ~ uniform(0, 100);
+  nu_alpha_t ~ uniform(0, 100);
+  
+  alpha_t ~ normal(alpha, nu_alpha);
+  
+  for(t in 1:ntype){
+    alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t); 
+  }
+}
+generated quantities{
+  ...
+  density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]], sigma );
+}
+
+```
+
+Note the new `transformed parameters` block: it is useful to keep your
+`model` block tidy with only the stochastic relationships. We add the
+region indexing to the data list prepared for stan:
+
+```{r}
+# prepare data for stan
+stan_data_model3 <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A,
+  type = data$type,
+  ntype= n_distinct(data$type),
+  region = data$region,
+  nregion = n_distinct(data$region)
+  )
+
+```
+
+And run the model with the new parameters to monitor:
+
+```{r}
+pars <- c('alpha','alpha_t','alpha_t_r', 'sigma','population_hat',  'density_hat')
+
+# mcmc
+fit3 <- rstan::stan(file = file.path('tutorial2_model3.stan'), 
+                   data = stan_data_model3,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+No problem of model convergence.
+
+Let's look at the estimated $\hat\alpha_{t,r}$. Since there are 1
+$\hat\alpha$, 5 $\hat\alpha_t$ and 5x11 $\hat\alpha_{t,r}$, we will zoom
+in two settlement types in particular, 1 and 4. To do so, remember how
+the parameter names are constructed:
+
+-   `alpha_t` is a vector of dimension 5, such that `alpha_t[1]`
+    represents $\hat{\alpha_1}$, the estimate associated to settlement 1
+
+-   `alpha_t_r` is a vector of dimension 5\*11, such that `alpha_t[1,1]`
+    represents $\hat{\alpha}_{1,1}$, the estimate associated to
+    settlement 1 and region 1.
+
+```{r alpha-sett-region, message=F, fig.cap='Estimated alpha by region for settlement 1 and 4'}
+alpha_4_r <- paste0('alpha_t_r[4,', 1:11, ']')
+alpha_1_r <- paste0('alpha_t_r[1,', 1:11, ']')
+
+stan_plot(fit3, pars=c('alpha','alpha_t[1]', alpha_1_r,'alpha_t[4]', alpha_4_r), fill_color='orange')
+
+```
+
+We see that:
+
+1.  $\hat\alpha$ has a estimated distribution that overlap the two
+    settlement types, and wider confidence interval to account for all
+    uncertainty
+
+2.  $\hat\alpha_1$ and $\hat\alpha_2$ have two distinctive patterns
+
+3.  those settlement-level patterns masks some regional disparities
+
+A fourth remark: look closely at region 4 and 10, that is to say
+$\hat\alpha_{1,4}$, $\hat\alpha_{1,10}$,$\hat\alpha_{2,4}$ and
+$\hat\alpha_{2,10}$. We see that the confidence intervals are larger
+than for any other region.
+
+This is because those two regions comprise only one settlement type (5)
+in the data (see Figure \@ref(fig:group-complete-schema)) and thus
+neither settlement type 1 nor settlement type 4. Therefore there is no
+data to inform those $\alpha_{t,r}$, but because of the hierarchy, they
+can be estimated from the global parameter $\alpha_t$. And indeed we see
+that their estimated means closely match their respective
+$\hat\alpha_t$.
+
+This feature of hierarchical setting is a **great advantage compared to
+the non-pooling setting**. When predicting population count across
+Nigeria, we might find out settlement type in a region that was not
+represented in our dataset, typically type 1, 2, 3 or 4 in region 4 or
+10. In a non-pooling setting we won't have any parameter estimated
+because the models are estimated independently per level combination
+that is for a type x region. In a partial-pooling setting or
+hierarchical model we are covered by the global $\alpha_t$. Obviously
+there will be more uncertainty in the prediction for this specific area
+because no data could be used to fit the model.
+
+This ability of a hierarchical model holds also if an entire grouping
+was not sampled, typically if a region was not included in the survey.
+However it means that this missing region will be estimated with
+observations from the other sampled regions. If the missing region has
+very different characteristics, the model will not be able to estimate
+them
+
+## A hierarchical intercept per settlement type, region, state and local government area
+
+To maximize the information retrieved from the reported administrative
+divisions, we can use a hierarchy with four levels: settlement type,
+region, state and local government area.
+
+The additional administrative level howvere are organised in a *nested
+setting* which is particular case from hierarchical data.
+
+Indeed we were previously in a *crossed hierarchical setting*: we would
+expect each settlement type to be present in every region. We are not
+however expecting each state to be present in every region. The
+hierarchy is strict.
+
+To account for a nested setting, the **indexing is key**. We need the
+indexing to be nested, that is *dense* for each level. Luckily our data
+has already been coded this way:
+
+```{r, message=F}
+data %>% group_by(region, state) %>% summarise(`Number of clusters`=n()) %>% 
+  kbl() %>% kable_minimal()
+```
+
+Each state's index is nested within the parent region.
+
+Including the additional levels of hierarchy in the `stan` code looks
+very similar to previous models:
+
+```{stan output.var="simpleCode", eval=F }
+// Model 4: Hierarchical alpha by settlement type , region, state local
+data{
+  ...
+  int<lower=1> nstate[nregion]; //number of states
+  int<lower=1,upper=max(nstate)> state[n]; // state
+  
+  int<lower=1> max_nlocal; // max local with data in one state
+  int<lower=0> nlocal[nregion, max(nstate)]; // number of local per region, per state
+  int<lower=1,upper=max_nlocal> local[n]; // local
+
+}
+parameters{
+  ...
+    
+  // hierarchical intercept by settlement, region, state, local
+  real alpha;
+  vector[ntype] alpha_t; 
+  vector[nregion] alpha_t_r[ntype];
+  vector[max(nstate)] alpha_t_r_s[ntype, nregion];
+  vector[max_nlocal] alpha_t_r_s_l[ntype, nregion, max(nstate)]; 
+  
+  real<lower=0> nu_alpha;
+  real<lower=0> nu_alpha_t;
+  real<lower=0> nu_alpha_r;
+  real<lower=0> nu_alpha_s;
+}
+transformed parameters{
+  ...
+  for(idx in 1:n){
+    pop_density_mean[idx] = alpha_t_r_s_l[type[idx], region[idx], state[idx], local[idx]];
+  }
+}
+model{
+  ...
+  // hierarchical intercept by settlement, region, state and local
+  alpha ~ normal(0, 100);
+  
+  alpha_t ~ normal(alpha, nu_alpha);
+  
+  for(t in 1:ntype){
+    alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t); 
+    for(r in 1:nregion){
+      alpha_t_r_s[t,r,1:nstate[r]] ~ normal(alpha_t_r[t,r], nu_alpha_r);
+      for(s in 1:nstate[r]){
+        alpha_t_r_s_l[t,r,s,1:nlocal[r,s]] ~ normal(alpha_t_r_s[t,r,s], nu_alpha_s);
+      }
+    }
+  }
+  
+  nu_alpha ~ uniform(0, 100);
+  nu_alpha_t ~ uniform(0, 100);
+  nu_alpha_r ~ uniform(0, 100);
+  nu_alpha_s ~ uniform(0, 100);
+  ...
+}
+
+generated quantities{
+  ...
+  density_hat[idx] = lognormal_rng( alpha_t_r_s_l[type[idx], region[idx], state[idx], local[idx]], sigma );
+}
+
+```
+
+The data preparation is slightly more complex. 1. `nstate` should
+indicate the number of states per region and thus be an array of size
+`nregion`.
+
+```{r}
+# prepare data for stan
+
+# providing number of state by region
+nstate <-  data %>% group_by(region) %>% summarise(nstate=n_distinct(state)) %>% ungroup() %>% select(nstate) %>% unlist(use.names = F)
+nstate
+```
+
+2.  `nlocal` should indicate the number of local government areas per
+    region per state and thus be a matrix of size `nregion x nstate`.
+    Naturally this matrix will have NA (there is not the same number of
+    local areas in each state). We replace those NAs by zero because
+    `stan` does not accept NAs in the data.
+
+```{r, message=F}
+# providing number of local areas by region and state
+nlocal <-  data %>% group_by(region, state) %>% summarise(nlocal=n_distinct(local)) %>% ungroup() %>% 
+  pivot_wider(id_cols=region, names_from = state, values_from = nlocal) %>% select(-region)
+nlocal[is.na(nlocal)] <- 0 # stan doesn't accept NA in the data 
+nlocal
+```
+
+We see that `nlocal` has 11 rows (the number of regions) and 3 columns
+(the maximum number of states per region).
+
+```{r}
+stan_data_model4 <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A,
+  type = data$type,
+  ntype= n_distinct(data$type),
+  region = data$region,
+  nregion = n_distinct(data$region),
+  nstate = nstate,
+  state = data$state,
+  nlocal = nlocal,
+  max_nlocal= max(nlocal, na.rm=T),
+  local = data$local
+  )
+
+```
+
+### Addressing convergence issues
+
+If we use the same mcmc setting as previously, the model takes more than
+5 hours to run and fail to converge. There are a few adaptations that we
+can add:
+
+1.  Adapt initialisation
+
+Markov chains need be initialised to start exploring the parameter
+space, that is to be given a position where to begin their walks. As
+from now we have left it to `stan` to choose the starting point whose
+default is *to randomly generate initial values between -2 and 2 on the
+unconstrained support*. To speed up the process we can give the
+algorithm an hinch about where to begin.
+
+For that purpose we write a function that takes as input our data and
+adds small random variations to it.
+
+```{r}
+inits <- function(md, nchains=4){
+  
+  set.seed(md$seed)
+  inits.out <- list()
+  
+  for (c in 1:nchains){
+    inits.i <- list()
+    # intercept
+    inits.i$alpha_t_r_s_l <- array(runif(md$ntype * md$nregion * max(md$nstate) * md$max_nlocal, 0, 2.5),
+                            dim=c(md$ntype, md$nregion, max(md$nstate), md$max_nlocal))
+    inits.i$alpha <- runif(1, 0, 2.5)
+    inits.i$alpha_t <- runif(md$ntype, 0, 2.5)
+    inits.i$alpha_t_r <- matrix(runif(md$ntype * md$nregion, 4, 8), nrow=md$ntype, ncol=md$nregion)
+    inits.i$alpha_t_r_s <- array(runif(md$ntype * md$nregion * max(md$nstate), 0, 2.5), 
+                                    dim=c(md$ntype, md$nregion, max(md$nstate)))
+    inits.i$nu_alpha <- runif(1, 0, 1)
+    inits.i$nu_alpha_t <- runif(1, 0, 1)
+    inits.i$nu_alpha_r <- runif(1, 0, 1)
+    inits.i$nu_alpha_s <- runif(1, 0, 1)
+    # variance
+    inits.i$sigma <- runif(1, 0.1, 0.5)
+    # population density
+    inits.i$pop_density <- rlnorm(md$n, log(md$population / md$area), 0.25)
+    
+    inits.out[[c]] <- inits.i
+  }
+return(inits.out)}
+
+```
+
+2.  Constrain `sigma`
+
+The prior distribution for sigma (`halfnormal(0,100)`) comprise unlikely
+values. A hint is given by the observed log of the geometric standard
+deviation of population density (that is $\sigma$ in a Lognormal):
+`r round(log(EnvStats::geoSD(data$pop_density)),2)`. We want to
+constrain the prior to be around 1 but we still want extreme values to
+be covered to avoid overfitting our data. The [Cauchy
+distribution](https://en.wikipedia.org/wiki/Cauchy_distribution) is a
+good candidate. Figure \@ref(fig:prior-comp) compares different prior
+distributions for $\sigma$.
+
+```{r prior-comp, fig.cap='Prior distributions comparison for sigma',class.source = 'fold-hide'}
+fig <- plot_ly(alpha = 0.6)
+fig <- fig %>% add_histogram(x = ~extraDistr::rhnorm(1000,100), name='Half Normal (0,100)')
+fig <- fig %>% add_histogram(x = ~extraDistr::rhcauchy(1000,1) + 1, name= 'Half Cauchy (0,1)')
+fig <- fig %>% add_histogram(x = ~extraDistr::rhnorm(1000,1) + 2, name='Half Normal (0,1)')
+fig <- fig %>% layout(barmode = "overlay",  xaxis = list(title=''))
+fig
+
+```
+
+Don't hesitate to use the interactive tools to understand the difference
+between a Half Normal (0,1) and a Half Cauchy (0,1). Below how we
+integrate the change in `stan`.
+
+```{stan output.var="simpleCode", eval=F }
+// Model 5: Hierarchical alpha by settlement type , region, state local with a Cauchy prior for sigma
+
+model{
+  ...
+
+  // variance with Cauchy prior
+  sigma ~ cauchy(0, 1);
+}
+
+```
+
+3.  Control sampler behaviour
+
+The option `control` in the `stan` call allows to adjust the way the
+chains are exploring the space. A critical setting in our context is
+`max_treedepth` : it controls t*he cap on the depth of the trees that it
+evaluates during each iteration. When the maximum allowed tree depth is
+reached it indicates that NUTS is terminating prematurely to avoid
+excessively long execution time*.
+
+We now gather all the three modifications and run the model with full
+hierarchy.
+
+```{r, eval=F}
+pars <- c('alpha','alpha_t','alpha_t_r','alpha_t_r_s','alpha_t_r_s_l', 'sigma','population_hat',  'density_hat')
+
+# mcmc
+start <- Sys.time ()
+fit5 <- rstan::stan(file = file.path('tutorial2_model5.stan'), 
+                   data = stan_data_model4,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed,
+                   init = inits(stan_data_model4),
+                   control = list(max_treedepth = 15))
+time <- Sys.time () - start
+
+fit <- list()
+fit$fit <- fit5
+fit$time <- time 
+saveRDS(fit, 'fit5.rds')
+library(beepr)
+beep()
+```
 
 # References
