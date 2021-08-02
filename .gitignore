@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-tutorials/tutorial1/*.rds
+*.rds
+wd/*
