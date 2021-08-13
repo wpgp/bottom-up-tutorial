@@ -13,9 +13,12 @@ data{
   int<lower=1> nregion; //number of regions
   int<lower=1,upper=nregion> region[n]; // region
   
-    // slope
-  int<lower=0> ncov; // number of covariates
-  matrix[n, ncov] cov; // covariates
+    // fixed slope
+  int<lower=0> ncov_fixed; // number of covariates -1
+  matrix[n, ncov_fixed] cov_fixed; // covariates
+  
+  // random slope
+  vector[n] cov_random;
     
 }
 
@@ -36,15 +39,18 @@ parameters{
   real<lower=0> sigma; 
   
   // slope
-  row_vector[ncov] beta; 
-  
+  row_vector[ncov_fixed] beta_fixed; 
+  vector[ntype] beta_random;
+
 }
 
 transformed parameters{
   vector[n] pop_density_mean;
-  
+  vector[n] beta;
+
   for(idx in 1:n){
-    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + sum( cov[idx,] .* beta );
+    beta[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
+    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
   }
   
 }
@@ -69,9 +75,10 @@ model{
   nu_alpha_t ~ uniform(0, 100);
   
   //slope
-  beta ~ normal(0,10);
-  
-  // variance with Cauchy prior
+  beta_fixed ~ normal(0,10);
+  beta_random ~ normal(0,10);
+
+  // variance
   sigma ~ uniform(0, 100);
 }
 
@@ -79,9 +86,12 @@ generated quantities{
   
   int<lower=-1> population_hat[n];
   real<lower=0> density_hat[n];
+  vector[n] beta_hat;
+
   
   for(idx in 1:n){
-    density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + sum(cov[idx,] .* beta), sigma );
+    beta_hat[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
+    density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + beta_hat[idx], sigma );
     if(density_hat[idx] * area[idx]<1e+09){
       population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
     } else {

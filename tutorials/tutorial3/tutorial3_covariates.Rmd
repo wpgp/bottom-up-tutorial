@@ -1,0 +1,780 @@
+---
+title: "Population modelling \n for census support"
+subtitle: "Tutorial 3: How to model small-scale spatial variations?"
+author: "Edith Darin and Douglas Leasure"
+date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    theme: yeti
+    number_sections: false
+    css: [../css/index_custom.css, ../css/tutorial_custom.css]
+    code_folding: show
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+```{r logo, echo=FALSE}
+###LOAD WP LOGO##
+htmltools::img(src = knitr::image_uri("assets/pic/320px-UNFPA_logo.svg.png"),
+               alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
+
+```
+
+![](../../assets/pic/wp_logotype_gray_low.png)
+
+```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
+# 1 Set-up ---
+
+# load libraries
+library(tidyverse) # managing data
+library(ggdag) # drawing DAG
+library(kableExtra) # visualising table
+library(here) # handling path
+library(rstan) # running Bayesian models
+library(plotly) # interactive plot
+
+# stan setup
+options(mc.cores = parallel::detectCores()-1)
+rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled model
+```
+
+# Introduction
+
+Tutorial 2 explored how to model large-scale spatial patterns, that is
+how population density differs per large grouping such as by region or
+settlement type. We integrate those large-scale variations in a Bayesian
+framework by using a hierarchical random intercept model.
+
+Tutorial 3 aims at integrating small-scale variations of population
+density that are due to local context. High-resolution covariates are
+great to inform about the local context:
+
+```{r raster, echo = FALSE, fig.cap = "Example of a covariate (residential area) around Onitscha, Nigeria", fig.align='center'}
+# raster example
+knitr::include_graphics(here("./assets/pic/tuto3_rasterZoom.png"))
+```
+
+Adding high-resolution covariates helps to improve the model fit as well
+as guides the population predictions in unsampled areas.
+
+For data to be used as covariates in the model, they should be:
+
+-   correlated with differences in population density
+
+-   measured consistently and completely across the study space
+
+-   accurately mapped as high-resolution geospatial layers
+
+High-resolution covariates that are suitable for the modelling are
+typically spatial covariates with national coverage and consistent data
+collection. While individual or household-level information, such as
+collected during surveys, is useful for understanding differences in
+demographic characteristics, that type of information is difficult to
+use in the bottom-up approaches because it only comes from a sample of
+households. The primary objective of the population model is to make a
+spatially-complete prediction.
+
+### Requirements
+
+To include a spatial covariate in the modelling and to use it as a
+support for prediction, we use gridded datasets, known as *rasters*. You
+would need thus to have basic GIS knowledge about raster and vector file
+management. It does not need to be in `R`, it can be in QGIS, ArcGIS,
+Python or any GIS software of your choice.
+
+The purpose of this tutorial is **not** spatial data processing. We will
+just mention processing techniques that are required to prepare
+covariates data for population modelling.
+
+However, here are some R resources on spatial manipulation:
+
+-   The [bible](https://keen-swartz-3146c4.netlify.app/) by Pebesma and
+    Bivand on the `sf` (vector data) and `stars` (raster data) R
+    packages with excellent overview of the different spatial
+    manipulations
+
+-   A [hands-on introduction](https://geoscripting-wur.github.io/) to
+    `sf` and `raster` package by the University of Wageningen
+
+-   A [focus on raster manipulation](https://rspatial.org/) with
+    `raster` and `terra` by Hijmans
+
+# Formal modelling
+
+We will work from model 3 in tutorial 2 which is based on a Poisson
+distribution to model population count and on a Lognormal distribution
+with a hierarchical random intercept by settlement type and region to
+model population density .
+
+Because the mean of the population density is only defined with a random
+intercept, it results in 5 (number of settlement type) x 11 (number of
+region) options for the population density estimates. To add small-scale
+variations we refine the mean with a regression model that integrates
+the covariates.
+
+More formally, let's define $X$ a matrix of size the number of
+observation x number of covariates that contains the covariates values
+for each cluster and $\beta$ a vector of size the number of covariates.
+Based on Equation 3 in tutorial 2 (and removing the prior definition of
+$\alpha_{t,r}$ for sake of readibility), we define $\mu$ the mean of the
+Lognormal distribution as follows:
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+pop\_density 〜 Lognormal(\mu, \: \sigma) \\
+
+\mu = \alpha_{t,r} + \beta X \\[10pt]
+
+\beta 〜 Normal(0,10)(\#eq:model1)
+
+
+\end{equation}
+```
+Note that the prior for $\beta$ are identical normal distribution for
+each covariate with mean 0 and standard deviation 10 to avoid
+introducing any bias.
+
+Figure \@ref(fig:dag1) shows the updated dependent relationships of our
+model when integrating covariates.
+
+```{r dag1, echo=F, fig.cap='Dependancy graph for model 1 of tutorial 3'}
+dagify(
+    Y ~ alpha_1+alpha_2+ alpha_3+sigma + beta+ X,
+    alpha_1 ~ alpha,
+    alpha_2 ~ alpha,
+    alpha_3 ~ alpha,
+    outcome = 'Y',
+    latent = 'alpha'
+  ) %>%
+    tidy_dagitty(seed=7) %>% 
+    mutate(color=c('data','parameter','parameter','parameter','parameter','parameter','parameter','parameter','parameter','data')) %>% 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+    geom_dag_point() +
+    geom_dag_edges() +
+    geom_dag_text(col = "grey20",size=4,  parse=T) +
+    scale_shape_manual(values=c(15,19))+
+    theme_dag()+ labs(title = '', color='', shape='')
+```
+
+# Review of the covariates used in WorldPop
+
+To date, five bottom-up population models have been produced at
+WorldPop:
+
+-   WorldPop. 2019. Bottom-up gridded population estimates for
+    **Nigeria, version 1.2**.\
+    WorldPop, University of Southampton.
+    <https://dx.doi.org/10.5258/SOTON/WP00655>.
+
+-   WorldPop (School of Geography and Environmental Science, University
+    of\
+    Southampton). 2020. Bottom-up gridded population estimates for
+    **Zambia, version 1.0**.\
+    <https://dx.doi.org/10.5258/SOTON/WP00662>
+
+-   WorldPop and Institut National de la Statistique et de la
+    Démographie du Burkina Faso. 2021. Census-based gridded population
+    estimates for **Burkina Faso (2019), version 1.0**. WorldPop,
+    University of Southampton.
+    <https://dx.doi.org/10.5258/SOTON/WP00687>.
+
+-   Boo G, Darin E, Leasure DR, Dooley CA, Chamberlain HR, Lazar AN,
+    Tatem AJ. 2020.\
+    Modelled gridded population estimates for the Kinshasa,
+    Kongo-Central, Kwango, Kwilu,\
+    and Mai-Ndombe provinces in the **Democratic Republic of the Congo,
+    version 2.0**.\
+    WorldPop, University of Southampton.
+    <https://dx.doi.org/10.5258/SOTON/WP00669>
+
+-   WorldPop. 2020. Bottom-up gridded population estimates for the
+    Kinshasa, Kongo-Central, Kwango, Kwilu, and Mai-Ndombe provinces in
+    the **Democratic Republic of the Congo, version 1.0**.  WorldPop,
+    University of Southampton.
+    <https://dx.doi.org/10.5258/SOTON/WP00658>
+
+In addition to that, two models are currently being updated: **Nigeria
+version 2.0** and **Democratic Republic of the Congo v3.0**.
+
+Those six models encompass a large range of covariates, that are
+specific to each country. Table \@ref(tab:review) offers an overview of
+the final covariates set selected for each model.
+
+```{r review, message=F, warning=F, class.source = 'fold-hide'}
+review_cov <- read_csv('tutorials/tutorial3/covs_review.csv')
+
+review_cov %>% arrange(Type) %>% kbl(caption='Review of covariates used in WorldPop bottom-up population estimates') %>% kable_minimal()
+```
+
+The covariates selected can be broadly classified as describing four
+main drivers of local population density variation:
+
+1.  *previous population spatial distribution* through WorldPop top-down
+    population disaggregation [@worldpopresearchgroup2018]
+2.  *infrastructure* locations through OpenStreetMap
+    [@openstreetmapcontributors2018], country-specific resources (for
+    example @institutgeographiqueduburkinafaso2015]) or modelled
+    resources (for example travel time to cities [@weiss2018] )
+3.  *natural features* through remote sensing product such as radar data
+    (Sentinel-1) or dry matter productivity (Copernicus)
+4.  *settlement shape* through morphology of building fooptrints
+    [@ecopia.ai2019] or settled area [@oakridgenationallaboratory2018]
+
+Other covariates sources that were considered (but not selected in the
+final models) were:
+
+-   Conflict locations from the [Armed Conflict Location and Event Data
+    Project](https://acleddata.com/data-export-tool/)
+
+-   Climatic variables from the [Climatic Research Unit at the
+    university of
+    Anglia](https://catalogue.ceda.ac.uk/uuid/10d3e3640f004c578403419aac167d82)
+
+-   Active mining concessions from the [IPIS
+    group](https://ipisresearch.be/publication/mining-concessions-dr-congo/)
+
+-   Land cover classification from the [European Spatial
+    Agency](https://climate.esa.int/en/esa-climate/esa-cci/)
+
+-   Global forest change from the [University of
+    Maryland](https://climate.esa.int/en/esa-climate/esa-cci/)
+
+-   Elevation and slope from
+    [WorldDEM](https://www.airbus.com/newsroom/press-releases/en/2018/10/WorldDEM-now-entirely-edited-and-available-via-streaming.html)
+
+-   Fossil fuel emissions from the [Open-source Data Inventory for
+    Anthropogenic CO2 Project](https://www.odiac.org/index.html)
+
+To build a model, we first gather all covariates that can be related to
+our specific population data. It can reach up to 100+. We then use
+geospatial analysis techniques to obtain gridded version of the
+covariates with identical spatial resolution, alignment and extent. It
+involves resampling and clipping for covariates provided as raster files
+or for covariates provided as vector files computing count, density,
+distance to nearest features or even interpolation techniques.
+
+# Covariates engineering
+
+Further covariates engineering steps can help extracting even more
+information from the gathered covariates.
+
+1.  Log-transformation
+
+Considering the logarithm of the covariates can help handling extreme
+values.
+
+2.  Focal statistics
+
+Focal statistics consist in summarising the covariate in a moving window
+around each grid cell. As seen in table \@ref(tab:review), we used
+different window sizes (1km, 2km or 5km) and summary statistics (mean or
+coefficient of variation).
+
+3.  Standardisation
+
+Scaling the covariate (that is substrastring the mean and dividing by
+the standard deviation) can help enhancing meaningful local variations
+from the mean. The scaling can even be refined by computing the mean and
+the standard deviation by region, such that local variations are
+representative of the region.
+
+##### A note on covariate selection
+
+After engineering the gathered covariates, we might end up with 1000+
+potential covariates.
+
+To select the best one for prediction purposes, we use two methods:
+
+-   pairwise correlation and scatter plot with the population density at
+    cluster level
+
+-   univariate model testing each covariate successively
+
+# Covariates in Nigeria, v1.2
+
+## Overview of the covariates
+
+Six covariates were used in Nigeria v1.2 model [@leasure2020]:
+
+-   `x_1`: gridded population estimates from WorldPop Global
+-   `x_2`: school densities within a 1km radius
+-   `x_3`: household sizes by interpolating Demographic Health Survey
+    results from 2013
+-   `x_4`: settled area within a 1km radius
+-   `x_5`: residential area in a 1km radius
+-   `x_6`: nonresidential settled area within a 1km radius
+
+Covariate `x_4` was scaled based on its mean and standard deviation
+nationally, whereas covariates `x_5` and `x_6` were scaled based on
+their mean and standard deviation within a 50-km radius. Leasure et at
+scaled `x_5` and `x_6` in this way because wethey suspected that
+neighborhood types may not be directly comparable across regions
+(especially northern versus southern Nigeria). This scaling also reduced
+correlation with `x_4` .
+
+They scaled the WorldPop Global estimates (`x_1`) based on their mean
+and standard deviation nationally. They averaged these values among
+pixels within each microcensus cluster. They treated this covariate as
+an indicator of relative population densities based on geospatial
+covariates that were in the random forest model.
+
+Covariate `x_2` was scaled using its mean and standard deviation within
+a 50km radius. They scaled this covariate within a 50km moving window
+because what constitutes a "high density" of schools varies by region
+and this distinction was lost when the covariate was scaled nationally.
+This also helped to control for possible differences in school mapping
+effort in different regions.
+
+They scaled `x_3` based on its mean and standard deviation nationally.
+One key reason for including this covariate was to account for a strong
+north--south gradient in household sizes, with significantly more people
+per household in northern Nigeria than in southern Nigeria.
+
+## Data preparation
+
+To integrate the covariates in the model, we build first a dataset with
+the average of the covariate values for each cluster using zonal
+statistics.
+
+Note that this constitutes a change in support: we might want to check
+if the range of covariates values at cluster level is representative of
+the covariate values at grid cell level.
+
+Figure \@ref(fig:scatter) shows the relation between the covariates and
+the population density at cluster level. We see that household size
+(`x_3`) is strongly positively correlated with population density. The
+negative value are due to the scaling method adopted. On the opposite,
+nonresidential settled area (`x_6`) is negatively correlated which is
+expected: the more the surroundings are nonresidential the lower the
+population density.
+
+```{r scatter, message=F, fig.cap='Scatterplot of covariates values vs population density for each cluster', class.source = 'fold-hide'}
+# prepare data
+data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
+data <- data %>% 
+  mutate(
+    pop_density=N/A,
+    id = as.character(1:nrow(data))
+  )
+
+data_long <- data %>% 
+  pivot_longer(starts_with('x'), names_to = 'cov')
+
+ggplot(data_long, aes(x=pop_density,y=value))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE,color='orange')+
+  theme_minimal()+
+  facet_wrap(.~cov, ncol=3, scales = 'free')+
+  labs(x='Population density', y='')
+
+```
+
+Before implementing the model in `stan`, we **uniformly scale the
+covariates at cluster level**, such that the $\beta_k$ have the same
+scale. We first compute the scaling coefficients (mean and standard
+deviation) for each covariate:
+
+```{r, message=F}
+covariatesScaling <- function(var){
+  mean_var <- mean(var)
+  sd_var <- sd(var)
+  return(
+    data.frame(
+      'cov_mean'= mean_var,
+      'cov_sd' = sd_var
+    )
+  )
+} 
+
+covs <- data %>% 
+  select(starts_with('x'))
+
+scale_factor <- bind_rows(apply(covs, 2, covariatesScaling))
+scale_factor$cov <- colnames(covs)
+
+scale_factor %>% select(cov, cov_mean, cov_sd) %>% kbl %>%  kable_minimal()
+```
+
+We then apply the scaling coefficient to the covariates:
+
+```{r}
+covs_scaled <-  covs %>% 
+  mutate(cluster_id = 1:nrow(covs)) %>% 
+  pivot_longer(-cluster_id,names_to = 'cov') %>% 
+  left_join(scale_factor, by="cov") %>% 
+  mutate(value= (value-cov_mean)/cov_sd ) %>% 
+  select(-cov_mean, -cov_sd) %>% 
+  pivot_wider(names_from = cov, values_from = value, id_cols = cluster_id) %>% 
+  select(-cluster_id)
+
+```
+
+We store the scaling coefficients for the prediction stage.
+
+```{r}
+write_csv(scale_factor, 'tutorials/tutorial3/scale_factor.csv')
+```
+
+## Model implementation
+
+Equation \@ref(eq:model1) is implemented in `stan` as follows:
+
+```{stan output.var="simpleCode", eval=F }
+// Model 1: Independent alpha by settlement type
+
+data{
+  ...
+  // slope
+  int<lower=0> ncov; // number of covariates
+  matrix[n, ncov] cov; // covariates
+
+}
+
+parameters{
+  ...
+    
+  // slope
+  row_vector[ncov] beta; 
+
+}
+transformed parameters{
+  ...
+  for(idx in 1:n){
+    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + sum( cov[idx,] .* beta );
+  }
+  
+}
+model{
+  ...
+  //slope
+  beta ~ normal(0,10);
+}
+
+generated quantities{
+  ...
+   for(idx in 1:n){
+    density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + sum(cov[idx,] .* beta), sigma );
+   }
+  
+}
+
+```
+
+Note the two new data type, `matrix` for the covariates values and
+`row_vector` for $\beta$. This is due to the way we have coded the
+inclusion of covariates: in a for loop that runs through each cluster
+observations, such that `cov[idx,]` is a (column)-vector and requires a
+`row_vector` as multiplier.
+
+We keep the same set up for `stan` Markov chains:
+
+```{r}
+# mcmc settings
+chains <- 4
+warmup <- 500
+iter <- 500
+seed <- 1789
+
+```
+
+And we add the covariates to `stan` input data:
+
+```{r}
+# prepare data for stan
+stan_data_model1 <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A,
+  type = data$type,
+  ntype= n_distinct(data$type),
+  region = data$region,
+  nregion = n_distinct(data$region),
+  seed=seed,
+  cov = covs_scaled,
+  ncov = ncol(covs_scaled)
+  )
+
+```
+
+We add `beta` as parameter to monitor and run the model.
+
+```{r,}
+pars <- c('alpha','sigma','beta','alpha_t', 'population_hat',  'density_hat')
+
+# mcmc
+
+fit1 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.stan'), 
+                   data = stan_data_model1,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+No convergence issue. We can plot the $\hat\beta_k$. The sign and
+magnitude of the covariate effects are inline with the correlation shown
+in Figure \@ref(fig:scatter).
+
+```{r, message=F}
+stan_plot(fit1, pars='beta', fill_color='orange')
+```
+
+The next question is: How does integrating covariates improve the model?
+
+We run Tutorial 2 model 3 to compare:
+
+```{r}
+pars <- pars[!grepl('beta', pars)]
+fit0 <- rstan::stan(file = file.path('tutorials/tutorial2/tutorial2_model3.stan'), 
+                   data = stan_data_model1,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+We can then compute the predictions for every cluster and compare the
+goodness-of-fit when adding the covariates.
+
+```{r, message=F}
+getPopPredictions <- function(model_fit, 
+                              estimate='population_hat',
+                              obs='N', reference_data=data){
+  # extract predictions
+  predicted_pop <- as_tibble(extract(model_fit, estimate)[[estimate]])
+  colnames(predicted_pop) <- reference_data$id
+  
+  # check if the trick used for poissong_rng in stan worked
+  if(any(predicted_pop==-1)){
+    print('-1 in predicted population')
+  }
+  
+  # summarise predictions
+  predicted_pop <- predicted_pop %>% 
+    pivot_longer(everything(),names_to = 'id', values_to = 'predicted') %>% 
+    group_by(id) %>% 
+    summarise(
+      across(everything(), list(mean=~mean(.), 
+                                upper=~quantile(., probs=0.975), 
+                                lower=~quantile(., probs=0.025)))
+      ) %>% 
+    left_join(reference_data %>% 
+                rename('reference'=all_of(obs)) %>% 
+                select(id, reference), by = 'id')%>% 
+    mutate(
+      residual= predicted_mean - reference,
+      ci_size = predicted_upper- predicted_lower,
+      estimate = estimate
+      )
+
+return(predicted_pop)
+}
+
+comparison_df <- rbind(
+ getPopPredictions(fit0) %>% 
+   mutate(model='Without covariates'),
+ getPopPredictions(fit1) %>% 
+   mutate(model='With covariates'))
+
+# compute goodness-of-fit metrics
+comparison_df %>% group_by(model) %>% 
+  summarise( `Bias`= mean(residual),
+    `Inaccuracy` = mean(abs(residual)),
+        `Imprecision` = sd(residual),
+    `Mean Confidence Interval Size` =mean(ci_size)
+) %>%  kbl(caption = 'Goodness-of-metrics comparison with and without covariates ') %>% kable_minimal()
+```
+
+We see an improvement on every goodness-of-fit metrics.
+
+# A random slope
+
+In tutorial 2 we have seen that a model fitting a unique $\alpha$ for
+all the observations could be improved by splitting the observations
+into groupings that would share a similar pattern of population density.
+
+The idea is similar with $\beta$: **some covariates effects might vary
+by settlement type**. Example: `x_4` , the sum of settled area within a
+1km radius might, might have a greater predictive power in rural areas
+than in urban areas. The difference in correlation between covariate and
+population density by settlement is highlighted in Figure
+\@ref(fig:scatter-t).
+
+```{r scatter-t, class.source = 'fold-hide', fig.cap='Scatterplot of covariates vs population density by settlement type'}
+ggplot(data_long %>% 
+         group_by(type) %>% 
+         mutate(
+           type = paste0(type,' n=' ,n()),
+           type=as.factor(type)), aes(x=pop_density,y=value, color=type))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  theme_minimal()+
+  facet_wrap(.~cov, ncol=3, scales = 'free')+
+  labs(y='', x='Population density', color='Settlement type')
+
+```
+
+Modelling $\beta_k$ by settlement type is called a **random slope
+mode**l.
+
+::: {.question}
+**Question**: Do we want to model the $\beta_k$ hierarchically?
+:::
+
+<details>
+
+<summary>
+
+Click for the solution
+
+</summary>
+
+The $\beta_{k,t}$ might have different patterns even with opposite
+direction which speaks against a common overarching $\beta$
+
+</details>
+
+Formally, a random slope model is written as follows:
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+pop\_density 〜 Lognormal(\mu, \: \sigma) \\
+
+\mu = \alpha_{t,r} + \beta^{random}_t X^{random} + \beta^{fixed} X^{fixed} \\[10pt]
+
+\beta^{random}_t 〜 Normal(0,10) \\
+\beta^{fixed} 〜 Normal(0,10)
+
+\end{equation}
+```
+The `stan` implementation is as follows:
+
+```{stan output.var="simpleCode", eval=F }
+// Model 1: Independent alpha by settlement type
+
+data{
+  ...
+    // fixed slope
+  int<lower=0> ncov_fixed; // number of covariates -1
+  matrix[n, ncov_fixed] cov_fixed; // covariates
+  // random slope
+  vector[n] cov_random;
+
+}
+
+parameters{
+  ...
+  // slope
+  row_vector[ncov_fixed] beta_fixed; 
+  vector[ntype] beta_random;
+
+}
+transformed parameters{
+  ...
+  vector[n] beta;
+
+  for(idx in 1:n){
+    beta[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
+    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
+  }
+  
+}
+model{
+  ...
+  //slope
+  beta_fixed ~ normal(0,10);
+  beta_random ~ normal(0,10);
+
+}
+
+generated quantities{
+  ...
+ vector[n] beta_hat;
+
+  for(idx in 1:n){
+    beta_hat[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
+    density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + beta_hat[idx], sigma );
+  ...
+}
+
+```
+
+Note that we wrote the code to model only **one** random covariate.
+
+To run the model, we distinguish in the input data between the
+covariates that are fixed and the one that is random.
+
+Note that this setting allows to test the model with different covariate
+candidates for the random effect.
+
+```{r, message =F}
+stan_data_model2 <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A,
+  type = data$type,
+  ntype= n_distinct(data$type),
+  region = data$region,
+  nregion = n_distinct(data$region),
+  seed=seed,
+  cov_fixed = covs_scaled %>% select(-x4),
+  ncov_fixed = ncol(covs_scaled) -1,
+  cov_random = covs_scaled$x4
+  )
+
+pars <- c('alpha','sigma','beta_fixed','beta_random','alpha_t', 'population_hat',  'density_hat')
+
+# mcmc
+fit2 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model2.stan'), 
+                   data = stan_data_model2,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+No convergence issue. We plot `beta_random` that is a vector with a
+$\hat\beta_t$ for each settlement type.
+
+```{r, message=F}
+stan_plot(fit2, pars='beta_random', fill_color='orange')
+```
+
+We see that modelling $\beta^{x4}$ by settlement type unravels different
+patterns: for settlement 2 we observe a positive effect for settlement
+2, a weak effect for settlement 1 and 3 and a negative effect for
+settlement type 4 and 5. TBC
+
+We now want to evaluate the effect on the predicted population count for
+each cluster.
+
+```{r}
+comparison_df <- rbind(
+ getPopPredictions(fit1) %>% 
+   mutate(model='Fixed effect'),
+ getPopPredictions(fit2) %>% 
+   mutate(model='Random effect in x4'))
+# compute goodness-of-fit metrics
+comparison_df %>% group_by(model) %>% 
+  summarise( `Bias`= mean(residual),
+    `Inaccuracy` = mean(abs(residual)),
+        `Imprecision` = sd(residual),
+    `Mean Confidence Interval Size` =mean(ci_size)
+) %>%  kbl(caption = 'Goodness-of-metrics comparison with and without random effect in x4 ') %>% kable_minimal()
+```
+
+We see a slight decrease of bias and an increase of the precision of the
+estimates with shorter credible intervals.
+
+# References

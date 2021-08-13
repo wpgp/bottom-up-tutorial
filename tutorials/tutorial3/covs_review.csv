@@ -1,0 +1,27 @@
+Type,Covariate,Model,Source
+Gridded population,UN-adjusted projected gridded estimates,Burkina Faso v1.0,WorldPop
+Settlement,Mean building count within a 5km radius,Burkina Faso v1.0,Ecopia & Maxar
+Infrastucture,Fricition surface,Burkina Faso v1.0,Access to the Cities project
+Infrastucture,Distance to secondary roads,Burkina Faso v1.0,National Geographical Office
+Natural feature,Distance to temporary rivers,Burkina Faso v1.0,National Geographical Office
+Settlement,Mean building area within a 1km radius,Democratic Republic of Congo v2.0,Ecopia & Maxar
+Settlement,Mean distance to nearest building  within a 1km radius,Democratic Republic of Congo v2.0,Ecopia & Maxar
+Settlement,Mean building count within a 1km radius,Democratic Republic of Congo v2.0,Ecopia & Maxar
+Settlement,Mean building area ,Zambia v1.0,Ecopia & Maxar
+Settlement,Building density,Zambia v1.0,Ecopia & Maxar
+Settlement,Coefficient of variation of building area,Zambia v1.0,Ecopia & Maxar
+Gridded population,Projected gridded estimates,Nigeria v1.2,WorldPop
+Infrastucture,Household size,"Nigeria v1.2, Nigeria v2.0",Demographic and Health Survey
+Settlement,Sum residential area within a 1km radius,Nigeria v1.2,Oak Ridge National Laboratory
+Settlement,Sum nonresidential area within a 1km radius,Nigeria v1.2,Oak Ridge National Laboratory
+Settlement,School density within a 1km radius,Nigeria v1.2,Oak Ridge National Laboratory
+Gridded population,Mean UN-adjusted projected gridded estimates within a 2km radius,Democratic Republic of Congo v1.0,WorldPop
+Infrastucture,Residential roads density,Democratic Republic of Congo v1.0,OpenStreetMap
+Infrastucture,Travel time to cities,Democratic Republic of Congo v1.0,Malaria Atlas Project
+Infrastucture,Tertiary-sector activities density,Democratic Republic of Congo v1.0,OpenStreetMap
+Settlement,Mean building perimeter,Democratic Republic of Congo v3.0,Ecopia & Maxar
+Settlement,Compactness of building,Democratic Republic of Congo v3.0,Ecopia & Maxar
+Natural feature,Monthly variability of dry matter productivity ,Democratic Republic of Congo v3.0,Copernicus 
+Natural feature,Monthly variability of surface air temperature ,Democratic Republic of Congo v3.0,Copernicus 
+Natural feature,Land surface 'roughness' from Synthetic Aperture Radard VH,Nigeria v2.0,Sentinel-1
+Natural feature,Land surface 'roughness' from Synthetic Aperture Radard VV,Nigeria v2.0,Sentinel-1
