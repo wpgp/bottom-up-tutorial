@@ -43,3 +43,12 @@ class: inverse, left, middle
 class:inverse, left, middle
 
 # Bayesian modelling
+
+
+# Markov chain Monte Carlo (MCMC)
+
+Approximating the posterior via simulation
+
+# Stan
+
+

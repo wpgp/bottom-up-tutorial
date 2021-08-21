@@ -1,4 +1,8 @@
-a:link{
+a {
+  color: #ff8000;
+}
+
+a:hover {
   color: #ff8000;
 }
 

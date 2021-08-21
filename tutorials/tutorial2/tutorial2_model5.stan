@@ -60,7 +60,7 @@ model{
   pop_density ~ lognormal(pop_density_mean, sigma );
   
   // hierarchical intercept by settlement and region
-  alpha ~ normal(0, 100);
+  alpha ~ normal(5, 1);
   
   alpha_t ~ normal(alpha, nu_alpha);
   
@@ -75,14 +75,14 @@ model{
   }
   
   
-  nu_alpha ~ uniform(0, 100);
-  nu_alpha_t ~ uniform(0, 100);
-  nu_alpha_r ~ uniform(0, 100);
-  nu_alpha_s ~ uniform(0, 100);
+  nu_alpha  ~ normal(0, 1);
+  nu_alpha_t ~ normal(0, 1);
+  nu_alpha_r  ~ normal(0, 1);
+  nu_alpha_s ~ normal(0, 1);
 
   
   // variance with Cauchy prior
-  sigma ~ cauchy(0, 1);
+  sigma ~ normal(0, 1);
 }
 
 generated quantities{

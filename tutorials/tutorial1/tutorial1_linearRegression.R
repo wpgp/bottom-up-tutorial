@@ -158,7 +158,7 @@ seed <- 1789
 pars <- c('alpha','sigma')
 
 # mcmc
-fit <- rstan::stan(file = file.path('tutorial1_model1.stan'), 
+fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model1.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,

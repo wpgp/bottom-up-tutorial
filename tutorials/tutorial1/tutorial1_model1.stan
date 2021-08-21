@@ -4,7 +4,6 @@
 data{
   
   int<lower=0> n; // number of microcensus clusters
-
   real<lower=0> population[n]; // count of people
 
 }
@@ -22,7 +21,6 @@ model{
   
   // population totals
   population ~ normal( alpha, sigma );
-  
 
   // intercept
   alpha ~ normal(0, 5000);

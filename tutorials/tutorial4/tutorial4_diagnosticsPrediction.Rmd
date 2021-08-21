@@ -44,8 +44,8 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled mode
 
 # Introduction
 
-From Tutorial 1 to Tutorial 3, **we built a bottom-up population
-model,** modelling brick by modelling **brick.** In Tutorial 1 we model
+From Tutorial 1 to Tutorial 3, we built a **bottom-up population
+model**, modelling brick by modelling brick**.** In Tutorial 1 we model
 population count as a **Poisson-Lognormal compound,** accounting for
 settled area. In Tutorial 2, we added a **hierarchical random
 intercept** by settlement type and region, that differentiates parameter
@@ -61,7 +61,16 @@ passes the different diagnostics, we will then predict population count
 for every grid cell of the study area. Predicting population will be the
 opportunity to talk about estimates uncertainty.
 
-## Supporting documentation
+### Goals
+
+1.  Understand posterior predictive check
+2.  Understand spatial autocorrelation
+3.  Understand cross-validation and overfitting
+4.  Predict population for every grid cell of the study area
+5.  Visualise prediction uncertainty
+6.  Aggregate prediction in custom spatial units
+
+### Supporting readings
 
 -   [Evaluating regression
     models](https://www.bayesrulesbook.com/chapter-10.html) by the
@@ -83,7 +92,34 @@ opportunity to talk about estimates uncertainty.
     by Andy Elmsley. Good introduction to cross-validation despite
     applying it to machine learning problems.
 
+### Extra packages
+
+We will use some additional packages, mainly for GIS manipulation:
+
+-   `raster` for predicting the gridded population in a raster format
+
+-   `sf` for aggregating the prediction in custom spatial unit
+
+-   `tmap` to plot spatial data
+
+-   `RColorBrewer` to use nice color palette in plots
+
+```{r, eval=F}
+
+install.packages('raster')
+install.packages('RColorBrewer')
+install.packages('sf')
+install.packages('tmap')
+```
+
 # Advanced model diagnostics
+
+Before predicting population count for the entire study area we want to
+make sure that the model is correct. We thus perform additional checks:
+on the estimated parameters with a *posterior predictive check*, on the
+spatial autocorrelation of the residuals with a *spatial correlogram*
+and on the predicted population count at study site with a
+*cross-validation approach*.
 
 Let's load the last fitted model in Tutorial 3, that is with a random
 slope effect on `x_4`.
@@ -105,7 +141,7 @@ We need first to extract the **estimated posterior distribution** from
 the `stanfit` object. We do it using the `extract` function from
 `rstan`.
 
-```{r}
+```{r, }
 alphas <- data.frame(
     # extact parameter
     posterior=extract(model_fit, pars='alpha')$alpha,
@@ -114,7 +150,7 @@ alphas <- data.frame(
 glimpse(alphas)
 ```
 
-`alphas` contain the estimated alpha for each iteration post-warmup
+`alphas` contains the estimated alpha for each iteration post-warmup
 (500) of each Markov chain (4).
 
 We want to recreate the **prior distribution**. In model 2 of Tutorial
@@ -135,7 +171,7 @@ We build a similar dataframe to `alphas` for contrasting the prior
 distribution with the posterior distribution of $\sigma$ and bind
 together with `alphas`.
 
-```{r posterior, fig.cap='Posterior predictive checks for alpha and sigma'}
+```{r posterior, fig.cap='Posterior predictive checks for alpha and sigma', class.source = 'fold-hide'}
 # build dataframe with parameters distribution comparison
 parameters <-  rbind(
   # alpha
@@ -260,8 +296,8 @@ from 0 to 100 km. For more information, check the [correlog
 function](https://www.rdocumentation.org/packages/pgirmess/versions/1.7.0/topics/correlog)
 from the `pgirmess` package.
 
-The coordinates of the clusters were not communicated with the data for
-confidentiality reason so we will reproduce the correlogram from
+The coordinates of the study sites were not communicated with the data
+for confidentiality reason so we will reproduce the correlogram from
 @leasure2020a where red dots indicate a statistically significant
 Moran's I statistic (P\<0.05).
 
@@ -282,16 +318,16 @@ revisit the **goodness-of-fit metrics based on population predictions**.
 
 In tutorial 1 to 3, we check the goodness-of-fit of the modelled
 predictions **in sample**, that is predicting population and comparing
-it to the observations for the clusters that were already used to fit
+it to the observations for the study sites that were already used to fit
 the model.
 
 **In-sample checks do not account for model overfitting.** Overfitting
 occurs when the model does not only reproduce the information from the
 observations but also the noise. We want the model to be able to
-accurately predict population also unknown new clusters. This real-world
-scenario can be reproduced by keeping a percentage of the observations
-for model fitting and leaving the remaing clusters for predicting, a
-mechanism called **cross-validation.**
+accurately predict population also unknown new study sites. This
+real-world scenario can be reproduced by keeping a percentage of the
+observations for model fitting and leaving the remaing study sites for
+predicting, a mechanism called **cross-validation.**
 
 We need first to split our data in two, a training set (70%) that will
 be used for fitting the model and a predicting set (30%) that will be
@@ -329,8 +365,8 @@ substantively the code.
 ```{stan output.var="simpleCode", eval=F }
 data{
   
-  int<lower=0> n_train; // number of microcensus clusters in training set
-  int<lower=0> n_test; // number of microcensus clusters in predicting set
+  int<lower=0> n_train; // number of microcensus study sites in training set
+  int<lower=0> n_test; // number of microcensus study sites in predicting set
 
   int<lower=0> population_train[n_train]; // count of people
   
@@ -419,7 +455,7 @@ generated quantities{
 }
 ```
 
-We prepare the data for `stan` and run the mode:
+We prepare the data for `stan` and run the model:
 
 ```{r}
 # prepare data
@@ -720,7 +756,8 @@ cov_random <- settled %>%
   as.matrix()
 ```
 
-We eventually need to associate the correct $\hat\alpha_{t,8}$ to each grid cell.
+We eventually need to associate the correct $\hat\alpha_{t,8}$ to each
+grid cell.
 
 $\hat\alpha_{t,8}$ has a similar format as $\hat\beta^{random}_t$. We
 will thus proceed in the same way.
@@ -738,7 +775,7 @@ alpha_predicted <- settled %>%
   as.matrix()
 ```
 
-We can finally compute $\hat\mu$ as the sum of $ \hat\alpha_{t,r}$, 
+We can finally compute $\hat\mu$ as the sum of $\hat\alpha_{t,r}$,
 $\hat\beta^{random}_t X^{random}$ and $\hat\beta^{fixed} X^{fixed}$
 
 ```{r, eval=F}
@@ -749,7 +786,7 @@ mu_predicted <- alpha_predicted + cov_fixed + cov_random
 ## Predicting population count for every grid cell
 
 To estimate the grid-cell population, we need to simulate from Equation
-1 with $\hat\mu$ and $\hat\sigma$.
+\@ref(eq:predict) with $\hat\mu$ and $\hat\sigma$.
 
 ```{r, eval=F}
 predictions <- as_tibble(mu_predicted) %>% 
@@ -778,9 +815,8 @@ predictions <- as_tibble(mu_predicted) %>%
     ) 
 ```
 
-
-`predictions` contains 2000 population estimates for every
-settled grid cell.
+`predictions` contains 2000 population estimates for every settled grid
+cell.
 
 ```{r, echo=F}
 predictions <-  readRDS('tutorials/data/gridded_pop_predicted.rds')
@@ -790,13 +826,13 @@ predictions <-  readRDS('tutorials/data/gridded_pop_predicted.rds')
 predictions[1:5, ] %>%  dplyr::select('gridcell_id', 1:10) %>% kbl() %>% kable_minimal()
 ```
 
-
-Model prediction is memory-intensive. We thus usually run it in
+Note: Model prediction is memory-intensive. We thus usually run it in
 parallel for blocks of grid cells.
 
 # Predicting distributions
 
-Bayesian modelling is a stochastic modelling thus accounts for the unknowns, caused by for example:
+Bayesian modelling is a stochastic modelling thus accounts for the
+unknowns, caused by for example:
 
 -   Weak predictors
 
@@ -806,13 +842,14 @@ Bayesian modelling is a stochastic modelling thus accounts for the unknowns, cau
 
 -   Observations variation
 
-These unknowns result in prediction uncertainty. More precisely it results in predicting 
-a distribution of the likely population count.
+These unknowns result in prediction uncertainty. More precisely it
+results in predicting a distribution of the likely population count.
 
-As seen in previous section, we have for every grid cell 2000 predictions. Figure
-\@ref(fig:ex-predict) shows an example for five grids cells.
+As seen in previous section, we have for every grid cell 2000
+predictions. Figure \@ref(fig:ex-predict) shows an example for five
+grids cells.
 
-```{r ex-predict, class.source = 'fold-hide', fig.cap='Example of predictions for 5 grid cells'}
+```{r ex-predict, class.source = 'fold-hide', fig.cap='Example of predicted population count for 5 grid cells and their mean population count'}
 prediction_ex <- predictions %>% slice(1:5) %>% 
          pivot_longer(-gridcell_id, names_to = 'iterations', values_to = 'prediction') %>% 
   group_by(gridcell_id) %>% 
@@ -836,7 +873,8 @@ which can be considered as the *most likely value.*
 
 ## Gridded population
 
-The gridded population that WorldPop released are based on the mean
+The [gridded bottom-up population that WorldPop
+released](https://wopr.worldpop.org/?/Population) are based on the mean
 value per grid cell.
 
 Let's see how we can create a gridded population from our predictions.
@@ -877,6 +915,7 @@ mastergrid <- raster(paste0(wd_path, 'mastergrid.tif'))
 ```
 
 And assign the predicted population count.
+
 ```{r}
 # create raster
 mean_r <- mastergrid
@@ -897,9 +936,10 @@ col <-  brewer.pal(n = 7, name = "YlOrRd")
 plot(mean_r, col=col)
 ```
 
-Figure \@ref(fig:raster-mean) shows typical population distribution: denser around cities and follows 
-the roads as seens by the lines of higher population count. 
-In white are displayed the unsettled grid cells.
+Figure \@ref(fig:raster-mean) shows typical population distribution:
+denser around cities and following the roads as seens by the lines of
+higher population count. In white are displayed the unsettled grid
+cells.
 
 ## Gridded uncertainty
 
@@ -946,19 +986,21 @@ col <-  brewer.pal(n = 7, name = "Blues")
 plot(uncertainty_r, col=col)
 ```
 
-We see that higher uncertainty can be observed on the outskirt of
-urban areas. This is often the case due to quick expansion of
-settlement extent that is difficult to capture.
+We see that higher uncertainty can be observed on the outskirt of urban
+areas. This is often the case due to the rapid expansion of settlement
+extent that is difficult to capture.
 
 # Aggregating prediction
 
 Gridded populations are great to visualise the spatial distribution of
 population across an area. But often we want to get aggregates, that is
-**a population estimate for a custom area** such as a city or the catchment
-area of a hospital.
+**a population estimate for a custom area** such as a city or the
+catchment area of a hospital.
 
 Let's look at an example. We manually drew the extent of one city in our
-study area. *Disclaimer*: the extents are not the official extent
+study area.
+
+*Disclaimer*: the extents are not the official extent
 
 ```{r, message=F, fig.cap='Map of the city extent with the gridded population', warning=F}
 library(sf)
@@ -975,8 +1017,9 @@ tm_shape(city)+
   tm_basemap('Esri.WorldGrayCanvas')
 ```
 
-Getting the mean population prediction for the city corresponds to computing zonal
-statistic on the gridded population, that is summing up all the grid cells contained in the city.
+Getting the **mean population prediction for the city** corresponds to
+computing zonal statistic on the gridded population, that is summing up
+all the grid cells contained in the city.
 
 ```{r}
 mean_city <- extract(mean_r, city, fun=sum, na.rm=TRUE, df=TRUE)
@@ -995,14 +1038,17 @@ We need thus to reconstruct the full population prediction distribution
 for the city by aggregating all grid-cells population prediction
 distribution.
 
-We first convert the city polygon to a raster with same extent as the gridded population.
-This raster is made of 1s for grid cells inside the city extent and 0s for grid cells outside the city.
+We first convert the city polygon to a raster with same extent as the
+gridded population. This raster is made of 1s for grid cells inside the
+city extent and 0s for grid cells outside the city.
+
 ```{r, message=F}
 city_r <- rasterize(city, mean_r)
 ```
 
-We convert the city raster to an array and join to `raster_df` to get the grid cell id.
-We filter out the grid cells that belongs to the city and then merhe it with the predictions:
+We convert the city raster to an array and join to `raster_df` to get
+the grid cell id. We filter out the grid cells that belongs to the city
+and then merge it with the predictions:
 
 ```{r, message=F}
 city_prediction <- raster_df %>% 
@@ -1026,8 +1072,9 @@ We first sum the predictions for every grid cells at each iteration.
 
 ```{r}
 city_prediction <- as_tibble(apply(city_prediction,2, sum, na.rm=T))
-``` 
-`city_prediction` becomes an array of size 2000 that contains thus the 
+```
+
+`city_prediction` becomes an array of size 2000 that contains thus the
 2000 population totals for the city.
 
 We can then derive meaningful statistics from the distribution of
@@ -1046,7 +1093,7 @@ ggplot(city_prediction, aes(x=value))+
     theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())+
-  labs(y='', x='Predicted population')+
+  labs(y='', x='Predicted population for the city')+
   annotate("segment",x=city_prediction_stats$`Mean population`, 
            xend=city_prediction_stats$`Mean population`, y=0, yend=0.000012, size=1)+
   annotate('text',x=city_prediction_stats$`Mean population`+5000, y=0.0000014, hjust = 0, fontface =2,
@@ -1063,8 +1110,7 @@ ggplot(city_prediction, aes(x=value))+
 
 Figure \@ref(fig:city-distrib) shows that the mean prediction matches
 the one computed with the gridded population raster. Furthermore we see
-that our skeleton model produces predictions with a very wide credible
-interval.
+that our model produces predictions with a very wide credible interval.
 
 Having the full distribution can answer questions such as *"what is the
 probability that there is more than xx people in the area"* or *"with a
