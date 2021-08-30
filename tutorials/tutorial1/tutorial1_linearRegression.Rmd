@@ -40,7 +40,7 @@ library(rstan) # running Bayesian models
 
 The first part of this tutorial will cover how to revamp a basic
 frequentist model into a Bayesian mdoel and will introduce some concepts
-such as Directed Acyclic graph and priors.
+such as Directed Acyclic Graph (DAG) and priors.
 
 The second part will be devoted to present the dataset we will be
 working with for the next three tutorials.
@@ -51,7 +51,7 @@ We will present two simple population models:
 
 -   a multilevel model based on a Poisson-Lognormal compound.
 
-This will be the occasion to experiment the Stan software and its R
+This will be the occasion to experiment with the Stan software and its R
 interface `rstan`.
 
 ### Goals
@@ -74,7 +74,7 @@ interface `rstan`.
 
 ### Supporting readings
 
-This serie of tutorials are not an introduction to statistics. For this
+This series of tutorials are not an introduction to statistics. For this
 specific lesson, it would be good to be familiar some statistical
 concepts, and for that purpose we indicate useful resources:
 
@@ -90,7 +90,7 @@ concepts, and for that purpose we indicate useful resources:
         [Log-normal
         distribution](https://en.wikipedia.org/wiki/Log-normal_distribution)
 
--   [Markov chain Monte Carlo (MCMC)], a simulation-based method for
+-   Markov chain Monte Carlo (MCMC), a simulation-based method for
     model estimation:
 
     -   [Markov chains explained
