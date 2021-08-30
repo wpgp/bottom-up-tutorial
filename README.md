@@ -1,4 +1,4 @@
-# ottom-up-tutorial
+# Bottom-up-tutorial
 IBGE bottom-up population model tutorial funded by UNFPA
 
 # Resources
@@ -6,10 +6,8 @@ IBGE bottom-up population model tutorial funded by UNFPA
 ### Internal
 - [Workshop Schedule](https://docs.google.com/spreadsheets/d/1TRUwB5K_vwPlpCCZ-ziyDY3hWZ-WPci0/edit#gid=1285004441)
 - [Workshop Proposal](https://docs.google.com/document/d/1RWnDpQJTmiZB92z3R8FYCiVYLCXhHjmR/edit)
-- [JAGS tutorial](https://drive.google.com/drive/folders/1w1qMbcsKIg1YQ5p3zswkAjKqL_OM5fQV)
 - [DSN Workshop](https://grid3.github.io/DSNTraining/AIBootcamp_Production%20and%20Use%20of%20Gridded%20Population%20data.pdf)
 - [Model checks](https://docs.google.com/document/d/1Xf3dygdTrFy1sWr4FgYouUk7P5n4qQmfAWOUmLV6hYs/edit?pli=1)
-- [NGA Model overview](https://github.com/wpgp/NGAv2/tree/master/demo)
 
 ### External
 - [Bayes Rules](https://www.bayesrulesbook.com/)
@@ -17,6 +15,8 @@ IBGE bottom-up population model tutorial funded by UNFPA
   - [slides](https://github.com/avehtari/BDA_course_Aalto/tree/master/slides)
 - [Bayesian Data Analysis for Cognitive Science](https://vasishth.github.io/bayescogsci/book/)
 - [Intro to Stan - Boulder](http://bechtel.colorado.edu/~bracken/tutorials/stan/stan-tutorial.pdf)
+- [Stan Documentation](https://mc-stan.org/users/documentation/)
+- [Robust Statistical Workflow in RStan](https://betanalpha.github.io/assets/case_studies/rstan_workflow.html)
 
 
 ## UNFPA branding
