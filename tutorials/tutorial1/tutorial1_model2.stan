@@ -1,5 +1,5 @@
-// This script contains the Stan code for the Bayesian model 1
-// Model 1: Population count as a lognormal distribution 
+// This script contains the Stan code for the Bayesian model 2
+// Model 2: Population count as a lognormal distribution 
 
 data{
   
@@ -16,7 +16,7 @@ parameters{
   vector<lower=0>[n] pop_density;
   
   // intercept
-  real<lower=0> alpha; 
+  real mu; 
   
   // variance
   real<lower=0> sigma; 
@@ -26,13 +26,13 @@ model{
   
   // population totals
   population ~ poisson(pop_density .* area);
-  pop_density ~ lognormal( alpha, sigma );
+  pop_density ~ lognormal( mu, sigma );
   
-  // intercept
-  alpha ~ normal(0, 100);
+  // mean
+  mu ~ normal(5, 4);
   
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 4);
 }
 
 generated quantities{
@@ -41,10 +41,9 @@ generated quantities{
   real<lower=0> density_hat[n];
   
   for(idx in 1:n){
-    density_hat[idx] = lognormal_rng( alpha, sigma );
+    density_hat[idx] = lognormal_rng( mu, sigma );
     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   } 
-  
   
 }
 
