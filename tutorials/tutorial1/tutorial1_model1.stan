@@ -1,31 +1,21 @@
 // This script contains the Stan code for the Bayesian model 1
-// Model 1: Population count as a normal distribution 
+// Model 1: Population count as a Poisson distribution 
 
 data{
-  
   int<lower=0> n; // number of microcensus clusters
-  real<lower=0> population[n]; // count of people
-
+  int<lower=0> population[n]; // count of people
 }
 
 parameters{
-  
-  // intercept
-  real alpha; 
-  
-  // variance
-  real<lower=0> sigma; 
+  // rate
+  real<lower=0> lambda; 
 }
 
 model{
   
   // population totals
-  population ~ normal( alpha, sigma );
+  population ~ poisson(lambda);
 
-  // intercept
-  alpha ~ normal(0, 5000);
-
-  // variance
-  sigma ~ uniform(0, 1000);
+  // rate
+  lambda ~ uniform(0, 3000);
 }
-

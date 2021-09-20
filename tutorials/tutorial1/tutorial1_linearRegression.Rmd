@@ -1,7 +1,7 @@
 ---
 title: "Population modelling \n for census support"
-subtitle: "Tutorial 1: How to think like a Bayesian and \nbuild a first population model"
-author: "Edith Darin and Douglas Leasure"
+subtitle: "Tutorial 1: How to think population as a Bayesian?"
+author: ""
 date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
 output: 
   bookdown::html_document2:
@@ -90,8 +90,8 @@ concepts, and for that purpose we indicate useful resources:
         [Log-normal
         distribution](https://en.wikipedia.org/wiki/Log-normal_distribution)
 
--   Markov chain Monte Carlo (MCMC), a simulation-based method for
-    model estimation:
+-   Markov chain Monte Carlo (MCMC), a simulation-based method for model
+    estimation:
 
     -   [Markov chains explained
         visually](https://setosa.io/ev/markov-chains/) by Victor Powell
@@ -205,9 +205,9 @@ The `stan` team put together interesting
 [guidelines](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations)
 to prior setting.
 
-# Let's try with data
+## Let's try with simulated data
 
-## Set up
+### Setting up
 
 First, download the most recent versions of the following softwares:
 
@@ -227,19 +227,334 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time
 
 -   Install a set of data wrangling packages:
 
-    ```{r, eval=F}
-    install.packages(c( "tidyverse", # for data manipulation
-                        'kableExtra', # for good visualisation of tables
-                        'here' # for handling relative path to external assets (pic, data)
-                        ), 
-                     dependencies = TRUE)
-    ```
+```{r, eval=F}
+install.packages(c( "tidyverse", # for data manipulation
+                    'kableExtra', # for good visualisation of tables
+                    'here' # for handling relative path to external assets (pic, data)
+                    ), 
+                 dependencies = TRUE)
+```
 
-Finally let's download the data we will be modelling. It belongs to the
+For more information, check out their vignettes:
+[tidyverse](https://www.tidyverse.org/),
+[kableExtra](http://haozhu233.github.io/kableExtra/) and
+[here](https://cran.r-project.org/web/packages/here/vignettes/here.html).
+
+### Simulating data
+
+We will simulate **fake observations** to introduce the basic concepts
+of Bayesian modelling and their implementation in `stan`.
+
+We produce our fake data as 1000 draws of a Normal with mean 5 and
+standard deviation 50:
+
+```{r}
+seed <- 2004
+set.seed(seed)
+data <- tibble(y=rnorm(1e3, mean= 5, sd=50))
+```
+Note that we define a `seed` for the results to be exactly replicated.
+
+
+The observed distribution of our simulated data is the following:
+
+```{r sim-distrib,class.source = 'fold-hide', fig.cap='Simulated observations distribution'}
+ggplot(data, aes(x=y))+
+  geom_histogram(bins = 50)+
+  theme_minimal()+
+  geom_vline(xintercept = mean(data$y), color='orange', size=1)+
+  annotate('text', x=15, y=30, label=paste0('Observed mean: ', round(mean(data$y),2)), colour='orange', angle=90)+
+  geom_segment(x=0,y=1, xend=sd(data$y), yend=1, colour='orange', size=1)+
+  annotate('text', x=50, y=4, label=paste0('Observed sd: ', round(sd(data$y),2)), colour='orange')+
+  labs(y='', x='observed y')+
+  theme(axis.text.y = element_blank())
+```
+
+### Modelling the data
+
+Now we want to model $y$, our observations. We see that $y$ has a clear
+bell shape. It can thus be **approximate with a Normal distribution**
+that is: $$Y 〜 Normal(mean=\mu, sd=\sigma)$$
+
+The corresponding DAG is:
+
+```{r, class.source = 'fold-hide',}
+# Normal model DAG
+dagify(
+  Y ~ alpha,
+  Y ~ sigma) %>%
+  tidy_dagitty(seed=41) %>% 
+  mutate(color=c('parameter', 'parameter','data')) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+  geom_dag_point() +
+  geom_dag_edges() +
+  geom_dag_text(col = "grey20",size=6,  parse=T) +
+  scale_shape_manual(values=c(15,19))+
+  theme_dag()+ labs(title = 'Model with simulated data: Normal distribution of Y', color='', shape='')
+```
+
+**We need to give some prior to the two parameters** $\mu$ the mean and
+$\sigma$ the standard deviation. Let's imagine that we don't have access
+to more information on the variable $Y$ than its manifestation in our
+dataset.
+
+We can guess that $\mu$ is around zero but without great confidence (see
+Figure \@ref(fig:sim-distrib)) In other words, we can assume that $\mu$
+can be drawn from a Normal(0,100).
+
+```{r prior-mu-distrib,class.source = 'fold-hide', fig.cap='Mu prior distribution'}
+data$prior_mu <- rnorm(1e3, mean= 0, sd=100)
+
+ggplot(data)+
+  geom_histogram(aes(x=y, after_stat(density)), bins=50, fill='grey30')+
+  geom_density(aes(x=prior_mu), colour='#00BFC4', size=1)+
+  theme_minimal()+
+  annotate('text', y=0.0020, x=250, label=paste0('Normal(0,100)'), colour='#00BFC4', size=5)+
+    theme(axis.text.y = element_blank())+
+  labs(y='', x='observed y')
+```
+
+Figure \@ref(fig:prior-mu-distrib) shows what does our prior for $\mu$
+means: we think that $\mu$ is likely to be around zero but could be up
+to 200. Given that our observed $y$, $\hat{y}$, has no occurrences above
+200, it is unlikely that the mean of $y$ is 200 but we don't exclude the
+possibilty. However we do consider that 0 is more likely than 200.
+
+For $\sigma$, we have stricter expectations. Indeed standard deviations
+are positive. We thus choose as prior for $\sigma$ a Uniform(0, 200).
+
+```{r prior-sigma-distrib,class.source = 'fold-hide', fig.cap='Sigma prior distribution'}
+data$prior_sigma <- runif(1e3,min = 0, max = 200)
+
+ggplot(data)+
+  geom_histogram(aes(x=y, after_stat(density)), bins=50, fill='grey30')+
+  geom_density(aes(x=prior_sigma), colour='#00BFC4', size=1, trim=T)+
+  theme_minimal()+
+  annotate('text', y=0.0060, x=150, label=paste0('Uniform(0,200)'), colour='#00BFC4', size=5)+
+      theme(axis.text.y = element_blank())+
+  labs(y='', x='observed y')
+```
+
+Figure \@ref(fig:prior-sigma-distrib) shows that a uniform prior means a
+equal probability of $\sigma$ to be 0 as to be 200.
+
+**The final model is**:
+
+```{=tex}
+\begin{equation}
+
+Y 〜 Normal( \mu, \sigma ) \\[1pt]
+\\
+\mu 〜 Normal( 0, 100 ) \\
+\sigma 〜 Uniform( 0, 200 )(\#eq:modeltheo)
+
+\end{equation}
+```
+### Implementing the model in `stan`
+
+To estimate $\mu$ and $\sigma$, we will write **our first model** in
+stan.
+
+```{stan output.var="simpleCode", eval=F }
+// Model for simulated data: y as normal distribution
+data {
+  int<lower=0> n; // number of observations
+  vector[n] y; // observations
+}
+
+// The parameters accepted by the model. Our model
+// accepts two parameters 'mu' and 'sigma'.
+parameters {
+  real mu;
+  real<lower=0> sigma;
+}
+
+// The model to be estimated. We model the output
+// 'y' to be normally distributed with mean 'mu'
+// and standard deviation 'sigma'.
+model {
+  y ~ normal(mu, sigma);
+  
+  mu ~ normal(0,100);
+  sigma ~ uniform(0,200);
+}
+```
+
+A `stan` model is composed of code blocks. The fundamentals ones are:
+
+-   the **data block** that describes the input data to the model
+
+-   the **parameters block** that describes the parameters to be
+    estimated
+
+-   the **model block** that describes the stochastic elements: (1) the
+    interaction between the parameters and the data, (2) the prior
+    distribution
+
+The `stan` software requires to declare all variables, both parameters
+and data, with their type (int, real) and size (as indicated with
+`[n]`)[^1] . It is possible to incorporate constraints on the variable
+support, e.g. it is not possible to have a negative $\sigma$
+(`real<lower=0> sigma`).
+
+[^1]: More details
+    [here](https://mc-stan.org/docs/2_27/reference-manual/overview-of-data-types.html).
+
+Note: `stan` requires to leave one blank line at the end of the script.
+
+We will store the model in a `stan` file called `tutorial1_model.stan`
+in the `tutorial1` folder.
+
+### Preparing the data for stan
+
+Stan software takes as input a list of the observed data that defines
+the variables indicated on the `data block`.
+
+```{r}
+# prepare data for stan
+stan_data <- list(
+  y = data$y,
+  n = nrow(data))
+```
+
+### Running the model
+
+We set up the **parameters of the Markov Chain algorithm.**
+
+```{r}
+# mcmc settings
+chains <- 4
+warmup <- 250
+iter <- 500
+```
+
+The `chains` argument specified the number of Markov chains to run
+simultaneously. We want the markov chains to replicate a fully random
+process. However, the design of the chain algorithm makes every sample
+dependant on the previous sample. To recreate a random setting we run
+independently several chains to explore the parameter space and that
+*hopefully* converge to the same consistent solution.
+
+The `warmup` parameter is the number of samples at the beginning of the
+estimation process that we discard from the results. This is similar to
+cooking pancakes in the sense that you need the algorithm to warm up
+before nearing reasonable values.
+
+The `iter` parameter specifies the number of iterations, that is the
+length of the Markov chain. The longer the chain the more likely it is
+to stabilize around the correct estimate.
+
+
+Then we define the **parameters than we want to monitor,** that are
+stored during the estimation process:
+
+```{r}
+# parameters to monitor
+pars <- c('mu','sigma')
+```
+
+And we are ready to **run the model**!
+
+```{r}
+# mcmc
+fit <- rstan::stan(file = file.path('tutorial1_model.stan'), 
+                   data = stan_data,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+### Checking the MCMC simulations
+
+We check the Markov chains to see if they converged to a unique
+solution. It can be visualized with a **traceplot** for the two
+parameters, $\mu$ and $\sigma$. A traceplot describes the evolution of
+the parameter estimation across the Markov chain iterations. A good
+traceplot sees the mixing of the different chains, evidence of
+convergence to a single estimate.
+
+```{r model-trace, fig.cap='Model Traceplot'}
+# plot trace
+stan_trace(fit, inc_warmup = T)
+```
+
+Figure \@ref(fig:model-trace) shows both the warm-up period (up until
+250) and the following iterations. We see that convergence happened
+before the end of the warm-up period and is stable over the iterations,
+because the four chains mixed well.
+
+From Figure \@ref(fig:model-trace) (and the absence of warning from
+`stan` ), we can conclude that the model converged.
+
+### Evaluating the estimated parameters
+
+Bayesian statistics consider parameters as stochastic, thus it estimates
+a distribution for each parameter. In practice `stan` stores parameters
+estimates for each iteration post-warmup for each chain which gives us
+500x4 estimates of the *posterior distribution*.
+
+We can extract from the `stanfit` object a summary of the estimated
+distribution using the `summary` function:
+
+```{r}
+estimated <- summary(fit, pars=pars)$summary
+
+estimated %>% kbl() %>% kable_minimal()
+```
+
+We can then compare **the parameters** $\hat\mu$ **and** $\hat\sigma$
+with the observed average and standard deviation of $\hat{y}$ as well as
+the true value, using the `stan_plot` function.
+
+```{r,class.source = 'fold-hide', warning=F, message=F}
+# plot estimated parameters
+mean_pop <- mean(data$y)
+sd_pop <- sd(data$y)
+
+
+alpha_plot <- stan_plot(fit, 'mu',fill_color='orange')+
+  annotate('segment',x=mean_pop, xend=mean_pop, 
+           y=0.7, yend=1.2,col='grey40', size=1)+
+  annotate('text',x=mean_pop, 
+           y=1.5, col='grey40',label= paste0('Observed\n',round(mean_pop,2)), fontface =2, size=4.5)+
+    annotate('segment',x=5, xend=5, 
+           y=0.7, yend=1.2,col='grey10', size=1)+
+    annotate('text',x=5, 
+           y=1.5, col='grey10',label= paste0('True\n',5), fontface =2, size=4.5)+
+    annotate('text',x=estimated['mu', 'mean'], 
+           y=1.5, col='orange',label= paste0('Estimated\n',round(estimated['mu', 'mean'],2)), fontface =2, size=4.5)
+sigma_plot <- stan_plot(fit, 'sigma', fill_color='orange')+
+  annotate('segment',x=sd_pop, xend=sd_pop, 
+           y=0.7, yend=1.2,col='grey40', size=1)+
+  annotate('text',x=sd_pop, 
+           y=1.5, col='grey40',
+           label= paste0('Observed\n', round(sd_pop,2)), fontface =2, size=4.5)+
+    annotate('segment',x=50, xend=50, 
+           y=0.7, yend=1.2,col='grey10', size=1)+
+    annotate('text',x=50, 
+           y=1.5, col='grey10',label= paste0('True\n',50), fontface =2, size=4.5)+
+    annotate('text',x=estimated['sigma', 'mean'], 
+           y=1.5, col='orange',label= paste0('Estimated\n',round(estimated['sigma', 'mean'],2)), fontface =2, size=4.5)
+
+gridExtra::grid.arrange(alpha_plot, sigma_plot, nrow=2)
+
+```
+
+We see that (1) the observed mean and standard deviation are within the 95% credible intervals of the estimated parameters, 
+(2) the true mean and standard deviation are within the 95% credible intervals of the estimated parameters,
+
+The model structure is inline with the observed data and manages to
+approximate the true data generating process.
+
+# Let's try with real data
+
+Let's download the data we will be modelling. It belongs to the
 [supplementary
 material](https://www.pnas.org/content/suppl/2020/09/09/1913050117.DCSupplemental)
 of the seminal paper describing WorldPop bottom-up population models
-[@leasure2020a].
+[@leasure2020].
 
 ```{r, eval=F}
 # 2 Introduce the data ---
@@ -269,7 +584,7 @@ knitr::include_graphics("../../assets/pic/tuto1_nga_mez.PNG")
 ```
 
 The map in Figure \@ref(fig:ngamap) shows some key characteristics of
-the sample design:
+the stratified-random sample design:
 
 -   Only some states were sampled
 
@@ -286,7 +601,8 @@ data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
 # create unique cluster id
 data <- data %>% 
   mutate(
-    id= paste0('cluster_',(1:n())) # compute cluster id
+    id= paste0('cluster_',(1:n())), # compute cluster id
+    pop_density = N/A # compute population density
   )
 data %>% select(id,N, A) %>% head(10) %>% kbl() %>% kable_minimal()
 ```
@@ -301,148 +617,115 @@ site:
 
 ```{r pop-distrib,class.source = 'fold-hide', fig.cap='Observed population count distribution at survey sites'}
 # plot population count
-ggplot(data, aes(x=N, y=..density..))+
+ggplot(data, aes(x=N))+
   geom_histogram(bins=50)+
-  geom_density(aes(x=N,y=..density..), size=1, color='orange')+
   theme_minimal()+
   theme(axis.text.y = element_blank())+
-  labs(title = "", y='', x='')+
-  annotate("text",x=1500, y=0.0015, 
-           label=paste0('mean=',round(mean(data$N)),' people',
-                        '\nstandard deviation=', round(sd(data$N)), ' people'))
+  labs(title = "", y='', x='Observed population count')+
+  geom_vline(xintercept = mean(data$N), color='orange', size=1)+
+  annotate('text', x=500, y=25, label=paste0('Observed mean: ', round(mean(data$N))), colour='orange', angle=90)
+
 ```
 
 Note the wide variation in population count per survey site, with a
 maximum of `r max(data$N)` people.
 
-## Modelling: Population count as a normal distribution
+## Modelling Population count: a Poisson distribution
 
-The simplest modelling assumption is that t**he population count follows
-a Normal distribution**. Indeed Figure \@ref(fig:pop-distrib) shows a
-bell-shaped curve. The parameters of a Normal distribution are the mean
-$\mu$ and the standard deviation $\sigma$ n. Because no covariates are
-involved, the mean equals to the intercept of the linear regression:
-$\mu = \alpha$ of Equation \@ref(eq:).
+Population count is by definition a discrete, positive variable. A good
+distribution candidate is the Poisson distribution.
 
 $$
-population 〜 Normal( \alpha, \sigma )
+population 〜 Poisson( \lambda )
 $$
 
 The corresponding DAG shows the interaction between the population count
-and the model parameters:
+and the model parameter:
 
 ```{r, echo=F}
 # 3 Model1: Normal distribution ---
 
 # Normal model DAG
 dagify(
-  Population ~ alpha,
-  Population ~ sigma,
+  Population ~ lambda,
   outcome = 'Population'
   ) %>%
-  tidy_dagitty(seed=41) %>% 
-  mutate(color=c('parameter',  'parameter','data')) %>% 
+  tidy_dagitty(seed=9) %>% 
+  mutate(color=c('parameter',  'data')) %>% 
   ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
   geom_dag_point() +
   geom_dag_edges() +
   geom_dag_text(col = "grey20",size=6,  parse=T) +
   scale_shape_manual(values=c(15,19))+
-  theme_dag()+ labs(title = 'Model 1: Normal distribution of population count', color='', shape='')
+  theme_dag()+ labs(title = 'Model 1: Poisson distribution of population count', color='', shape='')
 ```
 
-We then have to define the priors of the parameters. We will choose
-relatively uninformed priors based on our understanding of the data.
+We then have to define the prior for $\lambda$, which corresponds to the
+mean of the Poisson distribution. We will choose relatively uninformed
+prior based on our understanding of the data.
 
-From the observed distribution we know that the mean population count is
-around 450 per cluster and has a rough bell-shape. We set up the prior
-for $\alpha$ to follow a Normal centered on 450 but with wide tails to
-reduce the information given to the estimation process, and thus the
-bias introduced.
+We know that the mean observed population count is around 450 per
+cluster. We set up the prior for $\lambda$ to follow a Uniform between 0
+and 3000 to ensure a positive parameter while reducing the information
+given to the estimation process, and thus the bias introduced.
 
-```{r,class.source = 'fold-hide', fig.cap='Prior distribution for alpha'}
-# plot alpha prior 
-ggplot(data %>% mutate(color='Observed data'), aes(x=N, y=..density..))+
-  geom_histogram(bins=50, aes(fill=color, color=color))+
-  geom_density(data=
-                 data.frame(x=rnorm(1000, 0,5000), color=rep( 'Prior distribution for alpha', 1000)), 
-               aes(x=x,y=..density.., color=color), size=1)+
+```{r prior-lambda-distrib,class.source = 'fold-hide', fig.cap='Lambda prior distribution'}
+
+data$prior_lambda <- runif(nrow(data), min=0, max=3000)
+
+ggplot(data)+
+  geom_histogram(aes(x=N, after_stat(density)), bins=50, fill='grey30')+
+  geom_density(aes(x=prior_lambda), colour='#00BFC4', size=1)+
   theme_minimal()+
-  theme(axis.text.y = element_blank())+
-  labs(title = "", y='', x='', color='', fill='')+ 
-  guides(fill='none')
+  annotate('text', y=0.0005, x=2000, label=paste0('Uniform(0,3000)'), colour='#00BFC4', size=5)+
+    theme(axis.text.y = element_blank())+
+  labs(y='', x='Observed population count')
 ```
 
-Similarly, we know that the observed variance is around 300 people per
-cluster. We will set up the prior to be a uniform between 0 and 1000.
+The final model is:
 
 ```{=tex}
 \begin{equation}
 
-population 〜 Normal( \alpha, \sigma ) \\
+population 〜 Poisson( \lambda ) \\
 \\
-\alpha 〜 Normal( 0, 5000 ) \\
-\sigma 〜 Uniform( 0, 1000 )(\#eq:model1)
+\lambda 〜 Uniform( 0, 3000 )(\#eq:model1)
 
 \end{equation}
 ```
-### Model in `stan`
+### Implementing the model
 
-To estimate $\alpha$ and $\mu$, we will write **our first mode**l in
+To estimate $\lambda$, we will write **our first population model** in
 stan.
 
 ```{stan output.var="simpleCode", eval=F }
-// Model 1: Population count as a normal distribution 
+// Model 1: Population count as a Poisson distribution 
 data{
   int<lower=0> n; // number of microcensus clusters
-  real<lower=0> population[n]; // count of people
+  int<lower=0> population[n]; // count of people
 }
 parameters{
-  // intercept
-  real alpha; 
-  // variance
-  real<lower=0> sigma; 
+  // rate
+  real<lower=0> lambda; 
 }
+
 model{
   // population totals
-  population ~ normal( alpha, sigma );
-  // intercept
-  alpha ~ normal(0, 5000);
-  // standard deviation
-  sigma ~ uniform(0, 1000);
+  population ~ poisson(lambda);
+  // rate
+  lambda ~ uniform(0, 3000);
 }
-
 ```
 
-A `stan` model is composed of code blocks. The fundamentals ones are:
+We declare the input variable `population` as integer because our
+population data are counts and set it up to be positive. We define
+$\lambda$ as a positive real.
 
--   the **data block** that describes the input data to the model
+We store this model under `tutorial1_model1.stan`.
 
--   the **parameters block** that describes the parameters to be
-    estimated
+### Estimating the model
 
--   the **model block** that describes the stochastic elements: (1) the
-    interaction between the parameters and the data, (2) the prior
-    distribution
-
-The `stan` software requires to declare all variables, both parameters
-and data, with their type (int, real) and size (as indicated with
-`[n]`)[^1] . It is possible to incorporate constraints on the variable
-support, e.g. it is not possible to have a negative input `population`
-(`real<lower=0> population[n]`), and a negative $\sigma$
-(`real<lower=0> sigma`).
-
-[^1]: More details
-    [here](https://mc-stan.org/docs/2_27/reference-manual/overview-of-data-types.html).
-
-Note: `stan` requires to leave one blank line at the end of the script.
-
-We will store the model in a `stan` file called `tutorial1_model1.stan`
-in the `tutorial1` folder.
-
-### Preparing data for stan
-
-Stan software takes as input a list of the observed data that defines
-the variables indicated on the `data block`.
+We prepare the data for `stan`:
 
 ```{r}
 # prepare data for stan
@@ -451,42 +734,12 @@ stan_data <- list(
   n = nrow(data))
 ```
 
-### Running the model
-
-We first set up the **parameters of the Markov Chain algorithm.**
-
-```{r}
-# mcmc settings
-chains <- 4
-warmup <- 250
-iter <- 500
-seed <- 1789
-```
-
-The `chains` argument specified the number of Markov chains to run
-simultaneously. We want the markov chains to replicate a fully random
-process. However, the design of the chain algorithm makes every sample
-dependant on the previous sample. To recreate a random setting we run
-independently several chains to explore the parameter space and that
-*hopefully* converge to the same consistent solution.
-
-The `warmup` parameter is the number of samples at the beginning of the
-estimation process that we discard from the results. This is similar to
-cooking pancakes in the sense that you need the algorithm to warm up
-before nearing reasonable values.
-
-The `iter` parameter specifies the number of iterations, that is the
-length of the Markov chain. The longer the chain the more likely it is
-to stabilize around the correct estimate.
-
-Finally we define a `seed` for the results to be exactly replicated.
-
-Then we define the **parameters than we want to monitor,** that are
-stored during the estimation process:
+We keep the same parameters as previously for the Markov Chain algorithm
+and declare $\lambda$ as the parameter to monitor
 
 ```{r}
 # parameters to monitor
-pars <- c('alpha','sigma')
+pars <- c('lambda')
 ```
 
 And we are ready to **run the model**!
@@ -502,68 +755,43 @@ fit <- rstan::stan(file = file.path('tutorial1_model1.stan'),
                    seed = seed)
 ```
 
-### Checking the MCMC simulations
+The traceplot shows a model that converges to the observed mean:
 
-We check the Markov chains to see if they converged to a unique
-solution. It can be visualized with a **traceplot** for the two
-parameters, $\alpha$ and $\sigma$. A traceplot describes the evolution
-of the parameter estimation across the Markov chain iterations. A good
-traceplot sees the mixing of the different chains, evidence of
-convergence to a single estimate.
-
-```{r model1-trace, fig.cap='Model 1 Traceplot'}
-# plot trace
-stan_trace(fit, inc_warmup = T)
+```{r}
+traceplot(fit, inc_warmup=T)
 ```
 
-Figure \@ref(fig:model1-trace) shows both the warm-up period (up until
-250) and the following iterations. We see that convergence happened
-before the end of the warm-up period and is stable over the iterations.
-
-From Figure \@ref(fig:model1-trace) (and the absence of warning from
-`stan` ), we can conclude that the model converged and thus its
-goodness-of-fit can be evaluated.
+Note the wide variation at the start of the estimation. This is due to
+the uniform prior for $\lambda$ declaring than any value between 0 and
+3000 is similarly possible.
 
 ## Evaluating the model goodness-of-fit
 
 ### Estimated parameters
 
-We plot first **the parameters** $\hat\alpha$ **and** $\hat\sigma$ and
-see how they compare with the observed average and standard deviation.
-The stan object named `fit` stored the estimation of the parameters at
-each iterations, which correspond to the *posterior distribution* of the
-parameters. We overlay the `stan_plot` base function with the observed
-mean and standard deviation.
+We plot **the estimated parameter** $\hat\lambda$ to see how it compares
+with the observed average population count.
 
 ```{r,class.source = 'fold-hide', warning=F, message=F}
 # plot estimated parameters
 mean_pop <- mean(data$N)
-sd_pop <- sd(data$N)
 
-alpha_plot <- stan_plot(fit, 'alpha',fill_color='orange')+
-  scale_x_continuous(limits=c(400,500))+
+stan_plot(fit, 'lambda',fill_color='orange')+
   annotate('segment',x=mean_pop, xend=mean_pop, 
            y=0.7, yend=1.2,col='grey40', size=1)+
   annotate('text',x=mean_pop, 
            y=1.5, col='grey40',label= paste0('Observed average\n',round(mean_pop,2)), fontface =2, size=4.5)
-sigma_plot <- stan_plot(fit, 'sigma', fill_color='orange')+
-  annotate('segment',x=sd_pop, xend=sd_pop, 
-           y=0.7, yend=1.2,col='grey40', size=1)+
-  annotate('text',x=sd_pop, 
-           y=1.5, col='grey40',
-           label= paste0('Observed standard deviation \n',round(sd_pop,2)), fontface =2, size=4.5)
 
-gridExtra::grid.arrange(alpha_plot, sigma_plot, nrow=2)
+
 
 ```
 
-The observed variables belong to the credible interval of the estimated
-parameters.
+The estimated mean correspond to the observed mean.
 
 ### Predicted population count
 
-To see if the model is coherent with the observations, we cancompute the
-predicted population count for every survey site. It is part of
+To see if the model is coherent with the observations, we can compute
+the predicted population count for every survey site. It is part of
 posterior predictive checking which is based on the following idea: *if
 a model is a good fit then we should be able to use it to generate data
 that looks a lot like the data we observed*.
@@ -572,36 +800,34 @@ It is possible in `stan` to do it as part of the estimation process
 through the **generated quantities block** .
 
 ```{stan output.var="simpleCode", eval=F }
-// Model 1bis: Population count as a normal distribution with integrated predictions
+// Model 2bis: Population count as a normal distribution with integrated predictions
 ...
 generated quantities{
    real population_hat[n];
 
    for(idx in 1:n){
-     population_hat[idx] = normal_rng( alpha, sigma );
+     population_hat[idx] = poisson_rng( lambda );
    }
 }
 ```
 
 We define the parameter `population_hat` as a draw (as represented by
-the suffix `rng` for *random number generator*) from a Normal
-distribution with the estimated $\hat\alpha$ and $\hat\sigma$ at each
-iteration.
+the suffix `rng` for *random number generator*) from a Poisson
+distribution with the estimated $\hat\lambda$ for each iteration.
 
-We re-run the model:
+We run the model stored under `tutorial1_model1bis.stan`:
 
 ```{r}
-# parameter to monitor
-pars <- c('alpha','sigma', 'population_hat')
+pars <- c('lambda', 'population_hat')
 
 # mcmc
-fit_model1 <- rstan::stan(file = file.path('./tutorial1_model1bis.stan'), 
-                          data = stan_data,
-                          iter = warmup + iter, 
-                          chains = chains,
-                          warmup = warmup, 
-                          pars = pars,
-                          seed = seed)
+fit_model1 <- rstan::stan(file = file.path('tutorial1_model1bis.stan'), 
+                   data = stan_data,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
 ```
 
 And extract the predicted population count.
@@ -648,13 +874,14 @@ comparison_df <- predicted_pop_model1 %>%
 comparison_df %>% head() %>% kbl() %>% kable_minimal()
 ```
 
-We note that some predictions are negative - this is due to choosing a
-Normal distribution for representing the population count.
+We note that all predictions are very similar. The moodel includes only two parameters 
+— mean and standard deviation — and the site-level predictions do not account for any site-level characteristics. 
+Therefore, predictions at each site are drawn from the exact same distribution.
 
 Let's see the global picture by plotting the observed vs the predicted
 population count. A perfect model would see all points on the 1:1 line.
 
-```{r model1-comp, class.source = 'fold-hide', fig.cap='Comparison between observed and predicted population count (with the Normal model). Orange line indicates the 1:1 line'}
+```{r model1-comp, class.source = 'fold-hide', fig.cap='Comparison between observed and predicted population count (with the Poisson model). Orange line indicates the 1:1 line'}
 # add observed values
 comparison_df <- comparison_df %>% 
   left_join(data %>% 
@@ -673,8 +900,10 @@ ggplot(comparison_df) +
 
 Figure \@ref(fig:model1-comp) is a great visualization of the prediction
 process. Since the model has no covariates (introduced in tutorial 3)
-and no hierarchical structure (introduced in tutorial 2), the
-**predictions are drawn from the exact same distribution**.
+and no hierarchical structure (introduced in tutorial 2), there is no
+subnational variations introduced. Furthermore the credible intervals
+entail few observations: few grey lines intersect the orange line. This
+indicates issues with the modelling.
 
 We can compute goodness-of-fit metrics to complete the picture:
 
@@ -702,104 +931,67 @@ comparison_df %>%
     `Correct credible interval (in %)` = round(sum(in_CI)/n()*100,1),
     R2 = cor(predicted_mean, N)^2
   ) %>% 
-    kbl(caption = "Normal model goodness-of-fit metrics") %>% kable_minimal()
+    kbl(caption = "Poisson model goodness-of-fit metrics") %>% kable_minimal()
 ```
 
-Table \@ref(tab:model1-metrics) shows that in average the predictions
-are off by 231 people or a 180% relative error. We see however that the
-model is well-specified and the uncertainty is correctly taking into
-account with 95% of the observations being in the 95% credible interval.
+Table \@ref(tab:model1-metrics) confirms that the model is incorrectly
+specified: only 10% of the observations falls in their credible
+intervals.
 
-## Modelling: Population count as a Poisson Lognormal model
+This limitation is due to the impossibility to model overdispersion
+within a Poisson framework. Indeed $\lambda$ defines both the mean and
+the variance of a Poisson variable.
 
-The Normal model offers a quick solution for modelling population count
-(see Equation \@ref(eq:model1)). It is however unsatisfying because in
-reality:
+A source of overdispersion comes from the size of the clusters. We
+observed population counts for units with different area, in particular
+different sizes of settled areas as shown in Figure \@ref(fig:popvsarea)
 
--   Population counts are discrete, when a Normal model assumes a
-    continuous random variable
-
--   Population counts are positive, when the Normal distribution's
-    support is -$\infty$ to +$\infty$
-
--   Observed population counts have a lot of variation due to the
-    difference in study site size that is not taking into account in the
-    model
-
-We have to get back to the model itself.
-
-### Second response variable: the population density
-
-A continuous variable that can be extracted from our data is the
-**population density.**
-
-```{r, class.source = 'fold-hide', fig.cap='Observed population density distribution'}
-# 4 Model2: Poisson-Lognormal distribution ---
-
-# compute population density
-data <- data %>% 
-  mutate(
-    pop_density = N/A 
-  )
-# plot population density
-ggplot(data, aes(x=pop_density, y=..density..))+
-  geom_histogram(bins=50)+
-  geom_density(size=1, color='orange')+
+```{r popvsarea,  class.source = 'fold-hide', caption='Scatterplot contrsating population count with settled area for every cluster'}
+ggplot(data, aes(x=A, y=N))+
+  geom_point()+
   theme_minimal()+
-  theme(axis.text.y = element_blank())+
-  labs(title = "", y='', x='')+
-  annotate("text",x=500, y=0.0035, 
-           label=paste0('mean=',round(mean(data$pop_density)),' people/hectare',
-                        '\nvariance=', round(var(data$pop_density)), ' people/hectare'))
+  labs(x='Settled area in hectares', y='Population count')
 ```
 
-Figure \@ref(fig:distrib-comp) compares the distribution of the
-population count and the population density. We see that the population
-density has a more continuous and bell-curve distribution, with a
-shorter right tail. The decrease in response variable variation is
-partly due to the heterogeneity in study site size, that are taking into
-account when considering the population density. Indeed study site size
-ranges between `r round(min(data$A),2)` and `r round(max(data$A))`
-hectares.
+## Modelling Population count: a Poisson Lognormal model
 
-```{r distrib-comp,class.source = 'fold-hide', fig.cap="Response variable distribution comparaison"}
-# compare population density and population count
-ggplot(data %>% 
-         select(id, N, pop_density) %>% 
-         rename("Population count"=N,
-                "Population density"=pop_density) %>% 
-         pivot_longer(-id) %>% 
-         mutate(idx=0), aes(x=value, y=idx))+
-  geom_jitter()+
-  geom_density(aes(x=value,y=..density..*200), size=1, color='orange')+
-  scale_y_continuous(limits=c(-1,1))+
-  facet_wrap(vars(name),  dir='v')+
-  theme_minimal()+
-  labs(y='', x='')+
-  theme(axis.text.y = element_blank(), strip.text.x = element_text(size = 20))
-```
+To **incorporate overdispersion** in our model, we decompose population
+count as follows:
 
-### Poisson Lognormal model
+$$
+population = pop\_density * settled\_area
+$$
 
-To model population count, we use the [Poisson
-distribution](https://en.wikipedia.org/wiki/Poisson_distribution), that
-describes positive discrete events.
+The left hand side of the equation is a discrete observed variable
+whereas the right hand side is composed of two continuous variables, one
+observed, the *settled_area* and one latent, the *pop_density*.
 
-The issue with the Poisson distribution is that it has only one single
-parameter, $\lambda$, that controls both the mean and the variance. It
-makes the model insensitive to overdispersion, that was previously
-captured by $\sigma$ in the Normal model.
+Formally we can rewrite Equation \@ref(eq:model1) as:
 
-Therefore we choose the Poisson Lognormal model, where the [Lognormal
-distribution](https://en.wikipedia.org/wiki/Log-normal_distribution)
-captures overdispersion and enforces a positive outcome.
+$$
+population \sim Poisson( pop\_density * settled\_area)
+$$
+
+This formulation unravels a continuous positive latent variable,
+*pop_density* that can be modelled with its own distribution. We opt for
+a **Lognormal which is a continuous probability distribution of a random
+variable whose logarithm is normally distributed**. It is characterised
+by a positive distribution skewed to the right. The lognormal has two
+parameters, $\mu$, its location parameter that defines its median and
+$\sigma$ its scale parameter that defines its geometric standard
+deviation. This model allows us to capture overdispersion through
+$\sigma$.
+
+### Writing the model
+
+Applied to our population modelling it gives us:
 
 ```{=tex}
 \begin{equation}
 
-population 〜 Poisson( \lambda ) \\
+population 〜 Poisson( pop\_density * settled\_area) \\
 
-\lambda  〜 Lognormal( \alpha, \sigma)
+pop\_density  〜 Lognormal( \mu, \sigma)
 
 \end{equation}
 ```
@@ -808,9 +1000,7 @@ Note that this equation is equivalent to:
 ```{=tex}
 \begin{equation}
 
-population 〜 Poisson( \lambda ) \\
-
-log(\lambda)  〜 Normal( \alpha, \sigma)
+log(pop\_density)  〜 Normal( \mu, \sigma)
 
 \end{equation}
 ```
@@ -820,40 +1010,74 @@ can be rewritten as:
 ```{=tex}
 \begin{equation}
 
-population 〜 Poisson( \lambda ) \\
-
-\lambda  〜 exp(Normal( \alpha, \sigma))
+pop\_density  〜 exp(Normal( \mu, \sigma))
 
 \end{equation}
 ```
-In our particular case, we decompose $\lambda$ as the
-$population\_density * settled\_area$ which introduces the continuous
-variable, $population\_density$.
+### Defining the priors
 
-In the Lognormal, the parameter $\alpha$ represents the median of the
-population density on the log scale, and $\sigma$ the geometric standard
-deviation of population density on the log scale.
+In the Lognormal, there is two parameters, $\mu$ that represents the
+median of the population density on the log scale, and $\sigma$ the
+geometric standard deviation of population density on the log scale.
 
 We set up their priors similarly as before and retrieve from the data
-that the log observed mean is `r round(log(median(data$N)),2)` and the
-observed log geometric standard deviation is
+that the log observed median of the population density is
+`r round(log(median(data$pop_density)),2)` and the observed log
+geometric standard deviation is
 `r round(log(EnvStats::geoSD(data$pop_density)),2)`.
+
+We choose as prior for $\mu$ a Normal(5,4):
+
+```{r, class.source = 'fold-hide', fig.cap= 'Prior distribution for mu'}
+
+data$prior_mu <- rnorm(nrow(data), mean= 5, sd=4)
+
+ggplot(data)+
+  geom_histogram(aes(x=log(pop_density), after_stat(density)), bins=100, fill='grey30')+
+  geom_density(aes(x=prior_mu), colour='#00BFC4', size=1)+
+  theme_minimal()+
+  annotate('text', y=0.1, x=15, label=paste0('Normal(5,4)'), colour='#00BFC4', size=5)+
+    geom_vline(xintercept = median(log(data$pop_density)), color='orange', size=1)+
+  annotate('text', x=5.1, y=0.3, label=paste0('Observed median: ', round(median(log(data$pop_density))), 2), colour='orange', angle=90)+
+    theme(axis.text.y = element_blank())+
+  labs(y='', x='Observed population density (log)')+
+  xlim(-8,17)
+```
+
+We choose as prior for $\sigma$ a Uniform(0,4)
+
+```{r, class.source = 'fold-hide', fig.cap= 'Prior distribution for mu'}
+
+data$prior_sigma <- runif(nrow(data), min = 0, max=4)+5
+
+ggplot(data)+
+  geom_histogram(aes(x=log(pop_density), after_stat(density)), bins=100, fill='grey30')+
+  geom_density(aes(x=prior_sigma), colour='#00BFC4', size=1, trim=T)+
+  theme_minimal()+
+  annotate('text', y=0.3, x=7.7, label=paste0('Uniform(0,4)'), colour='#00BFC4', size=5)+
+    theme(axis.text.y = element_blank())+
+  labs(y='', x='Observed population density (log)')
+```
+
+The resulting model can be written as follows:
 
 ```{=tex}
 \begin{equation}
 
 population 〜 Poisson( pop\_density * settled\_area) \\
 
-pop\_density 〜 Lognormal( \alpha, \sigma) \\
+pop\_density 〜 Lognormal( \mu, \sigma) \\
 
 \\
 
-\alpha 〜 Normal( 0, 100 ) \\
+\mu 〜 Normal( 5, 4 ) \\
 
-\sigma 〜 Uniform( 0, 100 )(\#eq:model2)
+\sigma 〜 Uniform( 0, 4 )(\#eq:model2)
 
 \end{equation}
 ```
+### Implementing the model
+
 We adapt the `stan` code to the model change which affects all code
 blocks:
 
@@ -868,18 +1092,18 @@ parameters{
   // population density
   vector<lower=0>[n] pop_density;
   // intercept
-  real alpha; 
+  real mu; 
   // variance
   real<lower=0> sigma; 
 }
 model{
   // population totals
   population ~ poisson(pop_density .* area);
-  pop_density ~ lognormal( alpha, sigma );
+  pop_density ~ lognormal( mu, sigma );
   // intercept
-  alpha ~ normal(0, 100);
+  alpha ~ normal(5, 4);
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 4);
 }
 generated quantities{
    int<lower=0> population_hat[n];
@@ -902,53 +1126,18 @@ stan_data_model2 <- list(
   n = nrow(data),
   area = data$A)
 ```
+Note that the population density is not an input data of the model, but a unobserved latent variable that we model 
+through the Lognormal.
 
 Then we declare the parameters to monitor (including `density_hat`) and
 run the model.
 
 ```{r}
-# set paameters to monitor
-pars <- c('alpha','sigma', 'population_hat', 'density_hat')
+# set parameters to monitor
+pars <- c('mu','sigma', 'population_hat', 'density_hat')
 
 # mcmc
 fit_model2 <- rstan::stan(file = file.path('tutorial1_model2.stan'), 
-                   data = stan_data_model2,
-                   iter = warmup + iter, 
-                   chains = chains,
-                   warmup = warmup, 
-                   pars = pars,
-                   seed = seed)
-```
-
-Warnings are thrown stating that the Poisson rate is too large. This is
-because `stan` enforces a upper bound for the Poisson rate. Our model is
-likely to get over this upper bound during the warm-up period when
-exploring the parameter space. We could enforce constrains on the
-parameter but since this issue is arising only in the *generated
-quantities block* that is a side model block we will implement a little
-trick:
-
-```{stan output.var="simpleCode", eval=F }
-// Model 2: Population count as a Poisson-Lognormal distribution 
-generated quantities{
-  ...
-  for(idx in 1:n){
-    density_hat[idx] = lognormal_rng( alpha, sigma );
-    
-    if(density_hat[idx] * area[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
-  }
-}
-```
-
-We re-run the model with the trick:
-
-```{r}
-# mcmc
-fit_model2 <- rstan::stan(file = file.path('tutorial1_model2bis.stan'), 
                    data = stan_data_model2,
                    iter = warmup + iter, 
                    chains = chains,
@@ -963,19 +1152,13 @@ No warnings are shown.
 **Question**: Can you plot the traceplot and interpret it?
 :::
 
-<details>
-
-<summary>
-
-Click for the solution
-
-</summary>
+<details><summary>Click for the solution</summary>
 
 We plot the traceplot:
 
 ```{r}
 # plot trace
-traceplot(fit_model2, c('alpha', 'sigma'))
+traceplot(fit_model2, c('mu', 'sigma'))
 ```
 
 We see that the chain have mixed well and that the posterior
@@ -1036,12 +1219,13 @@ ggplot(comparison_df %>%
 ```
 
 We see for the `population_density` the same estimation pattern than in
-the Normal model, that is a similar posterior prediction distribution
-for every survey sites. The predicted `population_count` is, in
-contrast, influenced by the `settled_area`.
+the Poisson model, that is a similar mean posterior prediction
+distribution for every survey sites. The predicted `population_count`
+is, in contrast, influenced by the `settled_area` and by the variance
+term that adapts the confidence intervals for each cluster.
 
-The goodness-of-fit of the Poisson-Lognormal distribution is however not
-good:
+We use the same metrics based on residuals to assess the goodness-of-fit
+of the model.
 
 ```{r,class.source = 'fold-hide'}
 # compute goodness-of-fit metrics
@@ -1059,68 +1243,28 @@ comparison_df %>%
     kbl(caption = "Poisson-Lognormal model goodness-of-fit metrics") %>% kable_minimal()
 ```
 
-It will require further refinements that will be introduced in the next
-tutorials.
+The proportion of observations that falls in their credible intervals
+shows a well-behave model: 95.5% of the observations falls in the 95%
+credible interval. In average the model overestimates the population
+count by around 60 people, but this statistics varies in average by 337
+people.
 
-And for that purpose we will store this last model, as an RDS file.
+No variations is included in this model: we build a national model of
+population count. It will require further refinements that will be
+introduced in the next tutorials.
+
+And for that purpose we will store this last model as an RDS file.
 
 ```{r, eval=F}
 saveRDS(fit_model2, 'tutorial1_model2_fit.rds')
 ```
 
-## Bonus: What happens with a wrong prior specification?
+# Acknowledgements
 
-Specifying credible priors is an art in Bayesian analysis. Let's seen
-what happens when we set unrealistic prior, typically priors that have a
-support too constrained for the data.
+This tutorial was written by Edith Darin from WorldPop, University of
+Southampton and Douglas Leasure from Leverhulme Centre for Demographic
+Science, University of Oxford.
 
-Let's look back at the Normal model presented in Equation
-\@ref(eq:model1) and choose very constrained priors, for example:
-
-```{=tex}
-\begin{equation}
-
-population 〜 Normal( \alpha, \sigma ) \\
-
-\\
-
-\alpha 〜 Normal( 0, 15 ) \\
-
-\sigma 〜 Uniform( 0, 5 )
-
-\end{equation}
-```
-We store this model under `tutorial1_model1wrong.stan` and run it:
-
-```{r}
-# 5 Test prior ---
-# set parameters to monitor
-pars <- c('alpha','sigma')
-
-# mcmc
-fit_wrong <- rstan::stan(file = file.path('tutorial1_model1wrong.stan'), 
-                   data = stan_data,
-                   iter = warmup + iter, 
-                   chains = chains,
-                   warmup = warmup, 
-                   pars = pars,
-                   seed = seed)
-```
-
-We see that estimating this model has led to a LOT of warnings. They are
-related with different diagnostics of the algorithm convergence. For a
-nice overview of parameters tuning please check:
-<https://mc-stan.org/misc/warnings.html>
-
-The traceplot indicates clear convergence issue:
-
-```{r}
-# plot trace
-traceplot(fit_wrong)
-```
-
-First the estimation of `alpha` did not converge. Second the estimation
-of `sigma` is blocked at 5 which corresponds to the upper bound of the
-prior.
+Funding for the work was provided by the United Nations Population Fund.
 
 # References

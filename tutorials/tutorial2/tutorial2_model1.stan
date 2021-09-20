@@ -30,25 +30,20 @@ model{
   pop_density ~ lognormal( alpha_t[type], sigma );
 
   // independent intercept by settlement type
-  alpha_t ~ normal(0, 100);
+  alpha_t ~ normal(5, 4);
 
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 4);
 }
 
 generated quantities{
   
-   int<lower=-1> population_hat[n];
+   int<lower=0> population_hat[n];
    real<lower=0> density_hat[n];
 
   for(idx in 1:n){
     density_hat[idx] = lognormal_rng( alpha_t[type[idx]], sigma );
-    
-    if(density_hat[idx] * area[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
+    population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   }
   
 }

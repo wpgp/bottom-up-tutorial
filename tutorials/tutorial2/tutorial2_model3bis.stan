@@ -50,7 +50,7 @@ model{
   pop_density ~ lognormal(pop_density_mean, sigma );
   
   // hierarchical intercept by settlement and region
-  alpha ~ normal(5, 10);
+  alpha ~ normal(0, 10);
   nu_alpha ~ uniform(0, 15);
   nu_alpha_t ~ uniform(0, 15);
   
