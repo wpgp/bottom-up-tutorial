@@ -33,26 +33,21 @@ model{
 
   // hierarchical intercept by settlement
   alpha_t ~ normal(alpha, nu_alpha);
-  alpha ~ normal(0, 100);
-  nu_alpha ~ uniform(0, 100);
+  alpha ~ normal(5, 10);
+  nu_alpha ~ uniform(0, 15);
 
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 10);
 }
 
 generated quantities{
   
-   int<lower=-1> population_hat[n];
+   int<lower=0> population_hat[n];
    real<lower=0> density_hat[n];
 
   for(idx in 1:n){
     density_hat[idx] = lognormal_rng( alpha_t[type[idx]], sigma );
-    
-    if(density_hat[idx] * area[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
+    population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   }
   
 }
