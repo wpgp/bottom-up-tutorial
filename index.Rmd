@@ -1,5 +1,6 @@
 ---
 title: "Statistical population modelling for census support"
+date: "Last compiled on `r Sys.Date()`"
 ---
 
 ![](assets/pic/wp_logotype_gray_low.png)
