@@ -63,28 +63,26 @@ model{
   pop_density ~ lognormal(pop_density_mean, sigma );
   
   // hierarchical intercept by settlement and region
-  alpha ~ normal(0, 100);
-  
+  alpha ~ normal(5, 10);
   alpha_t ~ normal(alpha, nu_alpha);
-  
   for(t in 1:ntype){
     alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t); 
     }
   
-  nu_alpha ~ uniform(0, 100);
-  nu_alpha_t ~ uniform(0, 100);
+  nu_alpha ~ uniform(0, 15);
+  nu_alpha_t ~ uniform(0, 15);
   
   //slope
   beta_fixed ~ normal(0,10);
   beta_random ~ normal(0,10);
 
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 10);
 }
 
 generated quantities{
   
-  int<lower=-1> population_hat[n];
+  int<lower=0> population_hat[n];
   real<lower=0> density_hat[n];
   vector[n] beta_hat;
 
@@ -92,14 +90,8 @@ generated quantities{
   for(idx in 1:n){
     beta_hat[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
     density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + beta_hat[idx], sigma );
-    if(density_hat[idx] * area[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
-    
+    population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   }
-  
 }
 
 

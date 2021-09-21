@@ -23,12 +23,10 @@ parameters{
   // population density
   vector<lower=0>[n] pop_density;
   
-  // hierarchical intercept by settlement, region, state, local
+  // hierarchical intercept by settlement, region
   real alpha;
   vector[ntype] alpha_t; 
   vector[nregion] alpha_t_r[ntype];
-
-  
   real<lower=0> nu_alpha;
   real<lower=0> nu_alpha_t;
 
@@ -37,7 +35,6 @@ parameters{
   
   // slope
   row_vector[ncov] beta; 
-  
 }
 
 transformed parameters{
@@ -50,46 +47,37 @@ transformed parameters{
 }
 
 model{
-  
   // population totals
   population ~ poisson(pop_density .* area);
   
   pop_density ~ lognormal(pop_density_mean, sigma );
   
   // hierarchical intercept by settlement and region
-  alpha ~ normal(0, 100);
-  
+  alpha ~ normal(5, 10);
   alpha_t ~ normal(alpha, nu_alpha);
-  
   for(t in 1:ntype){
     alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t); 
     }
   
-  nu_alpha ~ uniform(0, 100);
-  nu_alpha_t ~ uniform(0, 100);
+  nu_alpha ~ uniform(0, 15);
+  nu_alpha_t ~ uniform(0, 15);
   
   //slope
   beta ~ normal(0,10);
   
-  // variance with Cauchy prior
-  sigma ~ uniform(0, 100);
+  // variance
+  sigma ~ uniform(0, 10);
 }
 
 generated quantities{
   
-  int<lower=-1> population_hat[n];
+  int<lower=0> population_hat[n];
   real<lower=0> density_hat[n];
   
   for(idx in 1:n){
     density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + sum(cov[idx,] .* beta), sigma );
-    if(density_hat[idx] * area[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
-    
+    population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   }
-  
 }
 
 
