@@ -1,6 +1,5 @@
 ---
 title: "Statistical population modelling for census support"
-author: "Edith Darin, Douglas Leasure"
 ---
 
 ![](assets/pic/wp_logotype_gray_low.png)
@@ -25,6 +24,14 @@ It has been first taught to the Brazilian Stats Office, Instituto Brasileiro de 
 ## Raw code
 
 The raw code of the website and tutorials can be found [here](<https://github.com/wpgp/bottom-up-tutorial>).
+
+# Acknowledgements
+
+This tutorial was written by Edith Darin from WorldPop, University of
+Southampton and Douglas Leasure from Leverhulme Centre for Demographic
+Science, University of Oxford.
+
+Funding for the work was provided by the United Nations Population Fund.
 
 <br>
 
