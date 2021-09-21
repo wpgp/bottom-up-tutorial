@@ -1,7 +1,6 @@
 ---
 title: "Population modelling \n for census support"
 subtitle: "Tutorial 2: How to model large-scale spatial variations?"
-author: "Edith Darin and Douglas Leasure"
 date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
 output: 
   bookdown::html_document2:
@@ -23,6 +22,17 @@ htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
 
 knitr::opts_chunk$set(fig.align = "center") 
+
+local({
+  hook_output <- knitr::knit_hooks$get('warning')
+  knitr::knit_hooks$set(warning = function(x, options) {
+    if (!is.null(options$max.height)) options$attr.warning <- c(
+      options$attr.warning,
+      sprintf('style="max-height: %s;"', options$max.height)
+    )
+    hook_output(x, options)
+  })
+})
 ```
 
 ![](../../assets/pic/wp_logotype_gray_low.png)
@@ -844,7 +854,6 @@ generated quantities{
   ...
   density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]], sigma );
 }
-
 ```
 
 Note the new `transformed parameters` block: it is useful to keep your
@@ -868,7 +877,7 @@ stan_data_model3 <- list(
 
 And run the model with the new parameters to monitor:
 
-```{r}
+```{r, max.height='150px'}
 pars <- c('alpha','alpha_t','alpha_t_r','nu_alpha', 'sigma','population_hat',  'density_hat')
 
 # mcmc
@@ -881,47 +890,19 @@ fit3 <- rstan::stan(file = file.path('tutorial2_model3.stan'),
                    seed = seed)
 ```
 
-Stan tells us that " The following variables have undefined values:
+Stan tells us that "The following variables have undefined values:
 population_hat[1],". This is due to **integer overflow:** the limit of
 integer value is 2\^31 - 1. To make sure we don't go over this limit,
-stan restricts the value for the Poisson rate to 1.07374e+09. We reached
-this value however in our estimation process due the parameter space
-exploration.
+stan restricts the value for the Poisson rate to 1.07374e+09. 
 
-To correct for it, we just change the scale of our data by multiplying
-the area by 1000 such that log of the observed population density has
-now for maximum 0.01.
+This issue happens however only for the prediction and during the warmup period.
+When the chains reach convergence, the Poisson rate becomes reasonable and `population_hat` becomes defined.
+We show here the example for cluster 2 prediction process :
 
-```{r}
-# prepare data for stan
-stan_data_model3bis <- list(
-  population = data$N,
-  n = nrow(data),
-  area = data$A*1000,
-  type = data$type,
-  ntype= n_distinct(data$type),
-  region = data$region,
-  nregion = n_distinct(data$region)
-  )
-
+```{r, fig.cap='Traceplot for cluster 2'}
+traceplot(fit3, 'density_hat[2]', inc_warmup=T)
 ```
 
-We account for this change of scale in the prior definition of $\alpha$,
-from a Normal(5,10) to a Normal(0,10) and store the model under
-`tutorial2_model3bis.stan`.
-
-```{r}
-# mcmc
-fit3bis <- rstan::stan(file = file.path('tutorial2_model3bis.stan'), 
-                   data = stan_data_model3bis,
-                   iter = warmup + iter, 
-                   chains = chains,
-                   warmup = warmup, 
-                   pars = pars,
-                   seed = seed)
-```
-
-We don't observe any problem of convergence or estimation anymore.
 
 ### Estimated parameters
 
@@ -937,16 +918,12 @@ the parameter names are constructed:
     represents $\hat{\alpha}_{1,1}$, the estimate associated to
     settlement 1 and region 1.
 
-Bear in mind that we are looking at the median of the lognormal for a
-rescaled population density. As a benchmark the observed rescaled median
-population density on the log scale is: \`r
-round(median(log(summary(data\$pop_density/1000))),2)\`
 
 ```{r alpha-sett-region, message=F, fig.cap='Estimated alpha by region for settlement 1 and 4'}
 alpha_4_r <- paste0('alpha_t_r[4,', 1:11, ']')
 alpha_1_r <- paste0('alpha_t_r[1,', 1:11, ']')
 
-stan_plot(fit3bis, pars=c('alpha','alpha_t[1]','alpha_t[4]', alpha_1_r, alpha_4_r), 
+stan_plot(fit3, pars=c('alpha','alpha_t[1]','alpha_t[4]', alpha_1_r, alpha_4_r), 
           fill_color='orange')
 
 ```
@@ -998,7 +975,7 @@ predictions for every survey sites.
 # build comprehensive dataframe
 comparison_df <- rbind(
   comparison_df,
- getPopPredictions(fit3bis) %>% 
+ getPopPredictions(fit3) %>% 
    mutate(model='Hierarchical - settlement, region'))
 
 # compute goodness-of-fit metrics
@@ -1010,6 +987,12 @@ comparison_df %>%
         `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-metrics comparison of the hierarchical models') %>% kable_minimal()
 ```
+We will store model 3 to use as comparison in tutorial 2.
+
+```{r, eval=F}
+saveRDS(fit3, 'tutorial2_model3_fit.rds')
+```
+
 
 # Acknowledgements
 
