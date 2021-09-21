@@ -1,26 +1,37 @@
 # Bottom-up-tutorial
-IBGE bottom-up population model tutorial funded by UNFPA
 
-# Resources
+This github repo contains contains the teaching materials for the **Statistical Population Modelling for Census Support workshop,** funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed at the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
 
-### Internal
-- [Workshop Schedule](https://docs.google.com/spreadsheets/d/1TRUwB5K_vwPlpCCZ-ziyDY3hWZ-WPci0/edit#gid=1285004441)
-- [Workshop Proposal](https://docs.google.com/document/d/1RWnDpQJTmiZB92z3R8FYCiVYLCXhHjmR/edit)
-- [DSN Workshop](https://grid3.github.io/DSNTraining/AIBootcamp_Production%20and%20Use%20of%20Gridded%20Population%20data.pdf)
-- [Model checks](https://docs.google.com/document/d/1Xf3dygdTrFy1sWr4FgYouUk7P5n4qQmfAWOUmLV6hYs/edit?pli=1)
-
-### External
-- [Bayes Rules](https://www.bayesrulesbook.com/)
-- [BDA - Ari Vehtari](https://avehtari.github.io/BDA_course_Aalto/gsu2021.html)
-  - [slides](https://github.com/avehtari/BDA_course_Aalto/tree/master/slides)
-- [Bayesian Data Analysis for Cognitive Science](https://vasishth.github.io/bayescogsci/book/)
-- [Intro to Stan - Boulder](http://bechtel.colorado.edu/~bracken/tutorials/stan/stan-tutorial.pdf)
-- [Stan Documentation](https://mc-stan.org/users/documentation/)
-- [Robust Statistical Workflow in RStan](https://betanalpha.github.io/assets/case_studies/rstan_workflow.html)
+It has been first taught to the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
 
 
-## UNFPA branding
+# Folder content
 
-- strong orange: #ff8000
-- light orange: #ffb300
-- strong blue: #4db3ff
+The relevant materials are to be found in the [`tutorials`](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials) folder.
+
+Each tutorial has its dedicated folder that contains:
+- Tutorial material
+  -  The `R` code
+  -  The `stan` code
+-  Background files
+  - The `html` code for the website page
+  - The `R markdown` code that has been used to produce the `html` page
+  - The `references.bib` with references used for the tutorial
+
+The `data` folder contains outputs of the tutorial.
+
+# Acknowledgements
+
+The tutorials were written by Edith Darin from WorldPop, University of
+Southampton and Douglas Leasure from Leverhulme Centre for Demographic
+Science, University of Oxford, with supervision from Andrew Tatem, orldPop, University of
+Southampton.
+
+Funding for the work was provided by the United Nations Population Fund.
+
+<br>
+
+<br>
+
+
+![alt](assets/pic/320px-UNFPA_logo.svg.png) | ![alt](assets/pic/wp_logo_gray_low.png)
