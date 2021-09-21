@@ -1174,9 +1174,6 @@ observations:
 # extract posterior predictions
 predicted_pop_model2 <- as_tibble(extract(fit_model2, 'population_hat')$population_hat)
 
-# check our implemented logic
-any(predicted_pop_model2==-1)
-
 predicted_dens_model2 <- as_tibble(extract(fit_model2, 'density_hat')$density_hat)
 colnames(predicted_pop_model2) <- data$id
 colnames(predicted_dens_model2) <- data$id

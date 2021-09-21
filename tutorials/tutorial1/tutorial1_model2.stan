@@ -44,7 +44,6 @@ generated quantities{
     density_hat[idx] = lognormal_rng( mu, sigma );
     population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
   } 
-  
 }
 
 
