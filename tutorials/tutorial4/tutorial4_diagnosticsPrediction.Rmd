@@ -1,7 +1,6 @@
 ---
 title: "Population modelling \n for census support"
 subtitle: "Tutorial 4: Advanced model diagnostics and prediction"
-author: "Edith Darin and Douglas Leasure"
 date: "Compiled on `r format(Sys.time(), '%d/%m/%Y')`"
 output: 
   bookdown::html_document2:
@@ -44,11 +43,11 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled mode
 
 # Introduction
 
-From Tutorial 1 to Tutorial 3, we built a **bottom-up population
-model**, modelling brick by modelling brick**.** In Tutorial 1 we model
+From Tutorial 1 to Tutorial 3, we built a **bottom-up population model**, 
+modelling brick by modelling brick. In Tutorial 1 we modelled
 population count as a **Poisson-Lognormal compound,** accounting for
-settled area. In Tutorial 2, we added a **hierarchical random
-intercept** by settlement type and region, that differentiates parameter
+settled area. In Tutorial 2, we added a **hierarchical random intercept** 
+by settlement type and region, that differentiates parameter
 estimation by the natural clustering of the observations. In Tutorial 3
 we eventually modelled small-scale variations in population density by
 adding **a linear regression based on geospatial covariates**. We
@@ -63,8 +62,8 @@ opportunity to talk about estimates uncertainty.
 
 ### Goals
 
-1.  Understand posterior predictive check
-2.  Understand spatial autocorrelation
+1.  Explore convergence issue
+2.  Understand posterior predictive check
 3.  Understand cross-validation and overfitting
 4.  Predict population for every grid cell of the study area
 5.  Visualise prediction uncertainty
@@ -76,10 +75,6 @@ opportunity to talk about estimates uncertainty.
     models](https://www.bayesrulesbook.com/chapter-10.html) by the
     bayesrules book, on poseterior predictive check and the difference
     between correct estimation and correct modelling.
-
--   [Spatial
-    autocorrelation](https://mgimond.github.io/Spatial/spatial-autocorrelation.html)
-    explained by Manuel Gimond, Colby College
 
 -   [Tidy data and Bayesian analysis make uncertainty visualization
     fun](https://www.mjskay.com/presentations/openvisconf2018-bayes-uncertainty-2.pdf)
@@ -112,25 +107,150 @@ install.packages('sf')
 install.packages('tmap')
 ```
 
+Vignettes can be found here: [raster](https://rspatial.org/raster/1-introduction.html), 
+[RColorBrewer](https://rdrr.io/cran/RColorBrewer/man/ColorBrewer.html), 
+[sf](https://r-spatial.github.io/sf/articles/) and
+[tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html).
+
 # Advanced model diagnostics
 
 Before predicting population count for the entire study area we want to
 make sure that the model is correct. We thus perform additional checks:
-on the estimated parameters with a *posterior predictive check*, on the
-spatial autocorrelation of the residuals with a *spatial correlogram*
+on the **model convergence** with traceplots and `stan` warnings, on the estimated parameters with a *posterior predictive check*
 and on the predicted population count at study site with a
 *cross-validation approach*.
 
-Let's load the last fitted model in Tutorial 3, that is with a random
-slope effect on `x_4`.
+We will work with the first relevant population model that we built in Tutorial 1, 
+that is the "basic" Poisson-Lognormal model:
+
+```{=tex}
+\begin{equation}
+
+population 〜 Poisson( pop\_density * settled\_area) \\
+
+pop\_density 〜 Lognormal( \mu, \sigma) \\
+
+\\
+
+\mu 〜 Normal( 5, 4 ) \\
+
+\sigma 〜 Uniform( 0, 4 )(\#eq:model2)
+
+\end{equation}
+```
+We do some set-ups that should now be familiar.
 
 ```{r}
-model_fit <- readRDS('tutorials/tutorial3/tutorial3_model2_fit.rds')
+# load data
+data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
+data <- data %>% 
+  mutate(
+    id = as.character(1:nrow(data)),
+    pop_density=N/A
+  )
+# mcmc settings
+chains <- 4
+iter <- 500
+seed <- 1789
+
+# stan data
+stan_data <- list(
+  population = data$N,
+  n = nrow(data),
+  area = data$A)
+
+# set parameters to monitor
+pars <- c('mu','sigma', 'density_hat', 'population_hat')
 ```
 
-## Posterior predictive check
 
-Bayesien estimation relies on choosing priors for the parameters. Those
+## Assessing convergence
+
+In this section we will explore models that have convergence issues and discover how to evaluate
+where they stem from and how to fix it.
+
+First let's look at the impact of the **warmup length**, the early phase of the simulations 
+in which the sequences get closer to the mass of the distribution.
+
+We choose a warmup of 20 iterations (instead of 250).
+
+```{r}
+warmup <- 20
+
+# mcmc
+fit_lowWarmup <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+                          data = stan_data,
+                          iter = warmup + iter, 
+                          chains = chains,
+                          warmup = warmup, 
+                          pars = pars,
+                          seed = seed)
+```
+Stan shows several warnings. You can explore the meaning of them [here](http://mc-stan.org/misc/warnings.html).
+
+Looking at the traceplot is, in this case, very informative:
+
+```{r}
+traceplot(fit_lowWarmup, c('mu', 'sigma'), inc_warmup=T)
+```
+
+The traceplots indicate that some exploration is still happening after the shaded area, 
+that is after the end of the warmup period.We just need to increase the length of the  warmup period.
+
+Next we will look at a more serious convergence issue.
+Let's say that we choose **unfit priors** for our model.
+Typically we can declare a Uniform with stricter bounds for $\sigma$:
+
+```{=tex}
+\begin{equation}
+
+\sigma 〜 Uniform( 0, 1 )
+
+\end{equation}
+```
+
+We store the model under `tutorial4/tutorial1_model2_wrong.stan` and estimate it.
+
+```{r}
+warmup <- 250
+
+fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_wrong.stan'), 
+                   data = stan_data,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+Many metrics detect a convergence issue. The most worrying one is the *divergent transitions* that are
+often related with issues in the model structure itself and not only with estimation process.
+
+```{r}
+traceplot(fit_wrong, c('mu', 'sigma'))
+```
+
+The traceplot for $\mu$ indicates that the chains didn't mix. Moreover the traceplot for $\sigma$ 
+shows clearly the issue in bounding with a ceiling at 1 that overly constrained the estimation.
+
+
+## Checking predicted posterior
+Let's come back to a correctly fit model.
+
+```{r}
+# mcmc
+fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+                          data = stan_data,
+                          iter = warmup + iter, 
+                          chains = chains,
+                          warmup = warmup, 
+                          pars = pars,
+                          seed = seed)
+```
+
+
+As shown in previous paragraph, Bayesien estimation highly relies on choosing correct 
+priors for the parameters. Those
 priors should reflect expert knowledge about the quantity of interest
 that is, then, confronted with the observations. The prior model defines
 the space for the posterior estimation. We should thus ensure that the
@@ -142,44 +262,43 @@ the `stanfit` object. We do it using the `extract` function from
 `rstan`.
 
 ```{r, }
-alphas <- data.frame(
+mus <- data.frame(
     # extact parameter
-    posterior=extract(model_fit, pars='alpha')$alpha,
-    parameter = 'alpha'
+    posterior=extract(fit, pars='mu')$mu,
+    parameter = 'mu'
     )
-glimpse(alphas)
+glimpse(mus)
 ```
 
-`alphas` contains the estimated alpha for each iteration post-warmup
+`mus` contains the estimated mu for each iteration post-warmup
 (500) of each Markov chain (4).
 
 We want to recreate the **prior distribution**. In model 2 of Tutorial
-3, we used as prior for $\alpha$ a $$Normal(0,100)$$We sample from this
+3, we used as prior: $$\mu \sim Normal(5,4)$$ We sample from this
 prior distribution, the same number of draws that we have for the
 posterior distribution (that is 2000).
 
 ```{r}
 # retrieve stan parameter
-post_warmup_draws <- model_fit@stan_args[[4]]$iter - model_fit@stan_args[[4]]$warmup
-chains <- length(model_fit@stan_args)
+post_warmup_draws <- iter - warmup
 
 # simulate from the prior distribution
-alphas$prior <- rnorm(chains * post_warmup_draws, 0, 100)
+mus$prior <- rnorm(chains * post_warmup_draws, 5, 4)
 ```
 
-We build a similar dataframe to `alphas` for contrasting the prior
-distribution with the posterior distribution of $\sigma$ and bind
-together with `alphas`.
+We build for $\sigma$ a similar dataframe to `mus` that contrasts its prior
+distribution with its posterior distribution and bind it
+together with `mus`.
 
 ```{r posterior, fig.cap='Posterior predictive checks for alpha and sigma', class.source = 'fold-hide'}
 # build dataframe with parameters distribution comparison
 parameters <-  rbind(
   # alpha
-  alphas ,
+  mus ,
   #sigma
   data.frame(
-      posterior=extract(model_fit, pars='sigma')$sigma,
-      prior = runif(chains * post_warmup_draws, 0, 100),
+      posterior=extract(fit, pars='sigma')$sigma,
+      prior = runif(chains * post_warmup_draws, 0, 4),
       parameter = 'sigma')
   )  %>% 
   pivot_longer(-parameter,
@@ -195,125 +314,18 @@ ggplotly(ggplot(parameters, aes(x=value, color=distribution, fill=distribution))
 ```
 
 Figure \@ref(fig:posterior) shows a posterior predictive check for both
-$\alpha$ and $\sigma$. It compares the prior distribution that we set in
+$\mu$ and $\sigma$. It compares the prior distribution that we set in
 the model and the estimated posterior distribution. Don't hesitate to
 zoom in, as the range of values is very different between the prior and
 the posterior.
 
-We confirm that our priors were not informed, with a very wide range of
+We confirm that our priors did not falsely constrain the posterior, with a very wide range of
 possible values. The unique constrain we can observe is the lower bound
-on $\sigma$ at 0 but this is normal as a variance has to be positive. We
-could have indicated a lower range of values to speed up the model
-estimation.
-
-Since the prior for $\alpha$ constrained the $\alpha_t$, it is not
-strictly necessary to perform the same test for $\alpha_t$.
-
-::: {.question}
-**Question**: Can you check the posterior distribution for $\beta$ and
-interpret it?
-
-Remember that we have two parameters related to $\beta$: (1)
-`beta_random` and (2) `beta_fixed`. They are both of dimension 5 for two
-separate reasons: `beta_random` because there is 5 settlement types and
-`beta_fixed` because there is 5 covariates modelled with a fixed effect.
-
-Coding this question will help you to familiarize with the structure of
-a `stanfit` object.
-:::
-
-<details>
-
-<summary>
-
-Click for the solution
-
-</summary>
-
-```{r, fig.cap='Posterior predictive checks for beta'}
-# extract beta posterior
-beta_posterior <- rbind(
-  # build dataframe for beta fixed
-  data.frame(
-    # extact beta fixed
-    beta_fixed=extract(model_fit, pars='beta_fixed')$beta_fixed
-    ) %>% 
-    # convert to long format
-  pivot_longer(everything(),
-               names_to = 'parameter',
-               values_to = 'value'
-               ) ,
-  # build dataframe for beta random
-  data.frame(
-    # extact beta random
-    beta_random=extract(model_fit, pars='beta_random')$beta_random
-    ) %>% 
-    # convert to long format
-    pivot_longer(everything(),
-               names_to = 'parameter',
-               values_to = 'value'
-               )) %>% 
-  mutate(
-    distribution = 'posterior'
-  )
-# merge beta posterior with beta prior
-beta <- rbind(beta_posterior,
-              # simulate priors for every beta
-              data.frame(
-                parameter = beta_posterior$parameter,
-                distribution='prior',
-                value = rnorm(nrow(beta_posterior), 0, 10)
-              ))
-# contrast prior and posterior distribution
-ggplotly(ggplot(beta, aes(x=value, color=distribution, fill=distribution))+
-  geom_density()+
-  theme_minimal()+
-    facet_wrap(.~parameter, scales = 'free'))
-```
-
-</details>
-
-## Spatial auto-correlation of the residuals
-
-After checking the parameter posterior, we now want to check **the
-assumption of independence between the observations** that is if the
-model is able to account for the correlations between observations. This
-is done by looking at the correlations of the residuals.
-
-One correlation we are particular interesting in is the [spatial
-auto-correlation](https://mgimond.github.io/Spatial/spatial-autocorrelation.html),
-that is when the outcome variable is highly determined by spatial
-locations. Population density is indeed likely to be more similar
-between close locations than distanced location.
-
-In our model we took into account the spatial context through two
-components: the hierarchical structure and the geospatial covariates. We
-need to check if that is sufficient to address the spatial
-auto-correlation. To that end, we look at the spatial distribution of
-the residuals and use a spatial correlogram of [Moran's I
-statistic](https://en.wikipedia.org/wiki/Moran's_I) calculated at ranges
-from 0 to 100 km. For more information, check the [correlog
-function](https://www.rdocumentation.org/packages/pgirmess/versions/1.7.0/topics/correlog)
-from the `pgirmess` package.
-
-The coordinates of the study sites were not communicated with the data
-for confidentiality reason so we will reproduce the correlogram from
-@leasure2020a where red dots indicate a statistically significant
-Moran's I statistic (P\<0.05).
-
-```{r correlogram, echo = FALSE, fig.cap = "Example of a spatial correlogram between model residuals from Leasure et al. (2020).", fig.align='center', out.width='50%'}
-knitr::include_graphics(here("assets/pic/tuto4_correlogram.PNG"))
-```
-
-Figure \@ref(fig:correlogram) shows that the Moran's I oscillates around
-zero or is not significant.
-
-It means that the model correctly accounts for the spatial correlation
-of the observations.
+on $\sigma$ at 0 but this is normal as a variance has to be positive.
 
 ## Cross-validation of model predictions
 
-After ensuring no spatial auto-correlation remains in the residuals, we
+After checking the model structure, we
 revisit the **goodness-of-fit metrics based on population predictions**.
 
 In tutorial 1 to 3, we check the goodness-of-fit of the modelled
@@ -334,123 +346,67 @@ be used for fitting the model and a predicting set (30%) that will be
 used for model prediction:
 
 ```{r, message=F}
-#load data
-seed <- 1789
-data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
-data <- data %>% 
-  mutate(
-    id = as.character(1:nrow(data)),
-    pop_density=N/A
-  )
-covs <- read_csv(here('tutorials/data/covs_scaled.csv'))
-
+set.seed(2004)
 # sample observations
 train_size <-  round(nrow(data)*0.7)
 train_idx <- sample(1:nrow(data), size = train_size, replace=F)
 
 # build train datasets
 train_data <- data[train_idx,]
-train_covs <- covs[train_idx,]
 
 # build test datasets
 test_data <- data[-train_idx,]
-test_covs <- covs[-train_idx,]
 ```
 
-In `stan` cross-validation can be done simultaneously with model fitting
+In `stan`, cross-validation can be done simultaneously with model fitting
 by providing the testing dataset to the `generated quantities` modelling
-block. Because all data has to be defined for each set it lengthens
-substantively the code.
+block. Because all variables have to be defined for each set, it lengthens
+substantively the code. 
 
 ```{stan output.var="simpleCode", eval=F }
 data{
   
-  int<lower=0> n_train; // number of microcensus study sites in training set
-  int<lower=0> n_test; // number of microcensus study sites in predicting set
+  int<lower=0> n_train; // number of microcensus clusters in training set
+  int<lower=0> n_test; // number of microcensus clusters in predicting set
 
   int<lower=0> population_train[n_train]; // count of people
   
   vector<lower=0>[n_train] area_train; // settled area in training
   vector<lower=0>[n_test] area_test; // settled area in testing
-  
-    // fixed slope
-  int<lower=0> ncov_fixed; // number of covariates -1
-  matrix[n_train, ncov_fixed] cov_fixed_train; // covariates in training
-  matrix[n_test, ncov_fixed] cov_fixed_test; // covariates in training
-  
-    // random slope
-  vector[n_train] cov_random_train;
-  vector[n_test] cov_random_test;
-
-  int<lower=0> ntype; // number of settlement types
-  int<lower=0> type_train[n_train]; // settlement type in train
-  int<lower=0> type_test[n_test]; // settlement type in test
-  
-  int<lower=1> nregion; //number of regions
-  int<lower=1,upper=nregion> region_train[n_train]; // region
-  int<lower=1,upper=nregion> region_test[n_test]; // region
 }
+
 parameters{
   // population density
   vector<lower=0>[n_train] pop_density_train;
   
-  // hierarchical intercept by settlement, region, state, local
-  real alpha;
-  vector[ntype] alpha_t; 
-  vector[nregion] alpha_t_r[ntype];
-  real<lower=0> nu_alpha;
-  real<lower=0> nu_alpha_t; 
+  //intercept
+  real mu;
 
   // variance
   real<lower=0> sigma; 
-  
-  // slope
-  row_vector[ncov_fixed] beta_fixed; 
-  vector[ntype] beta_random;
 }
-transformed parameters{
-  vector[n_train] pop_density_train_mean;
-  vector[n_train] beta_train;
 
-  for(idx in 1:n_train){
-    beta_train[idx] = sum( cov_fixed_train[idx,] .* beta_fixed) + cov_random_train[idx] * beta_random[type_train[idx]];
-    pop_density_train_mean[idx] = alpha_t_r[type_train[idx], region_train[idx]] + beta_train[idx];
-  }
-}
 model{
+  
   // population totals
   population_train ~ poisson(pop_density_train .* area_train);
-  pop_density_train ~ lognormal( pop_density_train_mean, sigma );
+  pop_density_train ~ lognormal( mu, sigma );
   
-  // hierarchical intercept by settlement and region
-  alpha ~ normal(0, 100);
-  alpha_t ~ normal(alpha, nu_alpha);
-  for(t in 1:ntype){
-    alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t); 
-    }
-  nu_alpha ~ uniform(0, 100);
-  nu_alpha_t ~ uniform(0, 100);
+  //  intercept
+  mu ~ normal(5, 4);
   
-  //slope
-  beta_fixed ~ normal(0,10);
-  beta_random ~ normal(0,10);
-
   // variance
-  sigma ~ uniform(0, 100);
+  sigma ~ uniform(0, 4);
 }
+
 generated quantities{
-  int<lower=-1> population_hat[n_test];
-  real<lower=-1> density_hat[n_test];
-  vector[n_test] beta_hat;
+  
+  int<lower=-0> population_hat[n_test];
+  real<lower=0> density_hat[n_test];
 
   for(idx in 1:n_test){
-    beta_hat[idx] = sum( cov_fixed_test[idx,] .* beta_fixed) + cov_random_test[idx] * beta_random[type_test[idx]];
-    density_hat[idx] = lognormal_rng( alpha_t_r[type_test[idx], region_test[idx]] + beta_hat[idx], sigma );
-    if(density_hat[idx] * area_test[idx]<1e+09){
-      population_hat[idx] = poisson_rng(density_hat[idx] * area_test[idx]);
-    } else {
-      population_hat[idx] = -1;
-    }
+    density_hat[idx] = lognormal_rng( mu, sigma );
+    population_hat[idx] = poisson_rng(density_hat[idx] * area_test[idx]);
   }
 }
 ```
@@ -467,30 +423,14 @@ stan_data_xval <- list(
   area_train = train_data$A,
   area_test = test_data$A,
 
-  ntype= n_distinct(data$type),
-  type_train = train_data$type,
-  type_test = test_data$type,
-
-  nregion = n_distinct(data$region),
-  region_train = train_data$region,
-  region_test = test_data$region,
-  
-  ncov_fixed = ncol(covs) -1,
-  cov_fixed_train = train_covs %>% select(-x4),
-  cov_fixed_test = test_covs %>% select(-x4),
-  cov_random_train = train_covs$x4,
-  cov_random_test = test_covs$x4,
-  
   seed=seed
 )
+
 # mcmc setting
-chains <- 4
-warmup <- 500
-iter <- 500
-pars <- c('alpha','sigma','beta_fixed','beta_random','alpha_t', 'population_hat',  'density_hat')
+pars <- c('mu','sigma', 'population_hat',  'density_hat')
 
 # mcmc
-fitxval <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial3_model2xval.stan'), 
+fit_xval <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2xval.stan'), 
                    data = stan_data_xval,
                    iter = warmup + iter, 
                    chains = chains,
@@ -499,8 +439,8 @@ fitxval <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial3_model2xva
                    seed = seed)
 ```
 
-We now have access to two predictions sets: one, `model_fit`, from the
-in-sample prediction and one, `fitxval`, from the cross-validation
+We now have access to two predictions sets: one, `fit`, from the
+in-sample prediction and one, `fit_xval`, from the cross-validation
 prediction.
 
 We compare the goodness-of-metrics from the two models:
@@ -513,11 +453,6 @@ getPopPredictions <- function(model_fit,
   # extract predictions
   predicted_pop <- as_tibble(extract(model_fit, estimate)[[estimate]])
   colnames(predicted_pop) <- reference_data$id
-  
-  # check if the trick used for poissong_rng in stan worked
-  if(any(predicted_pop==-1)){
-    print('-1 in predicted population')
-  }
   
   # summarise predictions
   predicted_pop <- predicted_pop %>% 
@@ -543,31 +478,37 @@ return(predicted_pop)
 
 # build comparison dataframe betweeen in-sample and xvalidation
 comparison_df <- rbind(
- getPopPredictions(model_fit) %>% 
+ getPopPredictions(fit) %>% 
    mutate(Model='In-sample'),
- getPopPredictions(fitxval, reference_data = test_data) %>% 
+ getPopPredictions(fit_xval, reference_data = test_data) %>% 
    mutate(Model='Cross-validation'))
 
 # compute goodness-of-fit metrics
 comparison_df %>% group_by(Model) %>% 
   summarise( `Bias`= mean(residual),
     `Inaccuracy` = mean(abs(residual)),
-        `Imprecision` = sd(residual),
-    `Mean Confidence Interval Size` = mean(ci_size)
+        `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-metrics computed in-sample vs cross-validation') %>% kable_minimal()
 ```
 
-Table \@ref(tab:xval) shows that the uncertainty increased because of
-the size of the dataset is subtantially smaller. The bias however even
-decreased. The model passed the cross-validation check.
+Table \@ref(tab:xval) shows that all metrics shows a worse fit: the bias, the imprecision and the 
+inacurracy increase. However they still remains in the same range, which seems to indcate
+that our model is not overfitting.
 
-A good practice is to always assess the model fit on the testing set to
-stay on the safe side of overfitting.
+A good practice is to **always assess the model fit on the testing set** to avoid producing overly 
+optimistic goodness-of-fit metrics.
 
 # Gridded population prediction
 
 We will cover in this section **model predictions for the entire study
 area** at the grid cell level.
+
+We will use our best population model, that is
+
+```{r}
+tutorial3_model2_fit <- readRDS("tutorials/tutorial3/tutorial3_model2_fit.rds")
+```
+
 
 It requires extracting the estimated parameters distributions:
 $\hat\alpha_{t,r}, \hat\sigma, \hat\beta^{fixed}, \hat\beta^{random}_t$.
@@ -597,11 +538,9 @@ Grid-cell based model prediction requires thus 10 input rasters:
 -   the six covariates
 
 -   a mastergrid that defines the grid cells for which to predict the
-    population. These grid cells are (1) contained inside the study area
+    population. These grid cells are (1) contained inside the study area, (2) considered as settled.
 
-    (2) considered as settled.
-
-Unfortunately we are not allowed to redistribute the settlement map that
+Unfortunately we are not allowed to redistribute the settlement map used in Nigera v1.2, that
 was provided by @oakridgenationallaboratory2018. We will thus provide
 the code to show all the steps of population prediction but you will not
 be able to run it.
@@ -712,7 +651,7 @@ alphas <- rstan::extract(model_fit, pars='alpha_t_r')$alpha_t_r
 sigmas <-  rstan::extract(model_fit, pars='sigma')$sigma
 ```
 
-We first focus on producing$\hat\beta^{fixed} X^{fixed}$ from Equation
+We first focus on producing $\hat\beta^{fixed} X^{fixed}$ from Equation
 \@ref(eq:predict), the covariates modelled with a fixed effect.
 
 $\hat\beta^{fixed}$ is a `2000 x 5` matrix for the 5 covariates and 2000
@@ -786,7 +725,7 @@ mu_predicted <- alpha_predicted + cov_fixed + cov_random
 ## Predicting population count for every grid cell
 
 To estimate the grid-cell population, we need to simulate from Equation
-\@ref(eq:predict) with $\hat\mu$ and $\hat\sigma$.
+\@ref(eq:predict) with the estimated $\hat\mu$ and $\hat\sigma$.
 
 ```{r, eval=F}
 predictions <- as_tibble(mu_predicted) %>% 
@@ -808,22 +747,23 @@ predictions <- as_tibble(mu_predicted) %>%
     population_predicted = rpois(n(), density_predicted*settled_area)
     ) %>% 
   dplyr::select(-mu_predicted,-sigma, -density_predicted) %>% 
-  # convert it back to hrid cell x iterations matrix
+  # convert it back to grid cell x iterations matrix
   pivot_wider(-c(iteration, population_predicted),
       names_from = iteration,
       values_from = population_predicted
     ) 
 ```
 
-`predictions` contains 2000 population estimates for every settled grid
-cell.
+`predictions` contains 2000 population predictions for every settled grid.
+cell. Let's see how does it look like for the 5 settled grid cells:
 
 ```{r, echo=F}
 predictions <-  readRDS('tutorials/data/gridded_pop_predicted.rds')
 ```
 
 ```{r}
-predictions[1:5, ] %>%  dplyr::select('gridcell_id', 1:10) %>% kbl() %>% kable_minimal()
+predictions[1:5, ] %>% dplyr::select(gridcell_id, everything()) %>% 
+  kbl() %>% kable_minimal()  %>% scroll_box(width = "100%")
 ```
 
 Note: Model prediction is memory-intensive. We thus usually run it in
@@ -831,7 +771,7 @@ parallel for blocks of grid cells.
 
 # Predicting distributions
 
-Bayesian modelling is a stochastic modelling thus accounts for the
+Bayesian modelling is a stochastic modelling. It accounts thus for the
 unknowns, caused by for example:
 
 -   Weak predictors
@@ -936,14 +876,14 @@ col <-  brewer.pal(n = 7, name = "YlOrRd")
 plot(mean_r, col=col)
 ```
 
-Figure \@ref(fig:raster-mean) shows typical population distribution:
-denser around cities and following the roads as seens by the lines of
-higher population count. In white are displayed the unsettled grid
-cells.
+Figure \@ref(fig:raster-mean) shows typical population spatial distribution. 
+We see in the top-left corner a cluster of cities, with denser neighborhoods in the centers.
+Lines of denser settlements are linked with the spatial distribution of population around roads.
+In white are displayed the unsettled grid cells.
 
 ## Gridded uncertainty
 
-We can also retrieve from the full posterior distribution the 95%
+We can also retrieve from the full posterior distribution, the 95%
 credible interval (CI) for every prediction and the related relative
 uncertainty computed as:
 
@@ -986,8 +926,8 @@ col <-  brewer.pal(n = 7, name = "Blues")
 plot(uncertainty_r, col=col)
 ```
 
-We see that higher uncertainty can be observed on the outskirt of urban
-areas. This is often the case due to the rapid expansion of settlement
+We see that higher uncertainty can be observed on the outskirt of denser settlement.
+This is often the case due to the rapid expansion of settlement
 extent that is difficult to capture.
 
 # Aggregating prediction
@@ -1006,7 +946,7 @@ study area.
 library(sf)
 library(tmap)
 tmap_options(check.and.fix = TRUE)
-city <- st_read(paste0(wd_path, 'study_city.gpkg'))
+city <- st_read(paste0(wd_path, 'study_city.gpkg'), quiet=T)
 
 names(mean_r) <- 'Gridded population'
 tmap_mode('view')
@@ -1094,16 +1034,16 @@ ggplot(city_prediction, aes(x=value))+
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())+
   labs(y='', x='Predicted population for the city')+
-  annotate("segment",x=city_prediction_stats$`Mean population`, 
-           xend=city_prediction_stats$`Mean population`, y=0, yend=0.000012, size=1)+
-  annotate('text',x=city_prediction_stats$`Mean population`+5000, y=0.0000014, hjust = 0, fontface =2,
+  annotate("segment",x=city_prediction_stats$`Mean population`,
+           xend=city_prediction_stats$`Mean population`, y=0, yend=0.000005, size=1)+
+  annotate('text',x=city_prediction_stats$`Mean population`+5000, y=0.0000012, hjust = 0, fontface =2,
            label=paste0('Mean prediction: \n', city_prediction_stats$`Mean population`, ' people'))+
-  annotate("segment",x=city_prediction_stats$`Upper bound`, 
-           xend=city_prediction_stats$`Upper bound`, y=0, yend=0.000012)+
+  annotate("segment",x=city_prediction_stats$`Upper bound`,
+           xend=city_prediction_stats$`Upper bound`, y=0, yend=0.000005)+
   annotate('text',x=city_prediction_stats$`Upper bound`+5000, y=0.000001, hjust = 0,
            label=paste0('97.5% prediction \nbound: \n', city_prediction_stats$`Upper bound`, ' people'))+
-    annotate("segment",x=city_prediction_stats$`Lower bound`, 
-           xend=city_prediction_stats$`Lower bound`, y=0, yend=0.000012)+
+    annotate("segment",x=city_prediction_stats$`Lower bound`,
+           xend=city_prediction_stats$`Lower bound`, y=0, yend=0.000005)+
     annotate('text',x=city_prediction_stats$`Lower bound`+5000, y=0.000001, hjust = 0,
            label=paste0('2.5% prediction \nbound: \n', city_prediction_stats$`Lower bound`, ' people'))
 ```
@@ -1115,5 +1055,14 @@ that our model produces predictions with a very wide credible interval.
 Having the full distribution can answer questions such as *"what is the
 probability that there is more than xx people in the area"* or *"with a
 95% certainty, what is the maximum number of people in that area?"*
+
+
+# Acknowledgements
+
+This tutorial was written by Edith Darin from WorldPop, University of
+Southampton and Douglas Leasure from Leverhulme Centre for Demographic
+Science, University of Oxford.
+
+Funding for the work was provided by the United Nations Population Fund.
 
 # References
