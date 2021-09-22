@@ -256,6 +256,7 @@ class: hide_logo
 # A daily-life example
 
 ![](day1_presentation_files/pic/restaurant_diagram.png)
+
 .footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
 
 ---
