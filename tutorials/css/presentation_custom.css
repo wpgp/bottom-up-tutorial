@@ -9,3 +9,15 @@
   /*text-shadow: 0 0 5px #333;*/
   /*padding-left: 100px;   delete this for 4:3 aspect ratio */
 }
+
+h3 {
+  color: #333333;
+}
+
+.center2 {
+  position: absolute;
+  top: 50%;
+  left: 45%;
+  right: -10%;
+  transform: translate(-40%, -40%);
+}
