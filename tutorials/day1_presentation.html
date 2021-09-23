@@ -3,8 +3,8 @@
   <head>
     <title>Statistical population modelling for census support</title>
     <meta charset="utf-8" />
-    <meta name="author" content="Edith Darin, Douglas Leasure" />
-    <meta name="date" content="2021-07-07" />
+    <meta name="author" content="Edith Darin" />
+    <meta name="date" content="2021-09-22" />
     <script src="day1_presentation_files/header-attrs/header-attrs.js"></script>
     <link href="day1_presentation_files/remark-css/default.css" rel="stylesheet" />
     <script src="day1_presentation_files/fabric/fabric.min.js"></script>
@@ -20,8 +20,8 @@ class: center, middle, inverse, title-slide
 
 # Statistical population modelling for census support
 ## Day 1
-### Edith Darin, Douglas Leasure
-### 2021-07-07
+### Edith Darin
+### 2021-09-22
 
 ---
 
@@ -67,19 +67,560 @@ bottom:-3.5em;left:0.5em;
 })()</script>
 </div>
 
+ 
+
+# Today's agenda
 
 
-# Introduction
+--
+&lt;br&gt;
+
+
+### 1. Global introduction to population modelling
+
+--
+&lt;br&gt;
+
+### 2. Presentation of tutorial 1: *how to think about population as a Bayesian?*
+
+---
+class: bottom, hide_logo
+
+# Introduction's outline
+
+--
+&lt;br&gt;
+
+### 1. Population models in WorldPop
+
+--
+
+### 2. Why Bayesian
+
+--
+### 3. Bayesian foundations
+
+--
+### 4. Bayesian model estimation
+
+--
+### 5. Course outline
+
+--
+### 6. Course materials 
+&lt;br&gt;
+
 ---
 class: inverse, left, middle
 
-# Population modelling
+# Population models at WorldPop
+
+---
+class: center, middle
+
+# Goal
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Estimate population locally]
+
+---
+class: hide_logo
+
+# Gridded population
+
+![](day1_presentation_files/pic/griddedpop_ex.png)
+
+---
+
+# Benefits of gridded population
+
+.pull-left[
+### 1. Description of fine spatial variations
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_zoom.png)
+]
+---
+# Benefits of gridded population
+
+.pull-left[
+
+### 2. Consistent and comparable format 
+-    Identical size
+-    Identical shape
+-    Constant across time
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/gridcell_world.png)
+
+![](day1_presentation_files/pic/gridcell.png)
+]
+
+---
+
+# Benefits of gridded population
+
+
+.pull-left[
+### 3. Custom spatial aggregation
+
+- Around a point*: health center, school, earthquake center*
+
+- Around a line*: river, roads borders*
+
+- In a zone*: villages, catchment area*
+]
+
+--
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_agreg_pts.png)
+![](day1_presentation_files/pic/griddedpop_agreg.png)
+]
+
+---
+
+# Benefits of gridded population
+
+
+.pull-left[
+### 4. Flexible data agregation
+
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_use.png)
+
+]
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Two types of model]
+
+---
+class: inverse, center, middle
+
+# When population data with full coverage is available
+
+---
+class: center, middle
+
+# Top-down model
+
+---
+
+# Top-down model
+
+&lt;br&gt;
+&lt;br&gt;
+
+![](day1_presentation_files/pic/schema1. png.png)
+---
+# Top-down R tutorial
+
+![](day1_presentation_files/pic/topdown_tuto.PNG)
+
+
+https://htmlpreview.github.io/?https://github.com/wpgp/top-down-tutorial/blob/master/4_tutorial.html
 
 
 ---
+class: inverse, center, middle
+
+# When population data with full coverage is **not** available
+
+---
+class: center, middle
+
+![](day1_presentation_files/pic/issue_pop.png)
+
+---
+
+# Bottom-up model
+&lt;br&gt;
+
+&lt;br&gt;
+
+![](day1_presentation_files/pic/schema2.jpg)
+
+---
+# Released models
+
+![](day1_presentation_files/pic/current_pop.png)
+
+
+
+.center[https://wopr.worldpop.org/?/Population]
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Common feature:  &amp;nbsp; ]
+## .bg-white[They are all Bayesian models! &amp;nbsp;]
+
+---
+
+
 class:inverse, left, middle
 
-# Bayesian modelling
+# Why Bayesian statistics?
+
+---
+class: center, middle
+
+# But what is Bayesian statistics?
+
+---
+class: center, middle
+
+### 1.  Bayesian statistics are a **knowledge building process**
+---
+class: hide_logo
+
+# A daily-life example
+
+![](day1_presentation_files/pic/restaurant_diagram.png)
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+class: middle, hide_logo
+
+
+.pull-left[
+###Bayesian philosophy: 
+1.  having *prior* information about a phenomenon
+2.  interpreting incoming data in light of this *prior*
+3. concluding with an updated information or *posterior*]
+
+.pull-right[
+![](day1_presentation_files/pic/bayes_diagram.png)
+]
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+layout: true
+class: hide_logo
+
+# Test your Bayesian thinking
+
+---
+
+.center2[*When flipping a fair coin, we say that ‘the probability of flipping Heads is 0.5.’* 
+
+How do you interpret this probability?
+
+1. If I flip this coin over and over, roughly 50% will be Heads.
+2. Heads and Tails are equally plausible.]
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+
+.center2[*Consider two claims:* 
+
+*(1) Zuofu claims that he can predict the outcome of a coin flip. 
+To test his claim, you flip a fair coin 10 times and he correctly predicts all 10.* 
+
+*(2) Kavya claims that she can distinguish natural and artificial sweeteners.
+To test her claim, you give her 10 sweetener samples and she correctly identifies each* 
+
+What do you conclude?
+
+1. You’re more confident in Kavya’s claim than Zuofu’s claim.
+2. The evidence supporting Zuofu’s claim is just as strong as the evidence supporting Kavya’s claim.]
+
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+layout:false
+class: center, middle
+
+### 2.  Bayesian statistics are a different **perspective on probability**
+---
+class: hide_logo, middle
+# Defining probability
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+&lt;br&gt;
+&gt; ### **Bayesian philosophy**: probability measures the *relative plausibility* of an event.
+
+--
+&gt; ### **Frequentist philosophy**: probability measures the *long-run relative frequency* of a *repeatable* event.
+
+---
+class: center, middle
+
+### 3.  Bayesian statistics are **transparent about the assumptions made**
+---
+# Bayes rule
+
+$$ \text{posterior} \quad = \quad \frac{\text{prior } \cdot \text{ likelihood}}{\text{normalizing constant}} \; $$
+
+&lt;br&gt; 
+**Prior proability model** &lt;br /&gt;
+It captures our belief about the phenomenon. prior to seeing any data.
+
+**Likelihood**&lt;br /&gt;
+It represents the range of parameter values accompanied by
+the likelihood that each parameter explains the data we are observing.
+
+**Posterior probability model**&lt;br /&gt;
+It summarises the plausibility of a phenomenon.
+
+
+---
+# Toy example
+
+#### Modeller's question: *Will it rain tomorrow the 27th September 2021 in the UK?*
+
+&lt;br&gt;
+
+**Prior proability model**: &lt;br /&gt;
+It rains 60% of the time in September in the UK.
+
+**Likelihood**&lt;br /&gt;
+It is sunny today and climate models say that weather is stable in 40% of the case.
+
+**Posterior probability model** &lt;br /&gt;
+Knowing the weather of today in the UK and climate models,
+we can update the prior information of the weather in September in the UK.
+
+---
+# Balancing data and knwoledge
+
+&lt;br&gt;
+&lt;br&gt;
+
+![](day1_presentation_files/pic/bayes-balance-1.png)
+
+&lt;br&gt; 
+
+As we collect more data, priors lose their influence.
+
+More details in [Chapter 2, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-2.html)
+
+---
+
+class: center, middle
+
+### 4.  Bayesian statistics account for the **uncertainty in the model**
+---
+# Uncertainty quantification
+
+### Sources of uncertainty &lt;br/&gt;
+- Impossible to know all relevant predictors
+- Errors in data collection
+- Imperfect representativity of the sample
+- Individual variation
+
+&lt;br&gt; 
+--
+
+#### **Parameters are considered as variable and thus have a distribution**
+
+--
+#### **Predictions are considered as variable and thus have a distribution**
+
+---
+class: center, middle
+
+### 5.  Bayesian models makes you think about your question in terms of **distributions**
+
+---
+class: center, middle
+
+
+#Why Bayesian statistics ?
+
+--
+### Principled
+
+--
+
+### Flexible
+
+--
+
+### Good with missing data
+
+--
+
+### Humble
+
+---
+class: inverse, middle, center
+
+# Estimating Bayesian models
+---
+# Markov chain Monte Carlo
+
+#### **Goal**: Approximating the posterior distribution via simulation
+--
+
+**Monte Carlo** &lt;br /&gt;
+Estimate a parameter by generating random numbers and checking if it corrersponds to the structure
+
+--
+.pull-right[
+![](day1_presentation_files/pic/monte_carlo.png)
+]
+
+---
+# Markov chain Monte Carlo
+
+#### **Goal**: Approximating the posterior distribution via simulation
+
+**Monte Carlo** &lt;br /&gt;
+Estimate a parameter by generating random numbers and checking if it corrersponds to the structure
+
+**Markov chain** &lt;br /&gt;
+Sequences of samples probabilistically related
+
+---
+# Markov chain Monte Carlo
+
+#### **Goal**: Approximating the posterior distribution via simulation
+
+**MCMC** &lt;br /&gt;
+1. Pick a random parameter value
+2. Evaluate how likely the value is to explain the data given the prior belief
+3. Draw another value linked depending on the goodness of the previous value
+
+--
+.pull-right[
+![](day1_presentation_files/pic/mcmc.png)
+]
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+[A Zero-math introduction to MCMC methods](https://towardsdatascience.com/a-zero-math-introduction-to-markov-chain-monte-carlo-methods-dcba889e0c50)
+
+---
+# Stan
+
+
+[Stan](http://mc-stan.org/) is a probabilistic programming language
+for Bayesian estimation
+
+Language- and platform-agnostic back-end  with a
+**wide range of front-ends**:
+- Shell (“CmdStan”)
+- **R (“RStan”) **
+- Python (“PyStan”) 
+- Matlab (“MatlabStan”)
+- Stata (“StataStan”)
+- Julia (“JuliaStan”)
+
+Two step compilation process: model in `stan` code, translated to `C++` and compiled in a standalone binary
+
+&lt;br&gt;
+
+Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, 2.27. https://mc-stan.org
+
+---
+class: inverse, middle, center
+
+# Supporting readings
+---
+
+# Supporting readings
+
+1. [Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/)
+by Alicia A. Johnson, Miles Ott, Mine Dogucu
+
+--
+
+2. [An Introduction to Bayesian Data Analysis for Cognitive Science](https://vasishth.github.io/bayescogsci/book/)
+by Bruno Nicenboim, Daniel Schad, and Shravan Vasishth
+
+--
+
+3. [Bayesian Data Analysis](http://www.stat.columbia.edu/~gelman/book/BDA3.pdf), by Andrew Gelman, John Carlin, Hal Stern,
+Donald Rubin, David Dunson, and Aki Vehtari
+
+--
+
+4. [Bayesian Data Analisys course](https://avehtari.github.io/BDA_course_Aalto/), by Aki Vehtari
+
+---
+class: inverse, middle, center
+
+# Course outline
+---
+
+## Tutorial 1: How to think about population like a Bayesian
+
+--
+
+#### Normal model with simulated data
+--
+
+#### Poisson model with true data
+
+.center[![](day1_presentation_files/pic/model_l1.PNG)]
+
+--
+
+#### Lognormal model with true data
+.center[![](day1_presentation_files/pic/model_l2.PNG)]
+---
+
+## Tutorial 2: How to model large-scale spatial variations?
+
+--
+
+#### Hierarchical model with true data
+.center[![](day1_presentation_files/pic/model_l3.PNG)]
+
+---
+
+## Tutorial 3: How to model small-scale spatial variations?
+
+--
+
+#### Covariates model with true data
+
+.center[![](day1_presentation_files/pic/model_l4.PNG)]
+---
+## Tutorial 4: Advanced model diagnostics and prediction
+
+---
+
+# Course material
+
+- All the course presentation and tutorial are provided at this website:
+https://wpgp.github.io/bottom-up-tutorial/ 
+
+&lt;br&gt;
+
+- The raw code can be found on Github: &lt;br /&gt;
+https://github.com/wpgp/bottom-up-tutorial
+
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
