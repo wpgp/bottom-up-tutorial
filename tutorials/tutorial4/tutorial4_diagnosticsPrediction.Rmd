@@ -73,7 +73,7 @@ opportunity to talk about estimates uncertainty.
 
 -   [Evaluating regression
     models](https://www.bayesrulesbook.com/chapter-10.html) by the
-    bayesrules book, on poseterior predictive check and the difference
+    Bayes rules! book, on posterior predictive check and the difference
     between correct estimation and correct modelling.
 
 -   [Tidy data and Bayesian analysis make uncertainty visualization
@@ -249,7 +249,7 @@ fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan')
 ```
 
 
-As shown in previous paragraph, Bayesien estimation highly relies on choosing correct 
+As shown in previous paragraph, Bayesian estimation highly relies on choosing correct 
 priors for the parameters. Those
 priors should reflect expert knowledge about the quantity of interest
 that is, then, confronted with the observations. The prior model defines
@@ -263,7 +263,7 @@ the `stanfit` object. We do it using the `extract` function from
 
 ```{r, }
 mus <- data.frame(
-    # extact parameter
+    # extract parameter
     posterior=extract(fit, pars='mu')$mu,
     parameter = 'mu'
     )
@@ -338,7 +338,7 @@ occurs when the model does not only reproduce the information from the
 observations but also the noise. We want the model to be able to
 accurately predict population also unknown new study sites. This
 real-world scenario can be reproduced by keeping a percentage of the
-observations for model fitting and leaving the remaing study sites for
+observations for model fitting and leaving the remaining study sites for
 predicting, a mechanism called **cross-validation.**
 
 We need first to split our data in two, a training set (70%) that will
@@ -476,7 +476,7 @@ getPopPredictions <- function(model_fit,
 return(predicted_pop)
 }
 
-# build comparison dataframe betweeen in-sample and xvalidation
+# build comparison dataframe between in-sample and xvalidation
 comparison_df <- rbind(
  getPopPredictions(fit) %>% 
    mutate(Model='In-sample'),
@@ -492,7 +492,7 @@ comparison_df %>% group_by(Model) %>%
 ```
 
 Table \@ref(tab:xval) shows that all metrics shows a worse fit: the bias, the imprecision and the 
-inacurracy increase. However they still remains in the same range, which seems to indcate
+inaccuracy increase. However they still remains in the same range, which seems to indicate
 that our model is not overfitting.
 
 A good practice is to **always assess the model fit on the testing set** to avoid producing overly 
@@ -540,7 +540,7 @@ Grid-cell based model prediction requires thus 10 input rasters:
 -   a mastergrid that defines the grid cells for which to predict the
     population. These grid cells are (1) contained inside the study area, (2) considered as settled.
 
-Unfortunately we are not allowed to redistribute the settlement map used in Nigera v1.2, that
+Unfortunately we are not allowed to redistribute the settlement map used in Nigeria v1.2, that
 was provided by @oakridgenationallaboratory2018. We will thus provide
 the code to show all the steps of population prediction but you will not
 be able to run it.

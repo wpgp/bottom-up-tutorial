@@ -142,7 +142,7 @@ More formally, let's define $X$ a matrix of size *number of
 observations* x *number of covariates* that contains the covariates
 values for each study site and $\beta$ a vector of size the number of
 covariates. Based on Equation 3 in tutorial 2 (and removing the prior
-distribution for $\alpha_{t,r}$ for sake of readibility), we define
+distribution for $\alpha_{t,r}$ for sake of readability), we define
 $\mu$ the median of the Lognormal distribution as follows:
 
 ```{=tex}
@@ -245,7 +245,7 @@ main drivers of local population density variation:
     resources (for example travel time to cities [@weiss2018] )
 3.  *natural features* through remote sensing product such as radar data
     (Sentinel-1) or dry matter productivity (Copernicus)
-4.  *settlement shape* through the morphology of building fooptrints
+4.  *settlement shape* through the morphology of building footprints
     [@ecopia.ai2019] or settled area [@oakridgenationallaboratory2018]
 
 Other covariates sources that were considered (but not selected in the
@@ -301,7 +301,7 @@ grid cells.
 
 3.  Standardisation
 
-Scaling the covariate (that is substrastring the mean and dividing by
+Scaling the covariate (that is subtracting the mean and dividing by
 the standard deviation) can help enhancing meaningful local variations
 from the mean. The scaling can even be refined by computing the mean and
 the standard deviation by region, such that local variations are
@@ -341,7 +341,7 @@ Six covariates were used in Nigeria v1.2 model:
 Covariate `x_4` was scaled based on its mean and standard deviation
 nationally, whereas covariates `x_5` and `x_6` were scaled based on
 their mean and standard deviation within a 50-km radius. Leasure et at
-scaled `x_5` and `x_6` in this way because wethey suspected that
+scaled `x_5` and `x_6` in this way because they suspected that
 neighborhood types may not be directly comparable across regions
 (especially northern versus southern Nigeria). This scaling also reduced
 correlation with `x_4` .
@@ -376,7 +376,7 @@ of the covariate values at grid cell level.*
 
 Figure \@ref(fig:scatter) shows the relation between the covariates and
 the population density at study site level. We see that household size
-(`x_3`) is positively assocaited with population density. The
+(`x_3`) is positively associated with population density. The
 negative value are due to the scaling method adopted. On the opposite,
 nonresidential settled area (`x_6`) is negatively associated which is
 expected: the more the surroundings are nonresidential the lower the
@@ -587,7 +587,7 @@ fit1bis <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.st
                    init= inits.out)
 ```
 
-We only observe the same issue than in tutorial 2 that is integrer overflow for the prediction of population in the warmup period.
+We only observe the same issue than in tutorial 2 that is integer overflow for the prediction of population in the warmup period.
 We can safely say that the model has converged.
 
 We can plot the $\hat\beta_k$. The sign and
