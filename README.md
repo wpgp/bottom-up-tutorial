@@ -26,7 +26,7 @@ The `data` folder contains outputs of the tutorial.
 
 The tutorials were written by Edith Darin from WorldPop, University of
 Southampton and Douglas Leasure from Leverhulme Centre for Demographic
-Science, University of Oxford, with supervision from Andrew Tatem, orldPop, University of
+Science, University of Oxford, with supervision from Andrew Tatem, WorldPop, University of
 Southampton.
 
 Funding for the work was provided by the United Nations Population Fund.
