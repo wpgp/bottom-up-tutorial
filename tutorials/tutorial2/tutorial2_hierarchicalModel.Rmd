@@ -996,10 +996,10 @@ saveRDS(fit3, 'tutorial2_model3_fit.rds')
 
 # Acknowledgements
 
-This tutorial was written by Edith Darin from WorldPop, University of
-Southampton and Douglas Leasure from Leverhulme Centre for Demographic
-Science, University of Oxford.
+This tutorial was written by Edith Darin from WorldPop, University of Southampton and 
+Douglas Leasure from Leverhulme Centre for Demographic Science, University of Oxford, 
+with supervision from Andrew Tatem, WorldPop, University of Southampton.
+Funding for the work was provided by the United Nations Population Fund (UNFPA).
 
-Funding for the work was provided by the United Nations Population Fund.
 
 # References
