@@ -17,7 +17,9 @@ xaringanthemer::style_mono_light(base_color = "#ff8000")
 ```
 
 ```{r xaringanExtra-scribble, echo=FALSE}
-xaringanExtra::use_scribble()
+xaringanExtra::use_scribble(
+  pen_color = "#408000"
+)
 ```
 
 ```{r xaringan-logo, echo=FALSE}
