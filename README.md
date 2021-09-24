@@ -6,10 +6,17 @@ It has been developed by the [WorldPop Research Group](<https://www.worldpop.org
 
 It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/en/home-eng.html), in October 2021.
 
+# Tutorials outline
+
+-   [Introduction](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/)
+-   [Tutorial 1](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial1/): How to think about population as a Bayesian?
+-   [Tutorial 2](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial2/): How to model large-scale spatial variations?
+-   [Tutorial 3](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial3/): How to model small-scale spatial variations?
+-   [Tutorial 4](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial4/): Advanced model diagnostics and prediction
 
 # Folder content
 
-The relevant materials are to be found in the [`tutorials`](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials) folder.
+The relevant materials are in the [`tutorials`](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials) folder.
 
 Each tutorial has its dedicated folder that contains:
 - Tutorial material
