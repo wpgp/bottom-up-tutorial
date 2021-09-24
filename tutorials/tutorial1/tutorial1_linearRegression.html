@@ -281,7 +281,7 @@ div.tocify {
 for census support</h1>
 <h3 class="subtitle">Tutorial 1: How to think about population as a Bayesian?</h3>
 <h4 class="author"></h4>
-<h4 class="date">Compiled on 22/09/2021</h4>
+<h4 class="date">Compiled on 24/09/2021</h4>
 
 </div>
 
@@ -454,7 +454,7 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time </code></pre>
 of Bayesian modelling and their implementation in <code>stan</code>.</p>
 <p>We produce our fake data as 1000 draws of a Normal distribution with
 mean 5 and standard deviation 50:</p>
-<pre class="r"><code># 2 Simulated data
+<pre class="r"><code># 2 Simulated data ----
 
 # Simulate data
 seed &lt;- 2004
@@ -1225,34 +1225,34 @@ cluster_10
 iter_1
 </td>
 <td style="text-align:right;">
-423
+442
 </td>
 <td style="text-align:right;">
-402
+431
+</td>
+<td style="text-align:right;">
+464
+</td>
+<td style="text-align:right;">
+422
+</td>
+<td style="text-align:right;">
+439
+</td>
+<td style="text-align:right;">
+459
+</td>
+<td style="text-align:right;">
+416
+</td>
+<td style="text-align:right;">
+419
+</td>
+<td style="text-align:right;">
+444
 </td>
 <td style="text-align:right;">
 455
-</td>
-<td style="text-align:right;">
-415
-</td>
-<td style="text-align:right;">
-414
-</td>
-<td style="text-align:right;">
-435
-</td>
-<td style="text-align:right;">
-445
-</td>
-<td style="text-align:right;">
-413
-</td>
-<td style="text-align:right;">
-430
-</td>
-<td style="text-align:right;">
-434
 </td>
 </tr>
 <tr>
@@ -1260,34 +1260,34 @@ iter_1
 iter_2
 </td>
 <td style="text-align:right;">
-469
+431
 </td>
 <td style="text-align:right;">
-410
+408
 </td>
 <td style="text-align:right;">
-460
+499
 </td>
 <td style="text-align:right;">
-460
+420
 </td>
 <td style="text-align:right;">
-458
+470
 </td>
 <td style="text-align:right;">
-423
+437
 </td>
 <td style="text-align:right;">
-461
+454
 </td>
 <td style="text-align:right;">
-477
+446
 </td>
 <td style="text-align:right;">
-461
+428
 </td>
 <td style="text-align:right;">
-461
+451
 </td>
 </tr>
 <tr>
@@ -1295,34 +1295,34 @@ iter_2
 iter_3
 </td>
 <td style="text-align:right;">
-461
+457
 </td>
 <td style="text-align:right;">
-440
+467
 </td>
 <td style="text-align:right;">
-441
+455
 </td>
 <td style="text-align:right;">
-410
+454
 </td>
 <td style="text-align:right;">
-475
+480
 </td>
 <td style="text-align:right;">
-421
+485
 </td>
 <td style="text-align:right;">
-433
+418
 </td>
 <td style="text-align:right;">
-441
+445
 </td>
 <td style="text-align:right;">
-410
+443
 </td>
 <td style="text-align:right;">
-473
+401
 </td>
 </tr>
 <tr>
@@ -1330,34 +1330,34 @@ iter_3
 iter_4
 </td>
 <td style="text-align:right;">
+422
+</td>
+<td style="text-align:right;">
+473
+</td>
+<td style="text-align:right;">
+467
+</td>
+<td style="text-align:right;">
+397
+</td>
+<td style="text-align:right;">
+455
+</td>
+<td style="text-align:right;">
+462
+</td>
+<td style="text-align:right;">
 465
 </td>
 <td style="text-align:right;">
-424
+450
 </td>
 <td style="text-align:right;">
-479
+461
 </td>
 <td style="text-align:right;">
-484
-</td>
-<td style="text-align:right;">
-443
-</td>
-<td style="text-align:right;">
-471
-</td>
-<td style="text-align:right;">
-474
-</td>
-<td style="text-align:right;">
-445
-</td>
-<td style="text-align:right;">
-431
-</td>
-<td style="text-align:right;">
-434
+462
 </td>
 </tr>
 <tr>
@@ -1365,34 +1365,34 @@ iter_4
 iter_5
 </td>
 <td style="text-align:right;">
-465
+455
 </td>
 <td style="text-align:right;">
-451
+439
 </td>
 <td style="text-align:right;">
-430
+461
 </td>
 <td style="text-align:right;">
-453
+433
 </td>
 <td style="text-align:right;">
-434
+452
 </td>
 <td style="text-align:right;">
-424
+474
 </td>
 <td style="text-align:right;">
-459
+460
 </td>
 <td style="text-align:right;">
-398
+435
 </td>
 <td style="text-align:right;">
-453
+482
 </td>
 <td style="text-align:right;">
-414
+410
 </td>
 </tr>
 <tr>
@@ -1400,34 +1400,34 @@ iter_5
 iter_6
 </td>
 <td style="text-align:right;">
-438
+439
 </td>
 <td style="text-align:right;">
-431
+435
+</td>
+<td style="text-align:right;">
+470
 </td>
 <td style="text-align:right;">
 456
 </td>
 <td style="text-align:right;">
-437
-</td>
-<td style="text-align:right;">
-450
+463
 </td>
 <td style="text-align:right;">
 424
 </td>
 <td style="text-align:right;">
-440
+419
 </td>
 <td style="text-align:right;">
-450
+442
 </td>
 <td style="text-align:right;">
-462
+478
 </td>
 <td style="text-align:right;">
-440
+448
 </td>
 </tr>
 <tr>
@@ -1435,34 +1435,34 @@ iter_6
 iter_7
 </td>
 <td style="text-align:right;">
-456
+447
+</td>
+<td style="text-align:right;">
+436
+</td>
+<td style="text-align:right;">
+469
 </td>
 <td style="text-align:right;">
 437
 </td>
 <td style="text-align:right;">
-449
+454
 </td>
 <td style="text-align:right;">
-435
+466
 </td>
 <td style="text-align:right;">
-468
+470
 </td>
 <td style="text-align:right;">
-443
+437
 </td>
 <td style="text-align:right;">
-480
+475
 </td>
 <td style="text-align:right;">
-442
-</td>
-<td style="text-align:right;">
-414
-</td>
-<td style="text-align:right;">
-438
+458
 </td>
 </tr>
 <tr>
@@ -1470,34 +1470,34 @@ iter_7
 iter_8
 </td>
 <td style="text-align:right;">
-435
+404
 </td>
 <td style="text-align:right;">
-421
+434
 </td>
 <td style="text-align:right;">
-441
+460
 </td>
 <td style="text-align:right;">
-423
+419
+</td>
+<td style="text-align:right;">
+453
 </td>
 <td style="text-align:right;">
 473
 </td>
 <td style="text-align:right;">
-422
+457
 </td>
 <td style="text-align:right;">
-436
+448
 </td>
 <td style="text-align:right;">
-442
+435
 </td>
 <td style="text-align:right;">
-456
-</td>
-<td style="text-align:right;">
-411
+443
 </td>
 </tr>
 <tr>
@@ -1505,34 +1505,34 @@ iter_8
 iter_9
 </td>
 <td style="text-align:right;">
-454
+459
 </td>
 <td style="text-align:right;">
-438
+439
 </td>
 <td style="text-align:right;">
-447
+463
 </td>
 <td style="text-align:right;">
-432
+469
 </td>
 <td style="text-align:right;">
-429
+420
 </td>
 <td style="text-align:right;">
-424
+434
 </td>
 <td style="text-align:right;">
-427
+413
 </td>
 <td style="text-align:right;">
-449
+448
 </td>
 <td style="text-align:right;">
-443
+410
 </td>
 <td style="text-align:right;">
-460
+411
 </td>
 </tr>
 <tr>
@@ -1543,31 +1543,31 @@ iter_10
 455
 </td>
 <td style="text-align:right;">
-432
+501
 </td>
 <td style="text-align:right;">
-446
+443
 </td>
 <td style="text-align:right;">
-425
+461
 </td>
 <td style="text-align:right;">
-453
+418
 </td>
 <td style="text-align:right;">
-459
+436
 </td>
 <td style="text-align:right;">
-438
-</td>
-<td style="text-align:right;">
-480
-</td>
-<td style="text-align:right;">
-457
+447
 </td>
 <td style="text-align:right;">
 427
+</td>
+<td style="text-align:right;">
+468
+</td>
+<td style="text-align:right;">
+428
 </td>
 </tr>
 </tbody>
@@ -1865,7 +1865,7 @@ that the log observed median of the population density is
 geometric standard deviation is
 0.87.</p>
 <p>We choose as prior for <span class="math inline">\(\mu\)</span> a Normal(5,4):</p>
-<pre class="r fold-hide"><code># Model2: Lognormal ---
+<pre class="r fold-hide"><code># 5 Model2: Lognormal ----
 
 # define prior for mu
 data$prior_mu &lt;- rnorm(nrow(data), mean= 5, sd=4)
@@ -2108,9 +2108,19 @@ introduced in the next tutorials.</p>
 <div id="acknowledgements" class="section level1">
 <h1>Acknowledgements</h1>
 <p>This tutorial was written by Edith Darin from WorldPop, University of
-Southampton and Douglas Leasure from Leverhulme Centre for Demographic
-Science, University of Oxford.</p>
-<p>Funding for the work was provided by the United Nations Population Fund.</p>
+Southampton and</p>
+<p>Douglas Leasure from Leverhulme Centre for Demographic Science,
+University of Oxford,</p>
+<p>with supervision from Andrew Tatem, WorldPop, University of Southampton.</p>
+<p>Funding for the work was provided by the United Nations Population Fund
+(UNFPA).</p>
+</div>
+<div id="license" class="section level1">
+<h1>License</h1>
+<p>You are free to redistribute this document under the terms of a Creative
+Commons Attribution-NoDerivatives 4.0 International (<a href="%5Bhttps://creativecommons.org/licenses/by-nd/4.0/">CC BY-ND
+4.0</a>)](<a href="https://creativecommons.org/licenses/by-nd/4.0/" class="uri">https://creativecommons.org/licenses/by-nd/4.0/</a>)))
+license.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>

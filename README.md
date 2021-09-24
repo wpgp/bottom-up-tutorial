@@ -38,6 +38,11 @@ Southampton.
 
 Funding for the work was provided by the United Nations Population Fund.
 
+# License
+
+You are free to redistribute this document under the terms of a Creative Commons Attribution-NoDerivatives 4.0
+International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) license.
+
 <br>
 
 <br>

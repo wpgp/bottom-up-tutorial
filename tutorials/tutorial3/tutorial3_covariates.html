@@ -9,7 +9,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Edith Darin and Douglas Leasure" />
 
 
 <title>Population modelling for census support</title>
@@ -281,8 +280,7 @@ div.tocify {
 <h1 class="title toc-ignore">Population modelling
 for census support</h1>
 <h3 class="subtitle">Tutorial 3: How to model small-scale spatial variations?</h3>
-<h4 class="author">Edith Darin and Douglas Leasure</h4>
-<h4 class="date">Compiled on 20/09/2021</h4>
+<h4 class="date">Compiled on 24/09/2021</h4>
 
 </div>
 
@@ -386,14 +384,14 @@ regression model</strong> that integrates the covariates.</p>
 observations</em> x <em>number of covariates</em> that contains the covariates
 values for each study site and <span class="math inline">\(\beta\)</span> a vector of size the number of
 covariates. Based on Equation 3 in tutorial 2 (and removing the prior
-distribution for <span class="math inline">\(\alpha_{t,r}\)</span> for sake of readibility), we define
+distribution for <span class="math inline">\(\alpha_{t,r}\)</span> for sake of readability), we define
 <span class="math inline">\(\mu\)</span> the median of the Lognormal distribution as follows:</p>
 <span class="math display" id="eq:model1">\[\begin{equation}
 
 population 〜 Poisson( pop\_density * settled\_area) \\
 pop\_density 〜 Lognormal(\mu, \: \sigma) \\
 
-\mu = \alpha_{t,r} + \beta_1 X_1 + \beta_2X_2 \\[10pt]
+\mu = \alpha_{t,r} + \beta X \\[10pt]
 
 \beta 〜 Normal(0,10)\tag{1}
 
@@ -850,7 +848,7 @@ example <span class="citation">Institut Géographique du Burkina Faso (2015)</sp
 resources (for example travel time to cities <span class="citation">(Weiss et al. 2018)</span> )</li>
 <li><em>natural features</em> through remote sensing product such as radar data
 (Sentinel-1) or dry matter productivity (Copernicus)</li>
-<li><em>settlement shape</em> through the morphology of building fooptrints
+<li><em>settlement shape</em> through the morphology of building footprints
 <span class="citation">(Ecopia.AI and Maxar Technologies 2019)</span> or settled area <span class="citation">(Oak Ridge National Laboratory 2018)</span></li>
 </ol>
 <p>Other covariates sources that were considered (but not selected in the
@@ -900,7 +898,7 @@ grid cells.</p>
 <ol start="3" style="list-style-type: decimal">
 <li>Standardisation</li>
 </ol>
-<p>Scaling the covariate (that is substrastring the mean and dividing by
+<p>Scaling the covariate (that is subtracting the mean and dividing by
 the standard deviation) can help enhancing meaningful local variations
 from the mean. The scaling can even be refined by computing the mean and
 the standard deviation by region, such that local variations are
@@ -918,13 +916,13 @@ study site level</p></li>
 </ul>
 </div>
 </div>
-<div id="covariates-in-nigeria-v1.2" class="section level1">
-<h1>Covariates in Nigeria, v1.2</h1>
+<div id="including-covariates-in-the-model" class="section level1">
+<h1>Including covariates in the model</h1>
 <p>We focused in the remaining parts of the tutorial on the data we
 downloaded from <span class="citation">Leasure et al. (2020)</span> which corresponds to the Nigeria model
 v1.2.</p>
-<div id="overview-of-the-covariates" class="section level2">
-<h2>Overview of the covariates</h2>
+<div id="overview-of-the-covariates-in-nigeria-v1.2" class="section level2">
+<h2>Overview of the covariates in Nigeria, v1.2</h2>
 <p>Six covariates were used in Nigeria v1.2 model:</p>
 <ul>
 <li><code>x_1</code>: gridded population estimates from WorldPop Global</li>
@@ -938,7 +936,7 @@ results from 2013</li>
 <p>Covariate <code>x_4</code> was scaled based on its mean and standard deviation
 nationally, whereas covariates <code>x_5</code> and <code>x_6</code> were scaled based on
 their mean and standard deviation within a 50-km radius. Leasure et at
-scaled <code>x_5</code> and <code>x_6</code> in this way because wethey suspected that
+scaled <code>x_5</code> and <code>x_6</code> in this way because they suspected that
 neighborhood types may not be directly comparable across regions
 (especially northern versus southern Nigeria). This scaling also reduced
 correlation with <code>x_4</code> .</p>
@@ -958,8 +956,8 @@ One key reason for including this covariate was to account for a strong
 north–south gradient in household sizes, with significantly more people
 per household in northern Nigeria than in southern Nigeria.</p>
 </div>
-<div id="data-preparation" class="section level2">
-<h2>Data preparation</h2>
+<div id="preparing-the-data" class="section level2">
+<h2>Preparing the data</h2>
 <p>To integrate the covariates in the model, we build first a dataset with
 the average of the covariate values for each study site using zonal
 statistics.</p>
@@ -968,9 +966,9 @@ if the range of covariates values at study site level is representative
 of the covariate values at grid cell level.</em></p>
 <p>Figure <a href="#fig:scatter">3</a> shows the relation between the covariates and
 the population density at study site level. We see that household size
-(<code>x_3</code>) is strongly positively correlated with population density. The
+(<code>x_3</code>) is positively associated with population density. The
 negative value are due to the scaling method adopted. On the opposite,
-nonresidential settled area (<code>x_6</code>) is negatively correlated which is
+nonresidential settled area (<code>x_6</code>) is negatively associated which is
 expected: the more the surroundings are nonresidential the lower the
 population density.</p>
 <pre class="r fold-hide"><code># prepare data
@@ -1114,9 +1112,7 @@ x6
 prediction stage (in Tutorial 4).</p>
 <pre class="r"><code>write_csv(covs_scaled, &#39;tutorials/data/covs_scaled.csv&#39;)
 write_csv(scale_factor, &#39;tutorials/data/scale_factor.csv&#39;)</code></pre>
-</div>
-<div id="model-implementation" class="section level2">
-<h2>Model implementation</h2>
+<p>##Implementing the model</p>
 <p>Equation <a href="#eq:model1">(1)</a> is implemented in <code>stan</code> as follows:</p>
 <pre class="stan"><code>// Model 1: Independent alpha by settlement type
 
@@ -1313,6 +1309,8 @@ fit1 &lt;- rstan::stan(file = file.path(&#39;tutorials/tutorial3/tutorial3_model
 ## population_hat[121],The following variables have undefined values:
 ## population_hat[122],Th</code></pre>
 <p>The model runs into convergence issues.</p>
+<div id="a-note-on-initialisation" class="section level3">
+<h3>A note on initialisation</h3>
 <p>This is an opportunity to discuss about <strong>initialisation<em>.</em></strong> MCMC
 simulations that are the backbone of Bayesian estimation needs to be
 given an initial value to start exploring the parameter space.</p>
@@ -1322,7 +1320,9 @@ parameters. The seed of the random number generator used by Stan can be
 specified via the seed argument. If the seed for Stan is fixed, the same
 initial values are used. The default is to randomly generate initial
 values between -2 and 2 on the unconstrained support&quot;.</em></p>
-<p>Based on our understanding of population distribution, we can</p>
+<p>Based on our understanding of population distribution,
+we define the start of the estimation process in the environs of the likely parameters value.</p>
+<p>We will initialise only root parameters, that are not depending on other parameters.</p>
 <pre class="r"><code>inits.out &lt;- list()
 set.seed(stan_data_model1$seed)
 
@@ -1338,6 +1338,7 @@ for (c in 1:chains){
   
   inits.out[[c]] &lt;- inits.i
 }</code></pre>
+<p>We run the estimation with these initialisation values.</p>
 <pre class="r"><code>fit1bis &lt;- rstan::stan(file = file.path(&#39;tutorials/tutorial3/tutorial3_model1.stan&#39;), 
                    data = stan_data_model1,
                    iter = warmup + iter, 
@@ -1469,13 +1470,18 @@ for (c in 1:chains){
 ## population_hat[120],The following variables have undefined values:
 ## population_hat[121],The following variables have undefined values:
 ## population_hat[122],Th</code></pre>
-<p>No convergence issue. We can plot the <span class="math inline">\(\hat\beta_k\)</span>. The sign and
+<p>We only observe the same issue than in tutorial 2 that is integer overflow for the prediction of population in the warmup period.
+We can safely say that the model has converged.</p>
+<p>We can plot the <span class="math inline">\(\hat\beta_k\)</span>. The sign and
 magnitude of the covariate effects are inline with the correlation shown
 in Figure <a href="#fig:scatter">3</a>.</p>
 <pre class="r"><code>stan_plot(fit1, pars=&#39;beta&#39;, fill_color=&#39;orange&#39;)</code></pre>
 <p><img src="data:image/png;base64,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" width="672" /></p>
-<p>The next question is: <strong>How does integrating covariates improve the
-model?</strong></p>
+</div>
+</div>
+<div id="comparing-prediction-with-previous-model" class="section level2">
+<h2>Comparing prediction with previous model</h2>
+<p>The next question is: <strong>How much improvement is brought by integrating covariates in the model?</strong></p>
 <p>We load Tutorial 2 model 3 to compare:</p>
 <pre class="r"><code>fit0 &lt;- readRDS(&#39;tutorials/tutorial2/tutorial2_model3_fit.rds&#39;)</code></pre>
 <p>We can then compute the predictions for every study site and compare the
@@ -1518,8 +1524,7 @@ comparison_df &lt;- rbind(
 comparison_df %&gt;% group_by(Model) %&gt;% 
   summarise( `Bias`= mean(residual),
     `Inaccuracy` = mean(abs(residual)),
-        `Imprecision` = sd(residual),
-    `Mean Confidence Interval Size` =mean(ci_size)
+        `Imprecision` = sd(residual)
 ) %&gt;%  kbl(caption = &#39;Goodness-of-metrics comparison with and without covariates &#39;) %&gt;% kable_minimal()</code></pre>
 <table class=" lightable-minimal" style="font-family: &quot;Trebuchet MS&quot;, verdana, sans-serif; margin-left: auto; margin-right: auto;">
 <caption>
@@ -1539,9 +1544,6 @@ Inaccuracy
 <th style="text-align:right;">
 Imprecision
 </th>
-<th style="text-align:right;">
-Mean Confidence Interval Size
-</th>
 </tr>
 </thead>
 <tbody>
@@ -1558,9 +1560,6 @@ With covariates
 <td style="text-align:right;">
 276.0208
 </td>
-<td style="text-align:right;">
-1249.628
-</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1574,9 +1573,6 @@ Without covariates
 </td>
 <td style="text-align:right;">
 284.0779
-</td>
-<td style="text-align:right;">
-1271.425
 </td>
 </tr>
 </tbody>
@@ -1869,8 +1865,7 @@ each study site.</p>
 comparison_df %&gt;% group_by(model) %&gt;% 
   summarise( `Bias`= mean(residual),
     `Inaccuracy` = mean(abs(residual)),
-        `Imprecision` = sd(residual),
-    `Mean Confidence Interval Size` = mean(ci_size)
+        `Imprecision` = sd(residual)
 ) %&gt;%  kbl(caption = &#39;Goodness-of-metrics comparison with and without random effect in x4 &#39;) %&gt;% kable_minimal()</code></pre>
 <table class=" lightable-minimal" style="font-family: &quot;Trebuchet MS&quot;, verdana, sans-serif; margin-left: auto; margin-right: auto;">
 <caption>
@@ -1890,9 +1885,6 @@ Inaccuracy
 <th style="text-align:right;">
 Imprecision
 </th>
-<th style="text-align:right;">
-Mean Confidence Interval Size
-</th>
 </tr>
 </thead>
 <tbody>
@@ -1909,9 +1901,6 @@ Fixed effect
 <td style="text-align:right;">
 276.0208
 </td>
-<td style="text-align:right;">
-1249.628
-</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1926,9 +1915,6 @@ Random effect in x4
 <td style="text-align:right;">
 275.3592
 </td>
-<td style="text-align:right;">
-1243.098
-</td>
 </tr>
 </tbody>
 </table>
@@ -1937,6 +1923,18 @@ estimates with shorter credible intervals.</p>
 <p>We will save the results of this final model as a RDS file to explore it
 in Tutorial 4.</p>
 <pre class="r"><code>saveRDS(fit2, &#39;tutorials/tutorial3/tutorial3_model2_fit.rds&#39;)</code></pre>
+</div>
+<div id="acknowledgements" class="section level1">
+<h1>Acknowledgements</h1>
+<p>This tutorial was written by Edith Darin from WorldPop, University of Southampton and
+Douglas Leasure from Leverhulme Centre for Demographic Science, University of Oxford,
+with supervision from Andrew Tatem, WorldPop, University of Southampton.
+Funding for the work was provided by the United Nations Population Fund (UNFPA).</p>
+</div>
+<div id="license" class="section level1">
+<h1>License</h1>
+<p>You are free to redistribute this document under the terms of a Creative Commons Attribution-NoDerivatives 4.0
+International (<a href="https://creativecommons.org/licenses/by-nd/4.0/">CC BY-ND 4.0</a>) license.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
