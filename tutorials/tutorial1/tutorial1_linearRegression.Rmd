@@ -960,9 +960,9 @@ the variance of a Poisson variable.
 
 A source of overdispersion comes from the size of the clusters. We
 observed population counts for units with different area, in particular
-different sizes of settled areas as shown in Figure \@ref(fig:poparea).
+different sizes of settled areas as shown in Figure \@ref(fig:pop-area).
 
-```{r poparea, class.source = 'fold-hide', caption='Scatterplot contrasting population count with settled area for every cluster'}
+```{r pop-area, class.source = 'fold-hide', fig.cap='Scatterplot contrasting population count with settled area for every cluster'}
 #plot overdispersion
 ggplot(data, aes(x=A, y=N))+
   geom_point()+
