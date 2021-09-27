@@ -663,7 +663,7 @@ and the model parameter:
 ```{r, echo=F}
 # 4 Model1: Poisson distribution ----
 
-# Normal model DAG
+# Poisson model DAG
 dagify(
   Population ~ lambda,
   outcome = 'Population'
@@ -983,15 +983,17 @@ The left hand side of the equation is a discrete observed variable
 whereas the right hand side is composed of two continuous variables, one
 observed, the *settled_area* and one latent, the *pop_density*.
 
+### Writing the model
+
 Formally we can rewrite Equation \@ref(eq:model1) as:
 
 $$
 population \sim Poisson( pop\_density * settled\_area)
 $$
 
-This formulation unveils a continuous positive latent variable,
+This formulation unveils the continuous positive scale-free latent variable,
 *pop_density* that can be modelled with its own distribution. We opt for
-a **Lognormal which is a continuous probability distribution of a random
+a **[Lognormal](https://en.wikipedia.org/wiki/Log-normal_distribution) which is a continuous probability distribution of a random
 variable whose logarithm is normally distributed**. It is characterised
 by a positive distribution skewed to the right. The lognormal has two
 parameters, $\mu$, its location parameter that defines its median and
@@ -999,7 +1001,25 @@ $\sigma$ its scale parameter that defines its geometric standard
 deviation. This model allows us to capture overdispersion through
 $\sigma$.
 
-### Writing the model
+
+```{r, echo=F}
+# Lognormal model DAG
+dagify(
+  Population ~ Pop_density,
+  Population ~ Settled_area,
+  Pop_density ~ mu,
+  Pop_density ~ sigma,
+  outcome = 'Population'
+  ) %>%
+  tidy_dagitty(seed=3) %>% 
+  mutate(color=c('parameter','data','parameter','parameter','data')) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+  geom_dag_point() +
+  geom_dag_edges() +
+  geom_dag_text(col = "grey20",size=4,  parse=T) +
+  scale_shape_manual(values=c(15,19))+
+  theme_dag()+ labs(title = 'Model 2: Lognormal-Poisson distribution of population count', color='', shape='')
+```
 
 Applied to our population modelling it gives us:
 
