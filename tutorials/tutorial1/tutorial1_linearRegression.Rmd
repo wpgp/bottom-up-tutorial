@@ -992,7 +992,9 @@ population \sim Poisson( pop\_density * settled\_area)
 $$
 
 This formulation unveils the continuous positive scale-free latent variable,
-*pop_density* that can be modelled with its own distribution. We opt for
+*pop_density* that can be modelled with its own distribution. 
+
+We opt for
 a **[Lognormal](https://en.wikipedia.org/wiki/Log-normal_distribution) which is a continuous probability distribution of a random
 variable whose logarithm is normally distributed**. It is characterised
 by a positive distribution skewed to the right. The lognormal has two
@@ -1001,6 +1003,12 @@ $\sigma$ its scale parameter that defines its geometric standard
 deviation. This model allows us to capture overdispersion through
 $\sigma$.
 
+```{r, echo = FALSE, fig.cap = "Probability distribution functions of log-normal distributions Source: Krishnavedala, CC0, via Wikimedia Commons", fig.align='center'}
+# map sample locations
+knitr::include_graphics("../../assets/pic/tuto1_log_normal_distributions.png")
+```
+
+Applied to our population modelling it gives us:
 
 ```{r, echo=F}
 # Lognormal model DAG
@@ -1021,8 +1029,7 @@ dagify(
   theme_dag()+ labs(title = 'Model 2: Lognormal-Poisson distribution of population count', color='', shape='')
 ```
 
-Applied to our population modelling it gives us:
-
+And in formal modelling:
 ```{=tex}
 \begin{equation}
 
