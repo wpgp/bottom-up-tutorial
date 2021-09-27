@@ -555,6 +555,10 @@ Donald Rubin, David Dunson, and Aki Vehtari
 
 4. [Bayesian Data Analysis course](https://avehtari.github.io/BDA_course_Aalto/), by Aki Vehtari
 
+--
+
+5. [Bayesian workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf), by Andrew Gelman et al
+
 ---
 class: inverse, middle, center
 
