@@ -281,7 +281,7 @@ div.tocify {
 for census support</h1>
 <h3 class="subtitle">Tutorial 1: How to think about population as a Bayesian?</h3>
 <h4 class="author"></h4>
-<h4 class="date">Compiled on 24/09/2021</h4>
+<h4 class="date">Compiled on 27/09/2021</h4>
 
 </div>
 
@@ -563,7 +563,7 @@ stan.</p>
 <pre class="stan"><code>// Model for simulated data: y as normal distribution
 data {
   int&lt;lower=0&gt; n; // number of observations
-  vector[n] y; // observations
+  real y[n]; // observations
 }
 
 // The parameters accepted by the model. Our model
@@ -1225,31 +1225,31 @@ cluster_10
 iter_1
 </td>
 <td style="text-align:right;">
-442
+402
 </td>
 <td style="text-align:right;">
-431
+400
 </td>
 <td style="text-align:right;">
-464
+465
 </td>
 <td style="text-align:right;">
-422
+467
 </td>
 <td style="text-align:right;">
-439
+411
 </td>
 <td style="text-align:right;">
-459
+411
 </td>
 <td style="text-align:right;">
-416
+432
 </td>
 <td style="text-align:right;">
-419
+448
 </td>
 <td style="text-align:right;">
-444
+413
 </td>
 <td style="text-align:right;">
 455
@@ -1260,34 +1260,34 @@ iter_1
 iter_2
 </td>
 <td style="text-align:right;">
-431
+426
+</td>
+<td style="text-align:right;">
+427
 </td>
 <td style="text-align:right;">
 408
 </td>
 <td style="text-align:right;">
-499
+415
 </td>
 <td style="text-align:right;">
-420
+452
 </td>
 <td style="text-align:right;">
-470
+392
 </td>
 <td style="text-align:right;">
-437
+439
 </td>
 <td style="text-align:right;">
-454
+401
 </td>
 <td style="text-align:right;">
-446
+480
 </td>
 <td style="text-align:right;">
-428
-</td>
-<td style="text-align:right;">
-451
+460
 </td>
 </tr>
 <tr>
@@ -1295,34 +1295,34 @@ iter_2
 iter_3
 </td>
 <td style="text-align:right;">
-457
+436
 </td>
 <td style="text-align:right;">
-467
+431
+</td>
+<td style="text-align:right;">
+432
 </td>
 <td style="text-align:right;">
 455
 </td>
 <td style="text-align:right;">
-454
+489
 </td>
 <td style="text-align:right;">
-480
+433
 </td>
 <td style="text-align:right;">
-485
+476
 </td>
 <td style="text-align:right;">
-418
+447
 </td>
 <td style="text-align:right;">
-445
+434
 </td>
 <td style="text-align:right;">
-443
-</td>
-<td style="text-align:right;">
-401
+414
 </td>
 </tr>
 <tr>
@@ -1330,34 +1330,34 @@ iter_3
 iter_4
 </td>
 <td style="text-align:right;">
-422
+445
 </td>
 <td style="text-align:right;">
-473
+441
 </td>
 <td style="text-align:right;">
-467
-</td>
-<td style="text-align:right;">
-397
-</td>
-<td style="text-align:right;">
-455
-</td>
-<td style="text-align:right;">
-462
-</td>
-<td style="text-align:right;">
-465
+423
 </td>
 <td style="text-align:right;">
 450
 </td>
 <td style="text-align:right;">
-461
+491
 </td>
 <td style="text-align:right;">
-462
+433
+</td>
+<td style="text-align:right;">
+449
+</td>
+<td style="text-align:right;">
+457
+</td>
+<td style="text-align:right;">
+463
+</td>
+<td style="text-align:right;">
+449
 </td>
 </tr>
 <tr>
@@ -1365,34 +1365,34 @@ iter_4
 iter_5
 </td>
 <td style="text-align:right;">
-455
+414
 </td>
 <td style="text-align:right;">
-439
+428
 </td>
 <td style="text-align:right;">
-461
+453
 </td>
 <td style="text-align:right;">
-433
+451
 </td>
 <td style="text-align:right;">
-452
+459
 </td>
 <td style="text-align:right;">
-474
+476
 </td>
 <td style="text-align:right;">
-460
+459
 </td>
 <td style="text-align:right;">
-435
+420
 </td>
 <td style="text-align:right;">
-482
+413
 </td>
 <td style="text-align:right;">
-410
+419
 </td>
 </tr>
 <tr>
@@ -1400,34 +1400,34 @@ iter_5
 iter_6
 </td>
 <td style="text-align:right;">
-439
+424
 </td>
 <td style="text-align:right;">
-435
+430
 </td>
 <td style="text-align:right;">
-470
+441
 </td>
 <td style="text-align:right;">
-456
+447
+</td>
+<td style="text-align:right;">
+446
+</td>
+<td style="text-align:right;">
+474
 </td>
 <td style="text-align:right;">
 463
 </td>
 <td style="text-align:right;">
-424
+462
 </td>
 <td style="text-align:right;">
-419
+462
 </td>
 <td style="text-align:right;">
-442
-</td>
-<td style="text-align:right;">
-478
-</td>
-<td style="text-align:right;">
-448
+466
 </td>
 </tr>
 <tr>
@@ -1435,34 +1435,34 @@ iter_6
 iter_7
 </td>
 <td style="text-align:right;">
-447
+414
+</td>
+<td style="text-align:right;">
+449
+</td>
+<td style="text-align:right;">
+426
+</td>
+<td style="text-align:right;">
+429
 </td>
 <td style="text-align:right;">
 436
 </td>
 <td style="text-align:right;">
-469
+434
 </td>
 <td style="text-align:right;">
-437
+424
 </td>
 <td style="text-align:right;">
-454
+478
 </td>
 <td style="text-align:right;">
-466
+444
 </td>
 <td style="text-align:right;">
-470
-</td>
-<td style="text-align:right;">
-437
-</td>
-<td style="text-align:right;">
-475
-</td>
-<td style="text-align:right;">
-458
+472
 </td>
 </tr>
 <tr>
@@ -1470,34 +1470,34 @@ iter_7
 iter_8
 </td>
 <td style="text-align:right;">
-404
+444
 </td>
 <td style="text-align:right;">
-434
+477
 </td>
 <td style="text-align:right;">
-460
+480
 </td>
 <td style="text-align:right;">
-419
+397
 </td>
 <td style="text-align:right;">
-453
-</td>
-<td style="text-align:right;">
-473
-</td>
-<td style="text-align:right;">
-457
-</td>
-<td style="text-align:right;">
-448
+459
 </td>
 <td style="text-align:right;">
 435
 </td>
 <td style="text-align:right;">
-443
+463
+</td>
+<td style="text-align:right;">
+418
+</td>
+<td style="text-align:right;">
+430
+</td>
+<td style="text-align:right;">
+437
 </td>
 </tr>
 <tr>
@@ -1505,34 +1505,34 @@ iter_8
 iter_9
 </td>
 <td style="text-align:right;">
-459
+455
 </td>
 <td style="text-align:right;">
-439
+474
 </td>
 <td style="text-align:right;">
-463
+408
 </td>
 <td style="text-align:right;">
-469
+462
 </td>
 <td style="text-align:right;">
-420
+451
 </td>
 <td style="text-align:right;">
-434
+461
 </td>
 <td style="text-align:right;">
-413
+499
 </td>
 <td style="text-align:right;">
-448
+471
 </td>
 <td style="text-align:right;">
-410
+451
 </td>
 <td style="text-align:right;">
-411
+488
 </td>
 </tr>
 <tr>
@@ -1540,34 +1540,34 @@ iter_9
 iter_10
 </td>
 <td style="text-align:right;">
-455
+417
 </td>
 <td style="text-align:right;">
-501
+401
 </td>
 <td style="text-align:right;">
-443
+430
 </td>
 <td style="text-align:right;">
-461
-</td>
-<td style="text-align:right;">
-418
+453
 </td>
 <td style="text-align:right;">
 436
 </td>
 <td style="text-align:right;">
-447
+437
 </td>
 <td style="text-align:right;">
-427
+462
 </td>
 <td style="text-align:right;">
-468
+418
 </td>
 <td style="text-align:right;">
-428
+412
+</td>
+<td style="text-align:right;">
+453
 </td>
 </tr>
 </tbody>
