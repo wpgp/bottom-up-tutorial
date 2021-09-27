@@ -1161,6 +1161,8 @@ generated quantities{
    }
 }
 ```
+Note that we need to use the `vector` format for `area` and `pop_density`.
+This formatting is implied by definition of the multiplication operation for the Poisson rate.
 
 We store the model under `tutorial1_model2.stan`, and prepare the
 corresponding data:
@@ -1199,13 +1201,7 @@ No warnings are shown.
 **Question**: Can you plot the traceplot and interpret it?
 :::
 
-<details>
-
-<summary>
-
-Click for the solution
-
-</summary>
+<details><summary>Click for the solution</summary>
 
 We plot the traceplot:
 
@@ -1270,9 +1266,10 @@ ggplot(comparison_df %>%
 
 We see for the `population_density` the same estimation pattern as in
 the Poisson model, that is a similar mean posterior prediction
-distribution for every survey sites. The predicted `population_count`
-is, in contrast, influenced by the `settled_area` and by the variance
-term that adapts the confidence intervals for each cluster.
+distribution for every survey sites. In contrast, the length of the confidence intervals
+varies between cluster predictions due to the variance term in the Lognormal.
+Furthermore the predicted `population_count`
+is influenced by the varying `settled_area`.
 
 We use the same metrics based on residuals to assess the goodness-of-fit
 of the model.
@@ -1311,12 +1308,8 @@ saveRDS(fit_model2, 'tutorial1_model2_fit.rds')
 # Acknowledgements
 
 This tutorial was written by Edith Darin from WorldPop, University of
-Southampton and
-
-Douglas Leasure from Leverhulme Centre for Demographic Science,
-University of Oxford,
-
-with supervision from Andrew Tatem, WorldPop, University of Southampton.
+Southampton and Douglas Leasure from Leverhulme Centre for Demographic Science,
+University of Oxford, with supervision from Andrew Tatem, WorldPop, University of Southampton.
 
 Funding for the work was provided by the United Nations Population Fund
 (UNFPA).
@@ -1325,7 +1318,7 @@ Funding for the work was provided by the United Nations Population Fund
 
 You are free to redistribute this document under the terms of a Creative
 Commons Attribution-NoDerivatives 4.0 International ([CC BY-ND
-4.0]([https://creativecommons.org/licenses/by-nd/4.0/))](https://creativecommons.org/licenses/by-nd/4.0/)))
+4.0](https://creativecommons.org/licenses/by-nd/4.0/))
 license.
 
 # References
