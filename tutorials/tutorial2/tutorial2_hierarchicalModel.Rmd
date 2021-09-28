@@ -16,7 +16,7 @@ editor_options:
 bibliography: references.bib
 ---
 
-```{r logo, echo=FALSE}
+```{r logo, echo=FALSE, purl=F}
 ###LOAD WP LOGO##
 htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
@@ -38,7 +38,7 @@ local({
 ![](../../assets/pic/wp_logotype_gray_low.png)
 
 ```{r, class.source = 'fold-hide', warning=F, message=F}
-# 1 Set-up ---
+# 1 Set-up ----
 
 # load libraries
 library(tidyverse) # managing data
@@ -127,6 +127,8 @@ knitr::include_graphics("../../assets/pic/tuto2_nga_pop_map.png")
 Let's plot the population density distribution by regions:
 
 ```{r popDens-boxplot, class.source = 'fold-hide', fig.cap='Boxplot of population densities per region'}
+# 2 Hierarchy in the data ----
+
 library(RColorBrewer)
 
 # prepare data
@@ -161,7 +163,7 @@ refers to a settlement map based on satellite imagery (Pleiades, Airbus
 and WorldView2, DigitalGlobe) classified into eight **settlement types**
 pictured in Figure \@ref(fig:sett-map) @weber2018.
 
-```{r sett-map, echo=F, fig.cap='Exemplars of the urban residential (A–F), rural residential (M), and non-residential (Z) types for Kano and Kaduna states, Nigeria, from Weber et al (2018)'}
+```{r sett-map, purl=F,  echo=F, fig.cap='Exemplars of the urban residential (A–F), rural residential (M), and non-residential (Z) types for Kano and Kaduna states, Nigeria, from Weber et al (2018)'}
 knitr::include_graphics(here('./assets/pic/tuto2_settlement.jpg'))
 ```
 
@@ -201,6 +203,7 @@ structure by clicking on a specific group.
 
 ```{r group-schema, message=F, warning=F,class.source = 'fold-hide', fig.cap='Full grouping structure of the survey (settlement, region, state, local)'}
 library(plotly)
+# Visualise grouping of the data
 # create unique id for the nested admin level
 data1 <- data %>% 
   mutate(state= paste0(state,region),
@@ -404,7 +407,7 @@ Let's see the different scenarios for estimating $\alpha$ by settlement
 type (we will show only for three settlement types for sake of
 simplicity):
 
-```{r, class.source = 'fold-hide'}
+```{r, class.source = 'fold-hide', purl=F}
 d1 <- dagify(
     Y ~ alpha,
     outcome = 'Y'
@@ -483,7 +486,7 @@ pop\_density \sim Lognormal( \alpha_t, \sigma) \\[5pt]
 How do you write it in Stan? We will show only the code that is
 impacted.
 
-```{stan output.var="simpleCode", eval=F }
+```{stan output.var="simpleCode", eval=F, purl=F }
 // Model 1: Independent alpha by settlement type
 data{
   ...
@@ -529,6 +532,9 @@ Once the model is written, we prepare the corresponding data, adding the
 settlement type:
 
 ```{r}
+# 3. Hierarchical model by settlement type ----
+
+# No-pooling
 # prepare data for stan
 stan_data_model1 <- list(
   population = data$N,
@@ -675,7 +681,7 @@ for $\nu_\alpha$, the standard deviation of the
 
 In `stan` we will write the mode like this:
 
-```{stan output.var="simpleCode", eval=F }
+```{stan output.var="simpleCode", eval=F , purl=F}
 // Model 2: Hierarchical alpha by settlement type
 parameters{
   ...
@@ -697,6 +703,8 @@ We add the new parameters to the parameters to monitor and we run the
 model:
 
 ```{r}
+# Partial pooling
+
 pars <- c('alpha_t','alpha', 'nu_alpha', 'sigma', 'population_hat', 'density_hat')
 
 # mcmc
@@ -713,8 +721,11 @@ We can now compare the estimated parameters between a no pooling and a
 partial pooling framework.
 
 ```{r comp-alpha-t, fig.cap='Comparison between alpha_t estimated independently and hierarchically',class.source = 'fold-hide'}
+# extract parameters from both models
 fit2_alpha_t <- summary(fit2, pars=c('alpha_t'))$summary
 fit1_alpha_t <-  summary(fit1, pars=c('alpha_t'))$summary
+
+# plot parameters
 data_plot <- rbind(
   as_tibble(fit1_alpha_t, rownames='param') %>% 
     mutate(model='No pooling'),
@@ -744,6 +755,8 @@ how incorporating the settlement type grouping has a direct effect on
 the prediction.
 
 ```{r metrics-comp-pooling,class.source = 'fold-hide'}
+# Complete pooling 
+
 # load previous model for complete pooling
 fit_tuto1_model2 <- readRDS('../tutorial1/tutorial1_model2_fit.rds')
 
@@ -805,7 +818,7 @@ pop\_density \sim Lognormal( \alpha_{t,r}, \sigma) \\[5pt]
 
 The model is translated in `stan` as :
 
-```{stan output.var="simpleCode", eval=F }
+```{stan output.var="simpleCode", eval=F , purl=F}
 // Model 3: Hierarchical alpha by settlement type and region
 
 data{
@@ -858,6 +871,8 @@ Note the new `transformed parameters` block: it is useful to keep your
 We add the region indexing to the data list prepared for stan:
 
 ```{r}
+# 4. Hierarchical model by settlement type and region ----
+
 # prepare data for stan
 stan_data_model3 <- list(
   population = data$N,
@@ -986,6 +1001,7 @@ comparison_df %>%
 We will store model 3 to use as comparison in tutorial 2.
 
 ```{r, eval=F}
+# save model
 saveRDS(fit3, 'tutorial2_model3_fit.rds')
 ```
 

@@ -1,21 +1,4 @@
-###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
-               alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
-
-knitr::opts_chunk$set(fig.align = "center") 
-
-local({
-  hook_output <- knitr::knit_hooks$get('warning')
-  knitr::knit_hooks$set(warning = function(x, options) {
-    if (!is.null(options$max.height)) options$attr.warning <- c(
-      options$attr.warning,
-      sprintf('style="max-height: %s;"', options$max.height)
-    )
-    hook_output(x, options)
-  })
-})
-
-# 1 Set-up ---
+# 1 Set-up ----
 
 # load libraries
 library(tidyverse) # managing data
@@ -33,6 +16,8 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled mode
 ## install.packages('plotly') # interactive plot
 
 
+
+# 2 Hierarchy in the data ----
 
 library(RColorBrewer)
 
@@ -56,7 +41,7 @@ ggplot(data %>%
   scale_fill_stepsn( colours = brewer.pal(6, "YlOrRd"))+
   labs(fill='Mean \npopulation \ndensity', x='Population density', y='Region')
 
-knitr::include_graphics(here('./assets/pic/tuto2_settlement.jpg'))
+
 
 # plot population density per settlement type
 ggplot(data %>% 
@@ -71,6 +56,7 @@ ggplot(data %>%
   labs(fill='Population density \n(mean)', x='', y='Settlement type')
 
 library(plotly)
+# Visualise grouping of the data
 # create unique id for the nested admin level
 data1 <- data %>% 
   mutate(state= paste0(state,region),
@@ -178,107 +164,13 @@ plot_ly() %>%
       grid = list(columns =2, rows = 1),
       margin = list(l = 0, r = 0, b = 0, t = 0))
 
-d1 <- dagify(
-    Y ~ alpha,
-    outcome = 'Y'
-  ) %>%
-    tidy_dagitty(seed=1) %>% 
-    mutate(color=c('parameter','data')) %>% 
-    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
-    geom_dag_point() +
-    geom_dag_edges() +
-    geom_dag_text(col = "grey20",size=3,  parse=T) +
-    scale_shape_manual(values=c(15,19))+
-    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'Complete pooling', color='', shape='')
 
-d2 <- dagify(
-    Y ~ alpha_1+alpha_2+ alpha_3,
-    outcome = 'Y'
-  ) %>%
-    tidy_dagitty(seed=1) %>% 
-    mutate(color=c('parameter','parameter','parameter','data')) %>% 
-    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
-    geom_dag_point() +
-    geom_dag_edges() +
-    geom_dag_text(col = "grey20",size=3,  parse=T) +
-    scale_shape_manual(values=c(15,19))+
-    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'No pooling', color='', shape='')
 
-d3 <- dagify(
-    Y ~ alpha_1+alpha_2+ alpha_3,
-    alpha_1 ~ alpha,
-    alpha_2 ~ alpha,
-    alpha_3 ~ alpha,
-    outcome = 'Y',
-    latent = 'alpha'
-  ) %>%
-    tidy_dagitty(seed=7) %>% 
-    mutate(color=c('parameter','parameter','parameter','parameter','parameter','parameter','data')) %>% 
-    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
-    geom_dag_point() +
-    geom_dag_edges() +
-    geom_dag_text(col = "grey20",size=3,  parse=T) +
-    scale_shape_manual(values=c(15,19))+
-    theme_dag()+ guides(color='none', shape='none')+ labs(title = 'Partial pooling', color='', shape='')
 
-gridExtra::grid.arrange(d1,d2,d3, ncol=3)
 
-## // Model 1: Independent alpha by settlement type
+# 3. Hierarchical model by settlement type ----
 
-## data{
-
-##   ...
-
-##   int<lower=0> type[n]; // settlement type
-
-##   int<lower=0> ntype; // number of settlement types
-
-## }
-
-## parameters{
-
-##   ...
-
-##   // independent intercept by settlement type
-
-##   vector[ntype] alpha_t;
-
-## }
-
-## model{
-
-##   // population totals
-
-##   ...
-
-##   pop_density ~ lognormal( alpha_t[type], sigma );
-
-## 
-
-##   // independent intercept by settlement type
-
-##   alpha_t ~ normal(5, 4);
-
-##   ...
-
-## }
-
-## generated quantities{
-
-##   ...
-
-##    for(idx in 1:n){
-
-##      density_hat[idx] = lognormal_rng( alpha_t[type[idx]], sigma );
-
-##      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
-
-##    }
-
-## }
-
-## 
-
+# No-pooling
 # prepare data for stan
 stan_data_model1 <- list(
   population = data$N,
@@ -359,36 +251,9 @@ ggplot(
   facet_wrap(.~type, scales = 'free')
 
 
-## // Model 2: Hierarchical alpha by settlement type
 
-## parameters{
 
-##   ...
-
-##   // hierarchical intercept by settlement
-
-##   vector[ntype] alpha_t;
-
-##   real alpha;
-
-##   real<lower=0> nu_alpha;
-
-## }
-
-## model{
-
-##   ...
-
-##   // hierarchical intercept by settlement
-
-##   alpha_t ~ normal(alpha, nu_alpha);
-
-##   alpha ~ normal(5, 10);
-
-##   nu_alpha ~ uniform(0, 15);
-
-## }
-
+# Partial pooling
 
 pars <- c('alpha_t','alpha', 'nu_alpha', 'sigma', 'population_hat', 'density_hat')
 
@@ -401,8 +266,11 @@ fit2 <- rstan::stan(file = file.path('tutorial2_model2.stan'),
                    pars = pars,
                    seed = seed)
 
+# extract parameters from both models
 fit2_alpha_t <- summary(fit2, pars=c('alpha_t'))$summary
 fit1_alpha_t <-  summary(fit1, pars=c('alpha_t'))$summary
+
+# plot parameters
 data_plot <- rbind(
   as_tibble(fit1_alpha_t, rownames='param') %>% 
     mutate(model='No pooling'),
@@ -422,6 +290,8 @@ ggplot(data_plot, aes(mean,param_, color=model, fill=model,label=labels))+
   labs(y='')+
     scale_y_discrete(labels=data_plot$labels)
 
+
+# Complete pooling 
 
 # load previous model for complete pooling
 fit_tuto1_model2 <- readRDS('../tutorial1/tutorial1_model2_fit.rds')
@@ -443,92 +313,9 @@ comparison_df %>% group_by(model) %>%
         `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-fit metrics comparison between complete pooling, no pooling, and partial pooling') %>% kable_minimal()
 
-## // Model 3: Hierarchical alpha by settlement type and region
 
-## 
-## data{
 
-##   ...
-
-##   int<lower=1> nregion; //number of regions
-
-##   int<lower=1,upper=nregion> region[n]; // region
-
-## }
-
-## parameters{
-
-##   ...
-
-##   // hierarchical intercept by settlement and region
-
-##   real alpha;
-
-## 
-
-##   vector[ntype] alpha_t;
-
-##   vector[nregion] alpha_t_r[ntype];
-
-## 
-
-##   real<lower=0> nu_alpha;
-
-##   real<lower=0> nu_alpha_t;
-
-## }
-
-## transformed parameters{
-
-##   vector[n] pop_density_mean;
-
-## 
-
-##   for(idx in 1:n){
-
-##     pop_density_mean[idx] = alpha_t_r[type[idx],region[idx]];
-
-##   }
-
-## }
-
-## model{
-
-##   pop_density ~ lognormal(pop_density_mean, sigma );
-
-## 
-##   // hierarchical intercept by settlement and region
-
-##   alpha ~ normal(5, 10);
-
-##   nu_alpha ~ uniform(0, 15);
-
-##   nu_alpha_t ~ uniform(0, 15);
-
-## 
-
-##   alpha_t ~ normal(alpha, nu_alpha);
-
-## 
-
-##   for(t in 1:ntype){
-
-##     alpha_t_r[t,] ~ normal(alpha_t[t], nu_alpha_t);
-
-##   }
-
-##   ...
-
-## }
-
-## generated quantities{
-
-##   ...
-
-##   density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]], sigma );
-
-## }
-
+# 4. Hierarchical model by settlement type and region ----
 
 # prepare data for stan
 stan_data_model3 <- list(
@@ -577,4 +364,5 @@ comparison_df %>%
         `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-metrics comparison of the hierarchical models') %>% kable_minimal()
 
+## # save model
 ## saveRDS(fit3, 'tutorial2_model3_fit.rds')
