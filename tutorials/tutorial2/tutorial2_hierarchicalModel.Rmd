@@ -267,12 +267,13 @@ Note that:
 
 2.  not every group combination is represented in the data. Some
     region/state/local governmental area do not have survey sites
-    belonging to all settlement types. Figure
-    \@ref(fig:group-complete-schema) shows the regions with missing
-    settlement type. We can't assess from this analysis if those
-    settlement types are missing because they have not being sampled in
-    our survey or they don't exist (for example a remote region that
-    does not contain any highly urban settlement type).
+    belonging to all settlement types.
+
+Figure \@ref(fig:group-complete-schema) shows the regions with missing
+settlement type. We can't assess from this analysis if those
+settlement types are missing because they have not being sampled in
+our survey or they don't exist (for example a remote region that
+does not contain any highly urban settlement type).
 
 ```{r group-complete-schema, message=F, warning=F,class.source = 'fold-hide', fig.cap='Grouping structure of the survey (settlement, region) with missing combinations in yellow'}
 makeSunburst2layer <- function(data){
@@ -374,7 +375,7 @@ Let's recall our previous model:
 ```{=tex}
 \begin{equation}
 
-population \sim Poisson( pop\_density * settled\_area) \\
+population \sim Poisson( pop\_density * settled\_area) \\[10pt]
 
 pop\_density \sim Lognormal( \mu, \sigma) \\
 
@@ -458,8 +459,8 @@ We will see the difference between the three models: complete pooling
 (one $\alpha$), no pooling (3 $\alpha$s) and partial pooling (3 $\alpha$
 + 1 overarching $\alpha$).
 
-**Model 2 from tutorial 1 is based on complete pooling of the data or
-fixed effect: a unique** $\alpha$ **for all settlement type.**
+Model 2 from tutorial 1 is based on complete pooling of the data or
+fixed effect: a unique $\alpha$ for all settlement type.
 
 ### No-pooling
 
@@ -474,7 +475,7 @@ but independent prior *Normal(5,4)*.
 
 population \sim Poisson( pop\_density * settled\_area) \\
 
-pop\_density \sim Lognormal( \alpha_t, \sigma) \\[5pt]
+pop\_density \sim Lognormal( \alpha_t, \sigma) \\[10pt]
 
 
 \alpha_t \sim Normal( 5, 4 ) \\
@@ -804,9 +805,10 @@ Let's include region in the modelling:
 
 population \sim Poisson( pop\_density * settled\_area) \\
 
-pop\_density \sim Lognormal( \alpha_{t,r}, \sigma) \\[5pt]
+pop\_density \sim Lognormal( \alpha_{t,r}, \sigma) \\[10pt]
+
 \alpha_{t,r} \sim Normal(\alpha_t, \nu_t) \\
-\alpha_t \sim Normal( \alpha, \nu) \\[5pt]
+\alpha_t \sim Normal( \alpha, \nu) \\[10pt]
 
 \alpha \sim Normal( 5, 10 ) \\
 \nu \sim Uniform( 0, 15 ) \\
@@ -814,6 +816,13 @@ pop\_density \sim Lognormal( \alpha_{t,r}, \sigma) \\[5pt]
 \sigma \sim Uniform( 0, 10 )
 \end{equation}
 ```
+
+We see that the priors for $\alpha_{t,r}$, the median per region and settlement type, 
+depend on two overarching parameters, $\alpha_t$ and $\nu_t$ that are estimated by settlement type.
+The priors for $\alpha_t$, the median per settlement type, depend on two overarching parameters
+$\alpha$ and $\nu$ that are estimated at the national level.
+
+
 ### Implementing the model
 
 The model is translated in `stan` as :
@@ -838,14 +847,14 @@ parameters{
   real<lower=0> nu_alpha_t;
 }
 transformed parameters{
-  vector[n] pop_density_mean;
+  vector[n] pop_density_median;
   
   for(idx in 1:n){
-    pop_density_mean[idx] = alpha_t_r[type[idx],region[idx]];
+    pop_density_median[idx] = alpha_t_r[type[idx],region[idx]];
   }
 }
 model{
-  pop_density ~ lognormal(pop_density_mean, sigma );
+  pop_density ~ lognormal(pop_density_median, sigma );
 
   // hierarchical intercept by settlement and region
   alpha ~ normal(5, 10);
@@ -919,7 +928,7 @@ traceplot(fit3, 'density_hat[2]', inc_warmup=T)
 
 Let's look at the estimated $\hat\alpha_{t,r}$. Since there are 1
 $\hat\alpha$, 5 $\hat\alpha_t$ and 5x11 $\hat\alpha_{t,r}$, we will zoom
-in on two settlement types in particular, 1 and 4. To do so, remember how
+in on only two settlement types in particular, 1 and 4. To do so, remember how
 the parameter names are constructed:
 
 -   `alpha_t` is a vector of dimension 5, such that `alpha_t[1]`
