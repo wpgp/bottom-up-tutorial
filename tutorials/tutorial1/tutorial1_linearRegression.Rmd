@@ -60,22 +60,24 @@ interface `rstan`.
 
 2.  Adapt the statistician toolbox to a real-world example
 
-3.  Fit a Normal model in `stan` for modelling population:
+3.  Fit a Normal model in `stan` with simulated data:
 
     1.  Format data for `stan`
 
     2.  Specify a model in the `stan` language
 
     3.  Set up a MCMC sampler to fit the model
+    
+4.  Fit a Poisson model for population count
 
-    4.  Evaluate results and limitations
+    1.  Evaluate results and limitations
 
-4.  Fit a Poisson-Lognormal model for modelling population
+5.  Fit a Poisson-Lognormal model for modelling population
 
 ### Supporting readings
 
 This series of tutorials are not an introduction to statistics. For this
-specific lesson, it would be good to be familiar some statistical
+specific lesson, it would be good to be familiar with some statistical
 concepts, and for that purpose we indicate useful resources:
 
 -   Probabilistic distribution
@@ -160,7 +162,7 @@ dagify(
     theme_dag()+ labs(title = 'Graph of a linear regression', color='', shape='')
 ```
 
-In a DAG, Squares represent data and circles represent parameters.
+In a DAG, squares represent data and circles represent parameters.
 Directions of arrows indicate dependence.
 
 In a Bayesian model, all root node parameters (those with no arrows
@@ -281,7 +283,8 @@ ggplot(data, aes(x=y))+
 
 ### Modelling the data
 
-Now we want to model $y$, our observations. We see that $y$ has a clear
+Let's pretend we don't know how the observations, $y$ have been created. 
+We want to model $y$ and we see that it has a clear
 bell shape. It can thus be **approximated with a Normal distribution**
 that is: $$Y \sim Normal(mean=\mu, sd=\sigma)$$
 
@@ -290,7 +293,7 @@ The corresponding DAG is:
 ```{r, class.source = 'fold-hide',}
 # Normal model DAG
 dagify(
-  Y ~ alpha,
+  Y ~ mu,
   Y ~ sigma) %>%
   tidy_dagitty(seed=41) %>% 
   mutate(color=c('parameter', 'parameter','data')) %>% 
@@ -526,7 +529,7 @@ mean_pop <- mean(data$y)
 sd_pop <- sd(data$y)
 
 
-alpha_plot <- stan_plot(fit, 'mu',fill_color='orange')+
+mu_plot <- stan_plot(fit, 'mu',fill_color='orange')+
   annotate('segment',x=mean_pop, xend=mean_pop, 
            y=0.7, yend=1.2,col='grey40', size=1)+
   annotate('text',x=mean_pop, 
@@ -550,7 +553,7 @@ sigma_plot <- stan_plot(fit, 'sigma', fill_color='orange')+
     annotate('text',x=estimated['sigma', 'mean'], 
            y=1.5, col='orange',label= paste0('Estimated\n',round(estimated['sigma', 'mean'],2)), fontface =2, size=4.5)
 
-gridExtra::grid.arrange(alpha_plot, sigma_plot, nrow=2)
+gridExtra::grid.arrange(mu_plot, sigma_plot, nrow=2)
 
 ```
 
@@ -588,7 +591,7 @@ download.file(
 
 ## The data
 
-The data consists of household surveys that collected information on the
+The data consist of household surveys that collected information on the
 total population in 1141 clusters in 15 of 37 states in Nigeria during
 2016 and 2017. Clusters varied slightly in size, but were all
 approximately 3 hectares. These clusters were randomly sampled locations
@@ -679,8 +682,8 @@ dagify(
 ```
 
 We then have to define the prior for $\lambda$, which corresponds to the
-mean of the Poisson distribution. We will choose relatively uninformed
-priors based on our understanding of the data.
+mean of the Poisson distribution. We will choose a relatively uninformed
+prior based on our understanding of the data.
 
 We know that the mean observed population count is around 450 per
 cluster. We set up the prior for $\lambda$ to follow a Uniform between 0
@@ -804,7 +807,7 @@ stan_plot(fit, 'lambda',fill_color='orange')+
 
 ```
 
-The estimated mean corresponds to the observed mean.
+The estimated mean is very close to the observed mean.
 
 ### Predicted population count
 
@@ -818,7 +821,7 @@ It is possible in `stan` to do it as part of the estimation process
 through the **generated quantities block** .
 
 ```{stan output.var="simpleCode", eval=F, purl=F }
-// Model 2bis: Population count as a normal distribution with integrated predictions
+// Model 1bis: Population count as a normal distribution with integrated predictions
 ...
 generated quantities{
    real population_hat[n];
@@ -893,7 +896,7 @@ comparison_df %>% head() %>% kbl() %>% kable_minimal()
 ```
 
 We note that all predictions are very similar. The model includes only
-two parameters --- mean and standard deviation --- and the site-level
+one parameter --- lambda --- and the site-level
 predictions do not account for any site-level characteristics.
 Therefore, predictions at each site are drawn from the exact same
 distribution.
@@ -979,9 +982,9 @@ $$
 population = pop\_density * settled\_area
 $$
 
-The left hand side of the equation is a discrete observed variable
-whereas the right hand side is composed of two continuous variables, one
-observed, the *settled_area* and one latent, the *pop_density*.
+The left hand side of the equation is *population*, a discrete observed variable,
+whereas the right hand side is composed of two continuous variables, *settled_area* the settled area, an
+observed variable, and *pop_density*, the population density, a latent variable.
 
 ### Writing the model
 
@@ -1147,7 +1150,7 @@ model{
   population ~ poisson(pop_density .* area);
   pop_density ~ lognormal( mu, sigma );
   // intercept
-  alpha ~ normal(5, 4);
+  mu ~ normal(5, 4);
   // variance
   sigma ~ uniform(0, 4);
 }
@@ -1156,7 +1159,7 @@ generated quantities{
    real<lower=0> density_hat[n];
 
    for(idx in 1:n){
-     density_hat[idx] = lognormal_rng( alpha, sigma );
+     density_hat[idx] = lognormal_rng( mu, sigma );
      population_hat[idx] = poisson_rng(density_hat[idx] * area[idx]);
    }
 }
@@ -1210,7 +1213,7 @@ We plot the traceplot:
 traceplot(fit_model2, c('mu', 'sigma'))
 ```
 
-We see that the chain have mixed well and that the posterior
+We see that the chains have mixed well and that the posterior
 distributions of the parameters are not constrained by their prior
 specification.
 

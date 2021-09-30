@@ -190,7 +190,7 @@ ggplot(data, aes(x=N))+
 
 # 4 Model1: Poisson distribution ----
 
-# Normal model DAG
+# Poisson model DAG
 dagify(
   Population ~ lambda,
   outcome = 'Population'
@@ -318,6 +318,26 @@ ggplot(data, aes(x=A, y=N))+
   geom_point()+
   theme_minimal()+
   labs(x='Settled area in hectares', y='Population count')
+
+# map sample locations
+knitr::include_graphics("../../assets/pic/tuto1_log_normal_distributions.png")
+
+# Lognormal model DAG
+dagify(
+  Population ~ Pop_density,
+  Population ~ Settled_area,
+  Pop_density ~ mu,
+  Pop_density ~ sigma,
+  outcome = 'Population'
+  ) %>%
+  tidy_dagitty(seed=3) %>% 
+  mutate(color=c('parameter','data','parameter','parameter','data')) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
+  geom_dag_point() +
+  geom_dag_edges() +
+  geom_dag_text(col = "grey20",size=4,  parse=T) +
+  scale_shape_manual(values=c(15,19))+
+  theme_dag()+ labs(title = 'Model 2: Lognormal-Poisson distribution of population count', color='', shape='')
 
 # 5 Model2: Lognormal ----
 
