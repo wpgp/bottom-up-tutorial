@@ -45,12 +45,12 @@ parameters{
 }
 
 transformed parameters{
-  vector[n] pop_density_mean;
+  vector[n] pop_density_median;
   vector[n] beta;
 
   for(idx in 1:n){
     beta[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
-    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
+    pop_density_median[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
   }
   
 }
@@ -60,7 +60,7 @@ model{
   // population totals
   population ~ poisson(pop_density .* area);
   
-  pop_density ~ lognormal(pop_density_mean, sigma );
+  pop_density ~ lognormal(pop_density_median, sigma );
   
   // hierarchical intercept by settlement and region
   alpha ~ normal(5, 10);

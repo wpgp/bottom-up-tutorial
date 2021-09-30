@@ -1,18 +1,3 @@
-###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("assets/pic/320px-UNFPA_logo.svg.png"),
-               alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
-
-local({
-  hook_output <- knitr::knit_hooks$get('warning')
-  knitr::knit_hooks$set(warning = function(x, options) {
-    if (!is.null(options$max.height)) options$attr.warning <- c(
-      options$attr.warning,
-      sprintf('style="max-height: %s;"', options$max.height)
-    )
-    hook_output(x, options)
-  })
-})
-
 # 1 Set-up ---
 
 # load libraries

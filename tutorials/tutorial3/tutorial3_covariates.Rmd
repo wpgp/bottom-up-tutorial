@@ -16,7 +16,7 @@ editor_options:
 bibliography: references.bib
 ---
 
-```{r logo, echo=FALSE}
+```{r logo, echo=FALSE, purl=F}
 ###LOAD WP LOGO##
 htmltools::img(src = knitr::image_uri("assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
@@ -472,7 +472,7 @@ parameters{
 transformed parameters{
   ...
   for(idx in 1:n){
-    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + sum( cov[idx,] .* beta );
+    pop_density_median[idx] = alpha_t_r[type[idx], region[idx]] + sum( cov[idx,] .* beta );
   }
 }
 model{
@@ -741,7 +741,7 @@ transformed parameters{
 
   for(idx in 1:n){
     beta[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
-    pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
+    pop_density_median[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
   }
 }
 model{
