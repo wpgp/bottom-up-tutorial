@@ -1,6 +1,6 @@
 ---
 title: "Statistical population modelling for census support"
-subtitle: "Day 3"
+subtitle: "Quiz 2"
 author: "Edith Darin"
 output:
   xaringan::moon_reader:
@@ -29,27 +29,7 @@ xaringanExtra::use_logo(
 )
 ```
 
-# Quizz
-
----
-# Practical question
-
-.center2[
-Have you finished to read tutorial 1?
-
-1. Yes
-2. No
-]
-
----
-# Practical question
-
-.center2[
-Have you run at least one model in `stan`?
-
-1. Yes
-2. No
-]
+# Quiz
 
 
 ---
@@ -297,14 +277,3 @@ layout: true
 5. 5.5
 6. 6]
 
----
-layout: false
-
-# Today
-
-.center2[
-What do you want to do now?
-
-1. Revisit tutorial 2
-2. Present tutorial 3
-]

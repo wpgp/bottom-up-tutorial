@@ -4,11 +4,11 @@
     <title>Statistical population modelling for census support</title>
     <meta charset="utf-8" />
     <meta name="author" content="Edith Darin" />
-    <script src="mcq_tuto1_files/header-attrs/header-attrs.js"></script>
-    <link href="mcq_tuto1_files/remark-css/default.css" rel="stylesheet" />
-    <script src="mcq_tuto1_files/fabric/fabric.min.js"></script>
-    <link href="mcq_tuto1_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
-    <script src="mcq_tuto1_files/xaringanExtra-scribble/scribble.js"></script>
+    <script src="mcq_tuto2_files/header-attrs/header-attrs.js"></script>
+    <link href="mcq_tuto2_files/remark-css/default.css" rel="stylesheet" />
+    <script src="mcq_tuto2_files/fabric/fabric.min.js"></script>
+    <link href="mcq_tuto2_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="mcq_tuto2_files/xaringanExtra-scribble/scribble.js"></script>
     <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#408000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
     <link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
     <link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
@@ -18,7 +18,7 @@
 class: center, middle, inverse, title-slide
 
 # Statistical population modelling for census support
-## Day 2
+## Quiz 2
 ### Edith Darin
 
 ---
@@ -65,184 +65,254 @@ bottom:-3.5em;left:0.5em;
 })()</script>
 </div>
 
-# Quizz
+# Quiz
 
 
 ---
-# Bayesian concepts
+layout: true
+# Core population model
 
-![](pic/mcq_tuto1_bayes_diagram.png)
+
+`$$population \sim Poisson( pop\_density * settled\_area)$$`
+
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
 ---
-# Bayesian concepts
+.center2[
+In the core population model, what is `\(population\)`?
 
-$$ \text{posterior} \quad = \quad \frac{\text{prior } \cdot \text{ likelihood}}{\text{normalizing constant}} \; $$
---
-&lt;br&gt;
-.center[![](mcq_tuto1_bayes.jpg)]
-
-.footnote[https://twitter.com/andrewheiss/status/1441857561297260548/photo/1
-https://www.tjmahr.com/bayes-theorem-in-three-panels/]
+1. Data
+2. Parameter
+3. Distribution
+]
 ---
-# Bayesian concepts
+.center2[
+In the core population model, what is `\(settled_area\)`?
 
-.center2[Priors represent the contextual knowledge around a phenomenon (eg, from past experience)
-1. TRUE
-2. FALSE]
+1. Data
+2. Parameter
+3. Distribution
+]
 ---
-# Bayesian concepts
 
-.center2[Priors are derived from the data
-1. TRUE
-2. FALSE]
+.center2[
+In the core population model, what is `\(Lognormal\)`?
 
-
----
-# Bayesian concepts
-
-.center2[*The **Bechdel test** measures the representation of women in film. It is based on three criteria
-and films either pass the test or fail. *
-
-Let π, a random value between 0 and 1, 
-denote the unknown proportion of movies that pass the Bechdel test. ]
+1. Data
+2. Parameter
+3. Distribution
+]
 
 ---
-# Bayesian concepts
 
-.center2[Three friends – the **feminist**, the **clueless**, and the **optimist** – have some prior ideas about π. 
+.center2[
+In the core population model, what is `\(\mu\)`?
 
-&lt;br&gt;
+1. Data
+2. Parameter
+3. Distribution
+]
 
-![](pic/mcq_tuto1_Bechdelprior.PNG)]
-
-
-.footnote[https://www.bayesrulesbook.com/chapter-4.html#fig:ch4-bechdel-priors]
 
 ---
+
+.center2[
+In the core population model, what is `\(pop\_density\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+
+---
+layout: false
+
+# MCMC setting
+A common call to `stan` looks like that:
+
+
+```r
+fit_model2 &lt;- rstan::stan(file = file.path('model.stan'), 
+                   data = stan_data_model,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+
+.center[
+Has the `seed` an impact on the estimation process?
+
+1.Yes&lt;br/&gt;
+2.No
+
+]
+
+---
+# Bayesian output
+
 .pull-left[
-#### Distribution 1
-![](pic/mcq_tuto1_normal.png)
-#### Distribution 2
-![](pic/mcq_tuto1_poisson.png)]
+#### Plot 1
+![](pic/mcq_tuto2_traceplot.png)
+]
 .pull-right[
-#### Distribution 3
-![](pic/mcq_tuto1_lognormal.png)]
+#### Plot 2
+![](pic/mcq_tuto2_parameterplot.png)
+]
+
+.center[Which plot is a traceplot?
+
+1.Plot 1&lt;br/&gt;
+2.Plot 2
+]
 
 ---
-# Bayesian estimation
+# Random modelling
 
-.center2[What does the parameter `warmup` control in stan?
-1. the number of iterations
-2. the length of the chain
-3. the number of iterations post-tuning
-4. the length of the chain pre-tuning]
+.center2[*Imagine you have two groups of ten people.*
+
+*Group A has an average height of 170 cm*&lt;br/&gt;
+*Group B has an average height of 168 cm*
+
+If you randomly select one person from each group who is more likely to be taller?
+
+1. Group A
+2. We don't know
+]
+---
+layout: true
+# Random modelling
+
+
+.footnote[Pace~svwiki, CC BY-SA 4.0 &lt;https://commons.wikimedia.org/w/index.php?curid=62007681&gt;]
 
 ---
-# Bayesian estimation
+.center[
+&lt;img src="pic/mcq_tuto2_simpsonpre.PNG" alt="drawing" width="450"/&gt;
 
-.pull-left[
-&lt;img src="pic/mcq_tuto1_traceplot.PNG" alt="drawing" width="300"/&gt;]
+What is the sign of the relation between x and y?
 
-.pull-right[
-This is a **traceplot**.
+1.Positif&lt;br/&gt;
+2.Negatif
+]
+---
+#### Simpson's Paradox
+.center[
+&lt;img src="pic/mcq_tuto2_simpsonpost.PNG" alt="drawing" width="500"/&gt;]
 
-*NB: we can see that the model run for 750 iterations.*
+---
+layout: false
+# Random vs hierarchical
 
-Can we consider that the model converged?
+.center2[
+&lt;img src="pic/mcq_tuto2_dag.png" alt="drawing" width="450"/&gt;
+
+How many models have a random effect?
+
+1. 0
+2. 1
+3. 2
+4. 3
+]
+---
+layout: true
+# Random vs hierarchical
+
+`$$population \sim Poisson( pop\_density * settled\_area)$$`
+
+`$$pop\_density \sim Lognormal( \alpha_t, \sigma)$$`
+
+
+`$$\alpha_t \sim Normal( 5, 4 )$$`
+---
+.center2[This model represents:
+1. A random model
+2. A hierarchical model
+]
+---
+
+.center2[This model is similar to running `\(n\)` models separately:
 1. Yes
 2. No
 ]
 
 ---
-# Writing Stan model
+layout:false 
 
+# Random vs hierarchical 
 
-```stan
-// Stan code
-data {
-}
-parameters {
+Gelman, Andrew. "Multilevel (hierarchical) modeling: what it can and cannot do." Technometrics 48.3 (2006): 432-435.
 
-}
-model {
-}
-```
-&lt;br&gt;
+.center2[*Radon is a radioactive gas known to cause lung cancer in high concentrations.
+Our goal is to estimate*
+
+*(1)  the distribution of radon levels in
+each of the approximately 3,000 U.S. counties and* 
+
+*(2) the impact of taking the measurement in the basement*
+]
+---
+# Random vs hierarchical 
+
+![](pic/mcq_tuto2_gelman.PNG)
+
 .center[
-If I want to **modify priors**, which block shall I modify?
+The **dotted** line shows the model under:
 
-1.data block &lt;br/&gt;
-2.parameter block &lt;br/&gt;
-3.model block
+1.No-pooling &lt;br/&gt;
+2.Complete pooling&lt;br/&gt;
+3.Partial pooling
 ]
 
 ---
+# Random vs hierarchical 
 
-# Practical question
+![](pic/mcq_tuto2_gelman.PNG)
+
+.center[
+The **light-colored** line shows the model under:
+
+1.No-pooling &lt;br/&gt;
+2.Complete pooling&lt;br/&gt;
+3.Partial pooling
+]
+
+---
+# Estimation in `stan`
+
+`## Warning in validityMethod(object): The following variables have undefined values: population_hat[1],The following variables have undefined`
 
 .center2[
-How far have you managed to read tutorial 1?
-
-1. I didn't have time to read it
-2. Until section 1: *From a frequentist to a Bayesian mindset*
-3. Until section 2: *Let’s try with simulated data*
-4. Until section 3: *Modelling Population count: a Poisson distribution*
-5. Until section 4: *Modelling Population count: a Poisson Lognormal model*
-6. I have read it all
+Is this warning problematic
+1. Yes
+2. No
 ]
 
 ---
-# Practical question
+layout: true
+# Hierarchically estimated parameters
 
-.center2[
-Which model did you manage to run?
 
-1. The Normal model with simulated data
-2. And the Poisson model with true data
-3. And the Lognormal model with true data
-4. None
-]
+.pull-left[![](pic/mcq_tuto2_hierarchicalalpha.png)]
 
 ---
-# Model evaluation
-
-*Let's consider a population model with full convergence of the estimates.*
-
-*We evaluate it by comparing the predicted population counts versus 
-the observed population counts*
-
-&lt;img src="pic/mcq_tuto1_fitplot.png" alt="drawing" width="500"/&gt;
-
+.pull-right[What is the estimated **national** population density median (in log)?
+1. 3.5
+2. 4
+3. 4.5
+4. 5
+5. 5.5
+6. 6]
 ---
-# Model evaluation
 
-*Let's consider a population model with full convergence of the estimates.*
-
-*We evaluate it by comparing the predicted population counts versus 
-the observed population counts and we obtain the following goodness-of-fit metrics*
-
-&lt;br&gt;
-
-![](pic/mcq_tuto1_goodness.PNG)
-
-&lt;br&gt;
-.center[
-Can we be confident about the model results? &lt;br/&gt;
-1.Yes &lt;br/&gt;
-2.No
-]
-
----
-# Today's program
-
-Now we will have a session for questions.
-
-.center2[After it would you prefer that we end the presentation of tutorial 1 or 
-that we start tutorial 2?
-
-1.  End tutorial 1
-2.  Start tutorial 2]
-
-
+.pull-right[What is the estimated population density median for **settlement type 1** (in log)?
+1. 3.5
+2. 4
+3. 4.5
+4. 5
+5. 5.5
+6. 6]
 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>

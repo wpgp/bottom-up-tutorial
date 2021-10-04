@@ -1,6 +1,6 @@
 ---
 title: "Statistical population modelling for census support"
-subtitle: "Day 2"
+subtitle: "Quiz 1"
 author: "Edith Darin"
 output:
   xaringan::moon_reader:
@@ -29,7 +29,7 @@ xaringanExtra::use_logo(
 )
 ```
 
-# Quizz
+# Quiz
 
 
 ---
@@ -138,32 +138,6 @@ If I want to **modify priors**, which block shall I modify?
 3.model block
 ]
 
----
-
-# Practical question
-
-.center2[
-How far have you managed to read tutorial 1?
-
-1. I didn't have time to read it
-2. Until section 1: *From a frequentist to a Bayesian mindset*
-3. Until section 2: *Let’s try with simulated data*
-4. Until section 3: *Modelling Population count: a Poisson distribution*
-5. Until section 4: *Modelling Population count: a Poisson Lognormal model*
-6. I have read it all
-]
-
----
-# Practical question
-
-.center2[
-Which model did you manage to run?
-
-1. The Normal model with simulated data
-2. And the Poisson model with true data
-3. And the Lognormal model with true data
-4. None
-]
 
 ---
 # Model evaluation
@@ -193,17 +167,5 @@ Can we be confident about the model results? <br/>
 1.Yes <br/>
 2.No
 ]
-
----
-# Today's program
-
-Now we will have a session for questions.
-
-.center2[After it would you prefer that we end the presentation of tutorial 1 or 
-that we start tutorial 2?
-
-1.  End tutorial 1
-2.  Start tutorial 2]
-
 
 
