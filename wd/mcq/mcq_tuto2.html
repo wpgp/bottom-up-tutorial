@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical population modelling for census support</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Edith Darin" />
+    <script src="mcq_tuto2_files/header-attrs/header-attrs.js"></script>
+    <link href="mcq_tuto2_files/remark-css/default.css" rel="stylesheet" />
+    <script src="mcq_tuto2_files/fabric/fabric.min.js"></script>
+    <link href="mcq_tuto2_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="mcq_tuto2_files/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#408000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Statistical population modelling for census support
+## Day 3
+### Edith Darin
+
+---
+
+class: inverse, middle, center
+
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(../../../assets/pic/320px-UNFPA_logo.svg.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+bottom:-3.5em;left:0.5em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+# Quizz
+
+---
+# Practical question
+
+.center2[
+Have you finished to read tutorial 1?
+
+1. Yes
+2. No
+]
+
+---
+# Practical question
+
+.center2[
+Have you run at least one model in `stan`?
+
+1. Yes
+2. No
+]
+
+
+---
+layout: true
+# Core population model
+
+
+`$$population \sim Poisson( pop\_density * settled\_area)$$`
+
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+---
+.center2[
+In the core population model, what is `\(population\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+---
+.center2[
+In the core population model, what is `\(settled_area\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+---
+
+.center2[
+In the core population model, what is `\(Lognormal\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+
+---
+
+.center2[
+In the core population model, what is `\(\mu\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+
+
+---
+
+.center2[
+In the core population model, what is `\(pop\_density\)`?
+
+1. Data
+2. Parameter
+3. Distribution
+]
+
+---
+layout: false
+
+# MCMC setting
+A common call to `stan` looks like that:
+
+
+```r
+fit_model2 &lt;- rstan::stan(file = file.path('model.stan'), 
+                   data = stan_data_model,
+                   iter = warmup + iter, 
+                   chains = chains,
+                   warmup = warmup, 
+                   pars = pars,
+                   seed = seed)
+```
+
+
+.center[
+Has the `seed` an impact on the estimation process?
+
+1.Yes&lt;br/&gt;
+2.No
+
+]
+
+---
+# Bayesian output
+
+.pull-left[
+#### Plot 1
+![](pic/mcq_tuto2_traceplot.png)
+]
+.pull-right[
+#### Plot 2
+![](pic/mcq_tuto2_parameterplot.png)
+]
+
+.center[Which plot is a traceplot?
+
+1.Plot 1&lt;br/&gt;
+2.Plot 2
+]
+
+---
+# Random modelling
+
+.center2[*Imagine you have two groups of ten people.*
+
+*Group A has an average height of 170 cm*&lt;br/&gt;
+*Group B has an average height of 168 cm*
+
+If you randomly select one person from each group who is more likely to be taller?
+
+1. Group A
+2. We don't know
+]
+---
+layout: true
+# Random modelling
+
+
+.footnote[Pace~svwiki, CC BY-SA 4.0 &lt;https://commons.wikimedia.org/w/index.php?curid=62007681&gt;]
+
+---
+.center[
+&lt;img src="pic/mcq_tuto2_simpsonpre.PNG" alt="drawing" width="450"/&gt;
+
+What is the sign of the relation between x and y?
+
+1.Positif&lt;br/&gt;
+2.Negatif
+]
+---
+#### Simpson's Paradox
+.center[
+&lt;img src="pic/mcq_tuto2_simpsonpost.PNG" alt="drawing" width="500"/&gt;]
+
+---
+layout: false
+# Random vs hierarchical
+
+.center2[
+&lt;img src="pic/mcq_tuto2_dag.png" alt="drawing" width="450"/&gt;
+
+How many models have a random effect?
+
+1. 0
+2. 1
+3. 2
+4. 3
+]
+---
+layout: true
+# Random vs hierarchical
+
+`$$population \sim Poisson( pop\_density * settled\_area)$$`
+
+`$$pop\_density \sim Lognormal( \alpha_t, \sigma)$$`
+
+
+`$$\alpha_t \sim Normal( 5, 4 )$$`
+---
+.center2[This model represents:
+1. A random model
+2. A hierarchical model
+]
+---
+
+.center2[This model is similar to running `\(n\)` models separately:
+1. Yes
+2. No
+]
+
+---
+layout:false 
+
+# Random vs hierarchical 
+
+Gelman, Andrew. "Multilevel (hierarchical) modeling: what it can and cannot do." Technometrics 48.3 (2006): 432-435.
+
+.center2[*Radon is a radioactive gas known to cause lung cancer in high concentrations.
+Our goal is to estimate*
+
+*(1)  the distribution of radon levels in
+each of the approximately 3,000 U.S. counties and* 
+
+*(2) the impact of taking the measurement in the basement*
+]
+---
+# Random vs hierarchical 
+
+![](pic/mcq_tuto2_gelman.PNG)
+
+.center[
+The **dotted** line shows the model under:
+
+1.No-pooling &lt;br/&gt;
+2.Complete pooling&lt;br/&gt;
+3.Partial pooling
+]
+
+---
+# Random vs hierarchical 
+
+![](pic/mcq_tuto2_gelman.PNG)
+
+.center[
+The **light-colored** line shows the model under:
+
+1.No-pooling &lt;br/&gt;
+2.Complete pooling&lt;br/&gt;
+3.Partial pooling
+]
+
+---
+# Estimation in `stan`
+
+`## Warning in validityMethod(object): The following variables have undefined values: population_hat[1],The following variables have undefined`
+
+.center2[
+Is this warning problematic
+1. Yes
+2. No
+]
+
+---
+layout: true
+# Hierarchically estimated parameters
+
+
+.pull-left[![](pic/mcq_tuto2_hierarchicalalpha.png)]
+
+---
+.pull-right[What is the estimated **national** population density median (in log)?
+1. 3.5
+2. 4
+3. 4.5
+4. 5
+5. 5.5
+6. 6]
+---
+
+.pull-right[What is the estimated population density median for **settlement type 1** (in log)?
+1. 3.5
+2. 4
+3. 4.5
+4. 5
+5. 5.5
+6. 6]
+
+---
+# Today
+
+.center2[
+What do you want to do now?
+
+1. Revisit tutorial 2
+2. Present tutorial 3
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

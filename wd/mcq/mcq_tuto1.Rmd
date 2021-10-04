@@ -1,0 +1,209 @@
+---
+title: "Statistical population modelling for census support"
+subtitle: "Day 2"
+author: "Edith Darin"
+output:
+  xaringan::moon_reader:
+    css: [css/xaringan-themer.css, css/presentation_custom.css, default]
+---
+class: inverse, middle, center
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+xaringanthemer::style_mono_light(base_color = "#ff8000")
+```
+
+```{r xaringanExtra-scribble, echo=FALSE}
+xaringanExtra::use_scribble(
+  pen_color = "#408000"
+)
+```
+
+```{r xaringan-logo, echo=FALSE}
+xaringanExtra::use_logo(
+  image_url = "../../../assets/pic/320px-UNFPA_logo.svg.png",
+  position = xaringanExtra::css_position(bottom = "-3.5em", left = "0.5em")
+)
+```
+
+# Quizz
+
+
+---
+# Bayesian concepts
+
+![](pic/mcq_tuto1_bayes_diagram.png)
+---
+# Bayesian concepts
+
+$$ \text{posterior} \quad = \quad \frac{\text{prior } \cdot \text{ likelihood}}{\text{normalizing constant}} \; $$
+--
+<br>
+.center[![](mcq_tuto1_bayes.jpg)]
+
+.footnote[https://twitter.com/andrewheiss/status/1441857561297260548/photo/1
+https://www.tjmahr.com/bayes-theorem-in-three-panels/]
+---
+# Bayesian concepts
+
+.center2[Priors represent the contextual knowledge around a phenomenon (eg, from past experience)
+1. TRUE
+2. FALSE]
+---
+# Bayesian concepts
+
+.center2[Priors are derived from the data
+1. TRUE
+2. FALSE]
+
+
+---
+# Bayesian concepts
+
+.center2[*The **Bechdel test** measures the representation of women in film. It is based on three criteria
+and films either pass the test or fail. *
+
+Let π, a random value between 0 and 1, 
+denote the unknown proportion of movies that pass the Bechdel test. ]
+
+---
+# Bayesian concepts
+
+.center2[Three friends – the **feminist**, the **clueless**, and the **optimist** – have some prior ideas about π. 
+
+<br>
+
+![](pic/mcq_tuto1_Bechdelprior.PNG)]
+
+
+.footnote[https://www.bayesrulesbook.com/chapter-4.html#fig:ch4-bechdel-priors]
+
+---
+.pull-left[
+#### Distribution 1
+![](pic/mcq_tuto1_normal.png)
+#### Distribution 2
+![](pic/mcq_tuto1_poisson.png)]
+.pull-right[
+#### Distribution 3
+![](pic/mcq_tuto1_lognormal.png)]
+
+---
+# Bayesian estimation
+
+.center2[What does the parameter `warmup` control in stan?
+1. the number of iterations
+2. the length of the chain
+3. the number of iterations post-tuning
+4. the length of the chain pre-tuning]
+
+---
+# Bayesian estimation
+
+.pull-left[
+<img src="pic/mcq_tuto1_traceplot.PNG" alt="drawing" width="300"/>]
+
+.pull-right[
+This is a **traceplot**.
+
+*NB: we can see that the model run for 750 iterations.*
+
+Can we consider that the model converged?
+1. Yes
+2. No
+]
+
+---
+# Writing Stan model
+
+```{stan output.var="simpleCode", eval=F, purl=F }
+// Stan code
+data {
+}
+parameters {
+
+}
+model {
+}
+```
+<br>
+.center[
+If I want to **modify priors**, which block shall I modify?
+
+1.data block <br/>
+2.parameter block <br/>
+3.model block
+]
+
+---
+
+# Practical question
+
+.center2[
+How far have you managed to read tutorial 1?
+
+1. I didn't have time to read it
+2. Until section 1: *From a frequentist to a Bayesian mindset*
+3. Until section 2: *Let’s try with simulated data*
+4. Until section 3: *Modelling Population count: a Poisson distribution*
+5. Until section 4: *Modelling Population count: a Poisson Lognormal model*
+6. I have read it all
+]
+
+---
+# Practical question
+
+.center2[
+Which model did you manage to run?
+
+1. The Normal model with simulated data
+2. And the Poisson model with true data
+3. And the Lognormal model with true data
+4. None
+]
+
+---
+# Model evaluation
+
+*Let's consider a population model with full convergence of the estimates.*
+
+*We evaluate it by comparing the predicted population counts versus 
+the observed population counts*
+
+<img src="pic/mcq_tuto1_fitplot.png" alt="drawing" width="500"/>
+
+---
+# Model evaluation
+
+*Let's consider a population model with full convergence of the estimates.*
+
+*We evaluate it by comparing the predicted population counts versus 
+the observed population counts and we obtain the following goodness-of-fit metrics*
+
+<br>
+
+![](pic/mcq_tuto1_goodness.PNG)
+
+<br>
+.center[
+Can we be confident about the model results? <br/>
+1.Yes <br/>
+2.No
+]
+
+---
+# Today's program
+
+Now we will have a session for questions.
+
+.center2[After it would you prefer that we end the presentation of tutorial 1 or 
+that we start tutorial 2?
+
+1.  End tutorial 1
+2.  Start tutorial 2]
+
+
+

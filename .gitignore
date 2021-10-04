@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 *.rds
-wd/*
+wd/reviews
+wd/misc
