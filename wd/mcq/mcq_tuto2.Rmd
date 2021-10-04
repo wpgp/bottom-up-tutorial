@@ -298,6 +298,8 @@ layout: true
 6. 6]
 
 ---
+layout: false
+
 # Today
 
 .center2[
