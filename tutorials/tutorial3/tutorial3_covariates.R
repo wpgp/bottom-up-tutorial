@@ -1,4 +1,4 @@
-# 1 Set-up ---
+# 1 Set-up ----
 
 # load libraries
 library(tidyverse) # managing data
@@ -12,31 +12,14 @@ library(plotly) # interactive plot
 options(mc.cores = parallel::detectCores()-1)
 rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled model
 
-# raster example
-knitr::include_graphics(here("./assets/pic/tuto3_rasterZoom.png"))
 
-dagify(
-    Y ~ alpha_1+alpha_2+ alpha_3+sigma + beta+ X,
-    alpha_1 ~ alpha,
-    alpha_2 ~ alpha,
-    alpha_3 ~ alpha,
-    outcome = 'Y',
-    latent = 'alpha'
-  ) %>%
-    tidy_dagitty(seed=7) %>% 
-    mutate(color=c('data','parameter','parameter','parameter','parameter','parameter','parameter','parameter','parameter','data')) %>% 
-    ggplot(aes(x = x, y = y, xend = xend, yend = yend, color=color,shape=color)) +
-    geom_dag_point() +
-    geom_dag_edges() +
-    geom_dag_text(col = "grey20",size=4,  parse=T) +
-    scale_shape_manual(values=c(15,19))+
-    theme_dag()+ labs(title = '', color='', shape='')
 
-review_cov <- read_csv('tutorials/tutorial3/covs_review.csv')
 
-review_cov %>% arrange(Type) %>% kbl(caption='Review of covariates used in WorldPop bottom-up population models') %>% kable_minimal()
 
-# prepare data
+
+
+# 2. Covariates preparation ----
+# load data
 data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
 data <- data %>% 
   mutate(
@@ -44,6 +27,7 @@ data <- data %>%
     id = as.character(1:nrow(data))
   )
 
+# contrast covariates with pop density
 data_long <- data %>% 
   pivot_longer(starts_with('x'), names_to = 'cov')
 
@@ -55,6 +39,7 @@ ggplot(data_long, aes(x=pop_density,y=value))+
   labs(x='Population density', y='')
 
 
+# compute scaling factors (mean and sd)
 covariatesScaling <- function(var){
   mean_var <- mean(var)
   sd_var <- sd(var)
@@ -74,6 +59,7 @@ scale_factor$cov <- colnames(covs)
 
 scale_factor %>% select(cov, cov_mean, cov_sd) %>% kbl %>%  kable_minimal()
 
+# apply sclaing factors to covariates
 covs_scaled <-  covs %>% 
   mutate(cluster_id = 1:nrow(covs)) %>% 
   pivot_longer(-cluster_id,names_to = 'cov') %>% 
@@ -84,68 +70,13 @@ covs_scaled <-  covs %>%
   select(-cluster_id)
 
 
+# save scaling factor
 write_csv(covs_scaled, 'tutorials/data/covs_scaled.csv')
 write_csv(scale_factor, 'tutorials/data/scale_factor.csv')
 
-## // Model 1: Independent alpha by settlement type
 
-## 
-## data{
 
-##   ...
-
-##   // slope
-
-##   int<lower=0> ncov; // number of covariates
-
-##   matrix[n, ncov] cov; // covariates
-
-## }
-
-## parameters{
-
-##   ...
-
-##   // slope
-
-##   row_vector[ncov] beta;
-
-## }
-
-## transformed parameters{
-
-##   ...
-
-##   for(idx in 1:n){
-
-##     pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + sum( cov[idx,] .* beta );
-
-##   }
-
-## }
-
-## model{
-
-##   ...
-
-##   //slope
-
-##   beta ~ normal(0,10);
-
-## }
-
-## generated quantities{
-
-##   ...
-
-##    for(idx in 1:n){
-
-##     density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + sum(cov[idx,] .* beta), sigma );
-
-##    }
-
-## }
-
+# 3. Modelling with covariates ----
 
 # mcmc settings
 chains <- 4
@@ -178,7 +109,7 @@ fit1 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.stan'
                    pars = pars,
                    seed = seed)
 
-
+# add initialisation
 inits.out <- list()
 set.seed(stan_data_model1$seed)
 
@@ -204,10 +135,13 @@ fit1bis <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.st
                    seed = seed,
                    init= inits.out)
 
+# plot beta estimation
 stan_plot(fit1, pars='beta', fill_color='orange')
 
+# load tutorial 2 final model
 fit0 <- readRDS('tutorials/tutorial2/tutorial2_model3_fit.rds')
 
+# extract predictions
 getPopPredictions <- function(model_fit, 
                               estimate='population_hat',
                               obs='N', reference_data=data){
@@ -249,6 +183,8 @@ comparison_df %>% group_by(Model) %>%
         `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-metrics comparison with and without covariates ') %>% kable_minimal()
 
+# 4. Modelling covariates with random slope ----
+
 ggplot(data_long %>% 
          group_by(type) %>% 
          mutate(
@@ -261,84 +197,9 @@ ggplot(data_long %>%
   labs(y='', x='Population density', color='Settlement type')
 
 
-## // Model 1: Independent alpha by settlement type
-
-## 
-## data{
-
-##   ...
-
-##     // fixed slope
-
-##   int<lower=0> ncov_fixed; // number of covariates -1
-
-##   matrix[n, ncov_fixed] cov_fixed; // covariates
-
-##   // random slope
-
-##   vector[n] cov_random;
-
-## }
-
-## parameters{
-
-##   ...
-
-##   // slope
-
-##   row_vector[ncov_fixed] beta_fixed;
-
-##   vector[ntype] beta_random;
-
-## }
-
-## transformed parameters{
-
-##   ...
-
-##   vector[n] beta;
-
-## 
-##   for(idx in 1:n){
-
-##     beta[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
-
-##     pop_density_mean[idx] = alpha_t_r[type[idx], region[idx]] + beta[idx];
-
-##   }
-
-## }
-
-## model{
-
-##   ...
-
-##   //slope
-
-##   beta_fixed ~ normal(0,10);
-
-##   beta_random ~ normal(0,10);
-
-## }
-
-## generated quantities{
-
-##   ...
-
-##  vector[n] beta_hat;
-
-## 
-##   for(idx in 1:n){
-
-##     beta_hat[idx] = sum( cov_fixed[idx,] .* beta_fixed) + cov_random[idx] * beta_random[type[idx]];
-
-##     density_hat[idx] = lognormal_rng( alpha_t_r[type[idx], region[idx]] + beta_hat[idx], sigma );
-
-##   ...
-
-## }
 
 
+# prepare stan data
 stan_data_model2 <- list(
   population = data$N,
   n = nrow(data),
@@ -355,8 +216,10 @@ stan_data_model2 <- list(
 
 pars <- c('alpha','sigma','beta_fixed','beta_random','alpha_t','alpha_t_r', 'nu_alpha', 'nu_alpha_t', 'population_hat',  'density_hat')
 
+# initialise
 inits.out <- list()
 set.seed(stan_data_model2$seed)
+
 for (c in 1:chains){
   inits.i <- list()
   # intercept
@@ -381,8 +244,10 @@ fit2 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model2.stan'
                    seed = seed,
                    init = inits.out)
 
+# plot beta estimation
 stan_plot(fit2, pars='beta_random', fill_color='orange')
 
+# extract predictions
 comparison_df <- rbind(
  getPopPredictions(fit1) %>% 
    mutate(model='Fixed effect'),
@@ -395,4 +260,5 @@ comparison_df %>% group_by(model) %>%
         `Imprecision` = sd(residual)
 ) %>%  kbl(caption = 'Goodness-of-metrics comparison with and without random effect in x4 ') %>% kable_minimal()
 
+# save model
 saveRDS(fit2, 'tutorials/tutorial3/tutorial3_model2_fit.rds')
