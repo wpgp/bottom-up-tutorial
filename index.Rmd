@@ -14,25 +14,28 @@ This website contains the teaching materials for the **Statistical Population Mo
 It has been first taught to the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
 
 ## Material
-
 -   [Introduction](tutorials/day1_presentation.html)
 -   [Tutorial 1](tutorials/tutorial1/tutorial1_linearRegression.html): How to think like a Bayesian and build a first population model? [Quiz](tutorials/quiz/mcq_tuto1.html)
 -   [Tutorial 2](tutorials/tutorial2/tutorial2_hierarchicalModel.html): How to model large-scale spatial variations? [Quiz](tutorials/quiz/mcq_tuto2.html)
 -   [Tutorial 3](tutorials/tutorial3/tutorial3_covariates.html): How to model small-scale spatial variations?
 -   [Tutorial 4](tutorials/tutorial4/tutorial4_diagnosticsPrediction.html): Advanced model diagnostics and prediction
--   [Conclusion](tutorials/day5_presentation.html)
 
 ## Raw code
 
-The raw code of the website and tutorials can be found [here](<https://github.com/wpgp/bottom-up-tutorial>).
+The raw code of the website and tutorials, including the R code can be found [here](<https://github.com/wpgp/bottom-up-tutorial>).
 
 # Acknowledgements
 
-This tutorial was written by Edith Darin from WorldPop, University of
-Southampton and Douglas Leasure from Leverhulme Centre for Demographic
-Science, University of Oxford.
+This tutorial was written by Edith Darin from WorldPop, University of Southampton and 
+Douglas Leasure from Leverhulme Centre for Demographic Science, University of Oxford, 
+with supervision from Andrew Tatem, WorldPop, University of Southampton.
+Funding for the work was provided by the United Nations Population Fund (UNFPA).
 
-Funding for the work was provided by the United Nations Population Fund.
+# License
+
+You are free to redistribute this document under the terms of a Creative Commons Attribution-NoDerivatives 4.0
+International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) license.
+
 
 <br>
 

@@ -1,7 +1,7 @@
 // Model for simulated data: y as normal distribution
 data {
   int<lower=0> n; // number of observations
-  vector[n] y; // observations
+  real y[n]; // observations
 }
 
 // The parameters accepted by the model. Our model

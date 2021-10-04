@@ -2,10 +2,9 @@
 title: "Statistical population modelling for census support"
 subtitle: "Day 1"
 author: "Edith Darin"
-date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
-    css: [default, css/xaringan-themer.css, css/presentation_custom.css]
+    css: [css/xaringan-themer.css, css/presentation_custom.css, default]
 ---
 
 
@@ -14,13 +13,13 @@ options(htmltools.dir.version = FALSE)
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
-library(xaringanthemer)
-style_mono_light(base_color = "#ff8000")
-#style_duo_accent(primary_color = "#ff8000", secondary_color = "#4db3ff")
+xaringanthemer::style_mono_light(base_color = "#ff8000")
 ```
 
 ```{r xaringanExtra-scribble, echo=FALSE}
-xaringanExtra::use_scribble()
+xaringanExtra::use_scribble(
+  pen_color = "#408000"
+)
 ```
 
 ```{r xaringan-logo, echo=FALSE}
@@ -49,7 +48,7 @@ xaringanExtra::use_logo(
 ---
 class: bottom, hide_logo
 
-# Introduction's outline
+# Presentation outline
 
 --
 <br>
@@ -155,7 +154,7 @@ class: hide_logo
 
 
 .pull-left[
-### 4. Flexible data agregation
+### 4. Flexible data combination
 
 ]
 
@@ -175,7 +174,7 @@ background-image: url(day1_presentation_files/pic/background_griddedpop.png)
 ---
 class: inverse, center, middle
 
-# When population data with full coverage is available
+# When population data with **full spatial coverage** is available
 
 ---
 class: center, middle
@@ -202,7 +201,7 @@ https://htmlpreview.github.io/?https://github.com/wpgp/top-down-tutorial/blob/ma
 ---
 class: inverse, center, middle
 
-# When population data with full coverage is **not** available
+# When population data with full spatial coverage is **not** available
 
 ---
 class: center, middle
@@ -294,6 +293,19 @@ How do you interpret this probability?
 
 ---
 
+.center2[*An election is coming up and a pollster claims that ‘candidate A has a 0.9 probability of winning.’* 
+
+How do you interpret this probability?
+
+1. If we observe the election over and over, candidate A will win roughly 90% of the time.
+2. Candidate A is much more likely to win than to lose.
+3. The pollster’s calculation is wrong. Candidate A will either win or lose, thus their probability of winning can only be 0 or 1.]
+
+
+
+.footnote[[Chapter 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
 .center2[*Consider two claims:* 
 
 *(1) Zuofu claims that he can predict the outcome of a coin flip. 
@@ -337,7 +349,7 @@ class: center, middle
 $$ \text{posterior} \quad = \quad \frac{\text{prior } \cdot \text{ likelihood}}{\text{normalizing constant}} \; $$
 
 <br> 
-**Prior proability model** <br />
+**Prior probability model** <br />
 It captures our belief about the phenomenon. prior to seeing any data.
 
 **Likelihood**<br />
@@ -354,19 +366,24 @@ It summarises the plausibility of a phenomenon.
 #### Modeller's question: *Will it rain tomorrow the 27th September 2021 in the UK?*
 
 <br>
+--
 
-**Prior proability model**: <br />
+**Prior probability model**: <br />
 It rains 60% of the time in September in the UK.
+
+--
 
 **Likelihood**<br />
 It is sunny today and climate models say that weather is stable in 40% of the case.
 
+--
+
 **Posterior probability model** <br />
 Knowing the weather of today in the UK and climate models,
-we can update the prior information of the weather in September in the UK.
+we can update the prior information of the weather for the 27th September in the UK.
 
 ---
-# Balancing data and knwoledge
+# Balancing data and knowledge
 
 <br>
 <br>
@@ -375,10 +392,11 @@ we can update the prior information of the weather in September in the UK.
 
 <br> 
 
+--
 As we collect more data, priors lose their influence.
 
-More details in [Chapter 2, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-2.html)
-
+.footnote[More details in [Chapter 2, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-2.html)
+]
 ---
 
 class: center, middle
@@ -387,10 +405,18 @@ class: center, middle
 ---
 # Uncertainty quantification
 
-### Sources of uncertainty <br/>
-- Impossible to know all relevant predictors
+--
+
+### Sources of uncertainty <br />
+- Missing predictors
+--
+
 - Errors in data collection
+--
+
 - Imperfect representativity of the sample
+--
+
 - Individual variation
 
 <br> 
@@ -438,7 +464,7 @@ class: inverse, middle, center
 --
 
 **Monte Carlo** <br />
-Estimate a parameter by generating random numbers and checking if it corrersponds to the structure
+Estimate a parameter by generating random numbers and checking if it corresponds to the structure
 
 --
 .pull-right[
@@ -451,7 +477,7 @@ Estimate a parameter by generating random numbers and checking if it correrspond
 #### **Goal**: Approximating the posterior distribution via simulation
 
 **Monte Carlo** <br />
-Estimate a parameter by generating random numbers and checking if it corrersponds to the structure
+Estimate a parameter by generating random numbers and checking if it corresponds to the structure
 
 **Markov chain** <br />
 Sequences of samples probabilistically related
@@ -463,8 +489,8 @@ Sequences of samples probabilistically related
 
 **MCMC** <br />
 1. Pick a random parameter value
-2. Evaluate how likely the value is to explain the data given the prior belief
-3. Draw another value linked depending on the goodness of the previous value
+2. Evaluate how likely the value explains the data given the prior belief and the model
+3. Draw another value depending on the goodness of the previous value
 
 --
 .pull-right[
@@ -502,8 +528,8 @@ Two step compilation process: model in `stan` code, translated to `C++` and comp
 
 <br>
 
-Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, 2.27. https://mc-stan.org
-
+.footnote[Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, 2.27. https://mc-stan.org
+]
 ---
 class: inverse, middle, center
 
@@ -527,7 +553,11 @@ Donald Rubin, David Dunson, and Aki Vehtari
 
 --
 
-4. [Bayesian Data Analisys course](https://avehtari.github.io/BDA_course_Aalto/), by Aki Vehtari
+4. [Bayesian Data Analysis course](https://avehtari.github.io/BDA_course_Aalto/), by Aki Vehtari
+
+--
+
+5. [Bayesian workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf), by Andrew Gelman et al
 
 ---
 class: inverse, middle, center
@@ -580,7 +610,24 @@ https://wpgp.github.io/bottom-up-tutorial/
 
 <br>
 
+--
+
 - The raw code can be found on Github: <br />
 https://github.com/wpgp/bottom-up-tutorial
 
+<br>
+
+--
+
+- Workshop workflow:
+--
+
+  -   Guided tutorials with live presentation and review
+--
+
+  -   Between session: Github issues or e-mail: e.c.darin@soton.ac.uk
+--
+<br>
+
+- Workshop co-construction: **Don't hesitate to provide feedback on the content!**
 

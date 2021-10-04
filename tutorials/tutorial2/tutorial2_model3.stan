@@ -34,10 +34,10 @@ parameters{
 }
 
 transformed parameters{
-  vector[n] pop_density_mean;
+  vector[n] pop_density_median;
   
   for(idx in 1:n){
-    pop_density_mean[idx] = alpha_t_r[type[idx],region[idx]];
+    pop_density_median[idx] = alpha_t_r[type[idx],region[idx]];
   }
   
 }
@@ -47,7 +47,7 @@ model{
   // population totals
   population ~ poisson(pop_density .* area);
   
-  pop_density ~ lognormal(pop_density_mean, sigma );
+  pop_density ~ lognormal(pop_density_median, sigma );
   
   // hierarchical intercept by settlement and region
   alpha ~ normal(5, 10);
