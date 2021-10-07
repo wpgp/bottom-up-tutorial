@@ -49,7 +49,7 @@ population count as a **Poisson-Lognormal compound,** accounting for
 settled area. In Tutorial 2, we added a **hierarchical random intercept** 
 by settlement type and region, that differentiates parameter
 estimation by the natural clustering of the observations. In Tutorial 3
-we eventually modelled small-scale variations in population density by
+we modelled small-scale variations in population density by
 adding **a linear regression based on geospatial covariates**. We
 covered thus all the fundamental modelling blocks of WorldPop bottom-up
 population model, described in @leasure2020a.
@@ -116,8 +116,9 @@ Vignettes can be found here: [raster](https://rspatial.org/raster/1-introduction
 
 Before predicting population count for the entire study area we want to
 make sure that the model is correct. We thus perform additional checks:
-on the **model convergence** with traceplots and `stan` warnings, on the estimated parameters with a *posterior predictive check*
-and on the predicted population count at study site with a
+on the **model convergence** with traceplots and `stan` warnings,
+on the **estimated parameters** with a *posterior predictive check*
+and on the **predicted population count at study site** with a
 *cross-validation approach*.
 
 We will work with the first relevant population model that we built in Tutorial 1, 
@@ -160,7 +161,7 @@ stan_data <- list(
   area = data$A)
 
 # set parameters to monitor
-pars <- c('mu','sigma', 'density_hat', 'population_hat')
+pars <- c('mu', 'sigma', 'density_hat', 'population_hat')
 ```
 
 
@@ -223,8 +224,10 @@ fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_
                    seed = seed)
 ```
 
-Many metrics detect a convergence issue. The most worrying one is the *divergent transitions* that are
-often related with issues in the model structure itself and not only with estimation process.
+Many metrics detect a convergence issue. 
+The most worrying one is the *divergent transitions* that are
+often related with issues in the model structure itself and not only 
+within the estimation process.
 
 ```{r}
 traceplot(fit_wrong, c('mu', 'sigma'))
@@ -336,7 +339,7 @@ the model.
 **In-sample checks do not account for model overfitting.** Overfitting
 occurs when the model does not only reproduce the information from the
 observations but also the noise. We want the model to be able to
-accurately predict population also unknown new study sites. This
+accurately predict population also for unknown new study sites. This
 real-world scenario can be reproduced by keeping a percentage of the
 observations for model fitting and leaving the remaining study sites for
 predicting, a mechanism called **cross-validation.**
