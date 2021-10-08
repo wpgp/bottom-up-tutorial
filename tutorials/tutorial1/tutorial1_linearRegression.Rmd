@@ -42,10 +42,10 @@ The first part of this tutorial will cover how to revamp a basic
 frequentist model into a Bayesian model and will introduce some concepts
 such as Directed Acyclic Graph (DAG) and priors.
 
-The second part will be devoted to presenting the dataset we will be
-working with for the next three tutorials.
-
-We will present two simple population models:
+The second part will be devoted to introduce population modelling
+from sparse but representative study sites sample. We will present 
+the dataset we will be
+working with for the next three tutorials and build our first two population models:
 
 -   a model based on the Normal distribution
 

@@ -453,8 +453,8 @@ prediction stage (in Tutorial 4).
 
 ```{r}
 # save scaling factor
-write_csv(covs_scaled, 'tutorials/data/covs_scaled.csv')
-write_csv(scale_factor, 'tutorials/data/scale_factor.csv')
+write_csv(covs_scaled, here('tutorials/data/covs_scaled.csv'))
+write_csv(scale_factor, here('tutorials/data/scale_factor.csv'))
 ```
 
 ## Implementing the model
@@ -562,22 +562,20 @@ which is forbidden.
 ### A note on initialisation
 
 This is an opportunity to discuss about **initialisation**. MCMC
-simulations,backbone of Bayesian estimation, need to start exploring 
-the parameter space at one value.
+simulations start exploring the parameter space from one initial value.
 
-This starting value is in `stan` controlled by the option `init` whose default is
+This initial value is controlled in `stan` by the option `init`. Its default is
 `random`, that is "*Let Stan generate random initial values for all
 parameters. The seed of the random number generator used by Stan can be
 specified via the seed argument. If the seed for Stan is fixed, the same
 initial values are used. The default is to randomly generate initial
 values between -2 and 2 on the unconstrained support".*
 
-Defining the starting values means helping the algorithm to start close to the region of interest
+Defining the starting values helps the algorithm to start close to the region of interest
 such that no time is lost in exploring an area of the parameter space that we know 
 doesn't fit the likely values and might run into parameters combination that is unfit to our model structure.
-
-We define the start of the estimation process based on our understanding of population distribution.
-let's state that initialisation is not constraining, it just gives a hint to the algorithm. 
+Note that the initialisation is not constraining, 
+it just gives a hint to the algorithm. 
 
 We initialise only *root parameters*. Root parameters are parameters that don't
 depend on other parameters. Dependent parameters will then inherit the initialisation.

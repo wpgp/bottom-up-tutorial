@@ -280,7 +280,7 @@ div.tocify {
 <h1 class="title toc-ignore">Population modelling
 for census support</h1>
 <h3 class="subtitle">Tutorial 3: How to model small-scale spatial variations?</h3>
-<h4 class="date">Compiled on 04/10/2021</h4>
+<h4 class="date">Compiled on 08/10/2021</h4>
 
 </div>
 
@@ -1116,8 +1116,8 @@ covs_scaled &lt;-  covs %&gt;%
 <p>We store the scaled covariates and the scaling coefficients for the
 prediction stage (in Tutorial 4).</p>
 <pre class="r"><code># save scaling factor
-write_csv(covs_scaled, &#39;tutorials/data/covs_scaled.csv&#39;)
-write_csv(scale_factor, &#39;tutorials/data/scale_factor.csv&#39;)</code></pre>
+write_csv(covs_scaled, here(&#39;tutorials/data/covs_scaled.csv&#39;))
+write_csv(scale_factor, here(&#39;tutorials/data/scale_factor.csv&#39;))</code></pre>
 </div>
 <div id="implementing-the-model" class="section level2">
 <h2>Implementing the model</h2>
@@ -1331,19 +1331,18 @@ which is forbidden.</p>
 <div id="a-note-on-initialisation" class="section level3">
 <h3>A note on initialisation</h3>
 <p>This is an opportunity to discuss about <strong>initialisation</strong>. MCMC
-simulations,backbone of Bayesian estimation, need to start exploring
-the parameter space at one value.</p>
-<p>This starting value is in <code>stan</code> controlled by the option <code>init</code> whose default is
+simulations start exploring the parameter space from one initial value.</p>
+<p>This initial value is controlled in <code>stan</code> by the option <code>init</code>. Its default is
 <code>random</code>, that is “<em>Let Stan generate random initial values for all
 parameters. The seed of the random number generator used by Stan can be
 specified via the seed argument. If the seed for Stan is fixed, the same
 initial values are used. The default is to randomly generate initial
 values between -2 and 2 on the unconstrained support”.</em></p>
-<p>Defining the starting values means helping the algorithm to start close to the region of interest
+<p>Defining the starting values helps the algorithm to start close to the region of interest
 such that no time is lost in exploring an area of the parameter space that we know
-doesn’t fit the likely values and might run into parameters combination that is unfit to our model structure.</p>
-<p>We define the start of the estimation process based on our understanding of population distribution.
-let’s state that initialisation is not constraining, it just gives a hint to the algorithm.</p>
+doesn’t fit the likely values and might run into parameters combination that is unfit to our model structure.
+Note that the initialisation is not constraining,
+it just gives a hint to the algorithm.</p>
 <p>We initialise only <em>root parameters</em>. Root parameters are parameters that don’t
 depend on other parameters. Dependent parameters will then inherit the initialisation.</p>
 <pre class="r"><code># add initialisation
