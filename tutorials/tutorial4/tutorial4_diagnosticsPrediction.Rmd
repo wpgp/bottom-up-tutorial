@@ -26,7 +26,7 @@ htmltools::img(src = knitr::image_uri("./assets/pic/320px-UNFPA_logo.svg.png"),
 ![](../../assets/pic/wp_logotype_gray_low.png)
 
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
-# 1 Set-up ---
+# 1 Set-up ----
 
 # load libraries
 library(tidyverse) # managing data
@@ -142,6 +142,8 @@ pop\_density 〜 Lognormal( \mu, \sigma) \\
 We do some set-ups that should now be familiar.
 
 ```{r}
+# 1. Model diagnostics ----
+
 # load data
 data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
 data <- data %>% 
@@ -176,6 +178,9 @@ in which the sequences get closer to the mass of the distribution.
 We choose a warmup of 20 iterations (instead of 250).
 
 ```{r}
+# 1.1 Short warmup period ----
+
+# set short warmup
 warmup <- 20
 
 # mcmc
@@ -213,8 +218,11 @@ Typically we can declare a Uniform with stricter bounds for $\sigma$:
 We store the model under `tutorial4/tutorial1_model2_wrong.stan` and estimate it.
 
 ```{r}
+# 1.2 Wrong prior ----
+
 warmup <- 250
 
+# mcmc
 fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_wrong.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
@@ -241,6 +249,8 @@ shows clearly the issue in bounding with a ceiling at 1 that overly constrained 
 Let's come back to a correctly fit model.
 
 ```{r}
+# 2.3 Predicted posterior check ----
+
 # mcmc
 fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
                           data = stan_data,
@@ -265,6 +275,7 @@ the `stanfit` object. We do it using the `extract` function from
 `rstan`.
 
 ```{r, }
+# extract estimated mu
 mus <- data.frame(
     # extract parameter
     posterior=extract(fit, pars='mu')$mu,
@@ -349,6 +360,8 @@ be used for fitting the model and a predicting set (30%) that will be
 used for model prediction:
 
 ```{r, message=F}
+# 2.4 Cross validation of predictions ----
+
 set.seed(2004)
 # sample observations
 train_size <-  round(nrow(data)*0.7)
@@ -366,7 +379,7 @@ by providing the testing dataset to the `generated quantities` modelling
 block. Because all variables have to be defined for each set, it lengthens
 substantively the code. 
 
-```{stan output.var="simpleCode", eval=F }
+```{stan output.var="simpleCode", eval=F, purl=F }
 data{
   
   int<lower=0> n_train; // number of microcensus clusters in training set
@@ -504,11 +517,17 @@ optimistic goodness-of-fit metrics.
 # Gridded population prediction
 
 We will cover in this section **model predictions for the entire study
-area** at the grid cell level.
+area** at the grid cell level. Population can be predicted for any spatial unit as long as
+1. all the covariates and input data can be produced for the spatial unit
+2. the predicting spatial unit is not too different in size from the fitting spatial unit, such that the 
+estimated relationship between covariates and population density can still be applied.
 
-We will use our best population model, that is
+
+We will predict population for grid cell of 100m x 100m and use our best population model: model 2 from tutorial 3.
 
 ```{r}
+# 3. Population prediction ----
+
 tutorial3_model2_fit <- readRDS("tutorials/tutorial3/tutorial3_model2_fit.rds")
 ```
 
@@ -575,7 +594,7 @@ rasterlist <- list.files(wd_path,
 raster_df <- as_tibble(sapply(rasterlist, getRasterValues))
 ```
 
-```{r, echo=F, eval=FALSE}
+```{r, echo=F, eval=FALSE, purl=F}
 raster_df$gridcell_id <- 1:nrow(raster_df)
 
 a <- raster_df %>% filter(mastergrid.tif==1) %>% dplyr::select(starts_with('settlement'), gridcell_id) 
@@ -593,11 +612,11 @@ raster_df <- raster_df %>%
   mutate(mastergrid = ifelse(is.na(x1), 0, mastergrid),
          mastergrid = ifelse(settlementType==6, 0, mastergrid))
 
-write_csv(raster_df %>% filter(mastergrid==1)%>% head(n=10), 'wd/raster_predict_ex.csv')
+write_csv(raster_df %>% filter(mastergrid==1)%>% head(n=10), 'wd/misc/raster_predict_ex.csv')
 ```
 
-```{r, include=F, echo=F}
-raster_df <- read.csv('wd/raster_predict_ex.csv')
+```{r, include=F, echo=F, purl=F}
+raster_df <- read.csv('wd/misc/raster_predict_ex.csv')
 ```
 
 The raster table contains 671 110 rows and 10 columns. 95% of the rows
@@ -824,7 +843,7 @@ Let's see how we can create a gridded population from our predictions.
 
 ```{r, echo=F,message=F,warning=F}
 library(raster)
-raster_df <- readRDS('wd/gridcell_id.rds')
+raster_df <- readRDS('wd/misc/gridcell_id.rds')
 ```
 
 We first compute the mean prediction for every grid cell:

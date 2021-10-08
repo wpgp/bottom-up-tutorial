@@ -59,7 +59,7 @@ scale_factor$cov <- colnames(covs)
 
 scale_factor %>% select(cov, cov_mean, cov_sd) %>% kbl %>%  kable_minimal()
 
-# apply sclaing factors to covariates
+# apply scaling factors to covariates
 covs_scaled <-  covs %>% 
   mutate(cluster_id = 1:nrow(covs)) %>% 
   pivot_longer(-cluster_id,names_to = 'cov') %>% 
@@ -71,8 +71,8 @@ covs_scaled <-  covs %>%
 
 
 # save scaling factor
-write_csv(covs_scaled, 'tutorials/data/covs_scaled.csv')
-write_csv(scale_factor, 'tutorials/data/scale_factor.csv')
+write_csv(covs_scaled, here('tutorials/data/covs_scaled.csv'))
+write_csv(scale_factor, here('tutorials/data/scale_factor.csv'))
 
 
 
@@ -115,12 +115,9 @@ set.seed(stan_data_model1$seed)
 
 for (c in 1:chains){
   inits.i <- list()
-  # intercept
-  inits.i$pop_density <- rlnorm(stan_data_model1$n, log(stan_data_model1$population / stan_data_model1$area), 0.5)
+
   inits.i$sigma <- runif(1, 0.4, 0.8)
   inits.i$alpha <- runif(1, 3, 6)
-  inits.i$nu_alpha <- runif(1, 0.5, 1.5)
-  inits.i$nu_alpha_t <- runif(1, 0.5, 1.5)
   inits.i$beta <- runif(stan_data_model1$ncov, -1, 1)
   
   inits.out[[c]] <- inits.i
@@ -223,11 +220,8 @@ set.seed(stan_data_model2$seed)
 for (c in 1:chains){
   inits.i <- list()
   # intercept
-  inits.i$pop_density <- rlnorm(stan_data_model2$n, log(stan_data_model2$population / stan_data_model2$area), 0.5)
   inits.i$sigma <- runif(1, 0.4, 0.8)
   inits.i$alpha <- runif(1, 3, 6)
-  inits.i$nu_alpha <- runif(1, 0.5, 1.5)
-  inits.i$nu_alpha_t <- runif(1, 0.5, 1.5)
   inits.i$beta_fixed <- runif(stan_data_model2$ncov_fixed, -1, 1)
   inits.i$beta_random <- runif(stan_data_model2$ntype, -1, 1)
 
@@ -245,7 +239,10 @@ fit2 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model2.stan'
                    init = inits.out)
 
 # plot beta estimation
-stan_plot(fit2, pars='beta_random', fill_color='orange')
+stan_plot(fit2, pars='beta_random', fill_color='orange')+
+    # add alpha from tutorial 1
+  geom_vline(xintercept=-0.006515444, size=1.5, linetype=2)+
+  annotate('text', x=0.1, y=5.7, label="beta for cov 4 \nfrom first model")
 
 # extract predictions
 comparison_df <- rbind(

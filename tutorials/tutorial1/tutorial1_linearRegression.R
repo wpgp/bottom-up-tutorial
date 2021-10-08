@@ -55,7 +55,7 @@ ggplot(data, aes(x=y))+
 
 # Normal model DAG
 dagify(
-  Y ~ alpha,
+  Y ~ mu,
   Y ~ sigma) %>%
   tidy_dagitty(seed=41) %>% 
   mutate(color=c('parameter', 'parameter','data')) %>% 
@@ -126,7 +126,7 @@ mean_pop <- mean(data$y)
 sd_pop <- sd(data$y)
 
 
-alpha_plot <- stan_plot(fit, 'mu',fill_color='orange')+
+mu_plot <- stan_plot(fit, 'mu',fill_color='orange')+
   annotate('segment',x=mean_pop, xend=mean_pop, 
            y=0.7, yend=1.2,col='grey40', size=1)+
   annotate('text',x=mean_pop, 
@@ -150,7 +150,7 @@ sigma_plot <- stan_plot(fit, 'sigma', fill_color='orange')+
     annotate('text',x=estimated['sigma', 'mean'], 
            y=1.5, col='orange',label= paste0('Estimated\n',round(estimated['sigma', 'mean'],2)), fontface =2, size=4.5)
 
-gridExtra::grid.arrange(alpha_plot, sigma_plot, nrow=2)
+gridExtra::grid.arrange(mu_plot, sigma_plot, nrow=2)
 
 
 # 3 Introduce the data ----

@@ -453,8 +453,8 @@ prediction stage (in Tutorial 4).
 
 ```{r}
 # save scaling factor
-write_csv(covs_scaled, 'tutorials/data/covs_scaled.csv')
-write_csv(scale_factor, 'tutorials/data/scale_factor.csv')
+write_csv(covs_scaled, here('tutorials/data/covs_scaled.csv'))
+write_csv(scale_factor, here('tutorials/data/scale_factor.csv'))
 ```
 
 ## Implementing the model
