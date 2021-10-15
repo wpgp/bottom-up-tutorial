@@ -20,6 +20,7 @@ It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de
 -   [Tutorial 2](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial2/): How to model large-scale spatial variations?
 -   [Tutorial 3](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial3/): How to model small-scale spatial variations?
 -   [Tutorial 4](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial4/): Advanced model diagnostics and prediction
+-   [Conclusion](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/)
 
 # Folder content
 
@@ -29,10 +30,10 @@ Each tutorial has its dedicated folder that contains:
 - Tutorial material
   -  The `R` code
   -  The `stan` code
--  Background files
-  - The `html` code for the website page
-  - The `R markdown` code that has been used to produce the `html` page
-  - The `references.bib` with references used for the tutorial
+- Background files
+  -  The `R markdown` code that has been used to produce the `html` page
+  -  The `references.bib` with references used for the tutorial
+  -  The `html` code for the website page  
 
 The `data` folder contains outputs of the tutorial.
 
@@ -60,4 +61,4 @@ Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census
 <br>
 
 
-![alt](assets/pic/320px-UNFPA_logo.svg.png) | ![alt](assets/pic/wp_logo_gray_low.png)
+![alt](assets/pic/320px-UNFPA_logo.svg.png) ![alt](assets/pic/wp_logo_gray_low.png)
