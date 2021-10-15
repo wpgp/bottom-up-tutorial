@@ -1,8 +1,15 @@
-# Tutorials for Bottom-up Bayesian Population Models
+# Statistical population modelling for census support
 
-This github repo contains the raw teaching materials for the **Statistical Population Modelling for Census Support workshop,** funded by the [United Nations Population Fund](<https://www.unfpa.org/>), and deployed [here](https://wpgp.github.io/bottom-up-tutorial/).
+This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
 
-It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
+The repo consists in a series of tutorials in Bayesian statistics for population modelling and hands-on experience to start developing the necessary skills. It includes example code and other resources designed to expedite the learning curve as much as possible.
+
+The key concepts that are covered in the tutorial series include:
+-  Introduction to software for Bayesian statistical modelling:  R and Stan,
+-  Simple linear regression in a Bayesian context,
+-  Random effects to account for settlement type (e.g. urban/rural) and other types of stratification in survey data,
+-  Quantifying and mapping uncertainties in population estimates and
+-  Diagnostics to evaluate model performance (e.g. cross-validation).
 
 It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/en/home-eng.html), in October 2021.
 
@@ -42,6 +49,11 @@ Funding for the work was provided by the United Nations Population Fund.
 
 You are free to redistribute this document under the terms of a Creative Commons Attribution-NoDerivatives 4.0
 International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) license.
+
+
+# Suggested citation
+
+Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton, https://wpgp.github.io/bottom-up-tutorial/
 
 <br>
 
