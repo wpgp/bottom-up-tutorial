@@ -2,14 +2,14 @@
 
 This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
 
-The repo consists in a series of tutorials in Bayesian statistics for population modelling and hands-on experience to start developing the necessary skills. It includes example code and other resources designed to expedite the learning curve as much as possible.
+The repo consists in a series of tutorials in **Bayesian statistics for population modelling** with hands-on experience. It includes example code and other resources designed to expedite the learning curve.
 
 The key concepts that are covered in the tutorial series include:
--  Introduction to software for Bayesian statistical modelling:  R and Stan,
--  Simple linear regression in a Bayesian context,
--  Random effects to account for settlement type (e.g. urban/rural) and other types of stratification in survey data,
--  Quantifying and mapping uncertainties in population estimates and
--  Diagnostics to evaluate model performance (e.g. cross-validation).
+1.  Introduction to software for Bayesian statistical modelling:  R and Stan,
+2.  Simple linear regression in a Bayesian context,
+3.  Random effects to account for settlement type (e.g. urban/rural) and other types of stratification in survey data,
+4.  Quantifying and mapping uncertainties in population estimates and
+5.  Diagnostics to evaluate model performance (e.g. cross-validation).
 
 It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/en/home-eng.html), in October 2021.
 
