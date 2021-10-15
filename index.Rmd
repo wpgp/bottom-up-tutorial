@@ -9,31 +9,23 @@ date: "Last compiled on `r Sys.Date()`"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Statistical population modelling is a powerful tool for producing gridded population estimates that can support census activities. [WorldPop](https://www.worldpop.org/) at the University of Southampton is a global leader in developing these methods and has partnered with the [United Nations Population Fund (UNFPA)](https://www.unfpa.org/) to provide support to national statistics offices in training and production of high-resolution gridded population estimates from existing data sources (e.g. household surveys, building footprints, administrative records, census projections).
+Statistical population modelling is a powerful tool for producing gridded population estimates to support census activities. [WorldPop](https://www.worldpop.org/) at the University of Southampton is a global leader in developing these methods and has partnered with the [United Nations Population Fund (UNFPA)](https://www.unfpa.org/) to provide support to national statistics offices in training and production of high-resolution gridded population estimates from existing data sources (e.g. household surveys, building footprints, administrative records, census projections).
 
-This website provides a series of tutorials in Bayesian statistics for population modelling
-and hands-on experience to start developing the
-necessary skills. It includes example code and other resources designed to
-expedite the learning curve as much as possible.
+This website provides a series of tutorials in **Bayesian statistics for population modelling** and hands-on experience to start developing the necessary skills. It includes example code and other resources designed to expedite the learning curve as much as possible.
 
-The key concepts that will be covered in
-the tutorial series will include:
+The key concepts that are covered in the tutorial series include:
 
-1.  Introduction to software for Bayesian statistical
-    modelling:  R and Stan,
+1.  Introduction to software for Bayesian statistical modelling:  R and Stan,
 
 2.  Simple linear regression in a Bayesian context,
 
-3.  Random effects to account for settlement type
-    (e.g. urban/rural) and other types of stratification in survey data,
+3.  Random effects to account for settlement type (e.g. urban/rural) and other types of stratification in survey data,
 
-4.  Quantifying and mapping uncertainties in
-    population estimates and
+4.  Quantifying and mapping uncertainties in population estimates and
 
-5.  Diagnostics to evaluate model performance (e.g.
-    cross-validation).
+5.  Diagnostics to evaluate model performance (e.g. cross-validation).
 
-It has been taught in a remote workshop to the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
+The material has been used during a remote workshop with the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
 
 ## Material
 
@@ -58,8 +50,7 @@ You are free to redistribute this document under the terms of a Creative Commons
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop,
-University of Southampton
+Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton, <https://wpgp.github.io/bottom-up-tutorial/>
 
 <br>
 
