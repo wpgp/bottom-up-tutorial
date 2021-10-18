@@ -11,6 +11,8 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
+    includes:
+       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72

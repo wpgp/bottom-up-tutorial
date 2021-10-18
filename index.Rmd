@@ -1,6 +1,10 @@
 ---
 title: "Statistical population modelling for census support"
 date: "Last compiled on `r Sys.Date()`"
+output: 
+  html_document:
+    includes:
+       in_header: wd/misc/clicky.html
 ---
 
 ![](assets/pic/wp_logotype_gray_low.png)
@@ -50,7 +54,7 @@ You are free to redistribute this document under the terms of a Creative Commons
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton, <https://wpgp.github.io/bottom-up-tutorial/>
+Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton, <https://wpgp.github.io/bottom-up-tutorial/>, <doi:10.5281/zenodo.5572490>
 
 <br>
 
