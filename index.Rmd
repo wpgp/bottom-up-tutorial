@@ -54,7 +54,7 @@ You are free to redistribute this document under the terms of a Creative Commons
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton, <https://wpgp.github.io/bottom-up-tutorial/>, <doi:10.5281/zenodo.5572490>
+Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. WorldPop, University of Southampton and UNFPA, <https://wpgp.github.io/bottom-up-tutorial/>, <doi:10.5281/zenodo.5572490>
 
 <br>
 
