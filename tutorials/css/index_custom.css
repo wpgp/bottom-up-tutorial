@@ -12,3 +12,10 @@ a:hover {
     background-color: #ff8000;
     border-color: #ff8000;
 }
+
+.title {
+  margin-right: 300px;
+}
+.subtitle {
+  margin-right: 200px;
+}

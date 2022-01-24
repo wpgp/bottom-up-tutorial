@@ -34,9 +34,11 @@ local({
   })
 })
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%", warning=F, message=F,}
+library(here)
+knitr::include_graphics(here('./assets/pic/wp_logotype_grey_hi.png'))
+knitr::include_graphics(here('./assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg'))
+```
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
 # 1 Set-up ----
 

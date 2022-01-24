@@ -20,13 +20,13 @@ bibliography: references.bib
 
 ```{r logo, echo=FALSE}
 ###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("./assets/pic/320px-UNFPA_logo.svg.png"),
+htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
-
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%"}
+knitr::include_graphics('../../assets/pic/wp_logotype_grey_hi.png')
+knitr::include_graphics('../../assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+```
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
 # 1 Set-up ----
 
@@ -186,7 +186,7 @@ We choose a warmup of 20 iterations (instead of 250).
 warmup <- 20
 
 # mcmc
-fit_lowWarmup <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+fit_lowWarmup <- rstan::stan(file = file.path('../tutorial1/tutorial1_model2.stan'), 
                           data = stan_data,
                           iter = warmup + iter, 
                           chains = chains,
@@ -225,7 +225,7 @@ We store the model under `tutorial4/tutorial1_model2_wrong.stan` and estimate it
 warmup <- 250
 
 # mcmc
-fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_wrong.stan'), 
+fit_wrong <- rstan::stan(file = file.path('tutorial1_model2_wrong.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,
@@ -254,7 +254,7 @@ Let's come back to a correctly fit model.
 # 2.3 Predicted posterior check ----
 
 # mcmc
-fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+fit <- rstan::stan(file = file.path('../tutorial1/tutorial1_model2.stan'), 
                           data = stan_data,
                           iter = warmup + iter, 
                           chains = chains,
@@ -448,7 +448,7 @@ stan_data_xval <- list(
 pars <- c('mu','sigma', 'population_hat',  'density_hat')
 
 # mcmc
-fit_xval <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2xval.stan'), 
+fit_xval <- rstan::stan(file = file.path('tutorial1_model2xval.stan'), 
                    data = stan_data_xval,
                    iter = warmup + iter, 
                    chains = chains,
@@ -530,7 +530,7 @@ We will predict population for grid cell of 100m x 100m and use our best populat
 ```{r}
 # 3. Population prediction ----
 
-tutorial3_model2_fit <- readRDS("tutorials/tutorial3/tutorial3_model2_fit.rds")
+tutorial3_model2_fit <- readRDS("../tutorial3/tutorial3_model2_fit.rds")
 ```
 
 
@@ -618,7 +618,7 @@ write_csv(raster_df %>% filter(mastergrid==1)%>% head(n=10), 'wd/misc/raster_pre
 ```
 
 ```{r, include=F, echo=F, purl=F}
-raster_df <- read.csv('wd/misc/raster_predict_ex.csv')
+raster_df <- read.csv('../../wd/misc/raster_predict_ex.csv')
 ```
 
 The raster table contains 671 110 rows and 10 columns. 95% of the rows
@@ -782,7 +782,7 @@ predictions <- as_tibble(mu_predicted) %>%
 cell. Let's see how does it look like for the 5 settled grid cells:
 
 ```{r, echo=F}
-predictions <-  readRDS('tutorials/data/gridded_pop_predicted.rds')
+predictions <-  readRDS('../data/gridded_pop_predicted.rds')
 ```
 
 ```{r}
@@ -845,7 +845,7 @@ Let's see how we can create a gridded population from our predictions.
 
 ```{r, echo=F,message=F,warning=F}
 library(raster)
-raster_df <- readRDS('wd/misc/gridcell_id.rds')
+raster_df <- readRDS('../../wd/misc/gridcell_id.rds')
 ```
 
 We first compute the mean prediction for every grid cell:

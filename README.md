@@ -56,7 +56,7 @@ International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) 
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. United Nations Population Fund (UNFPA), Regional Office for Latin America and the Caribbean and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, doi:10.5281/zenodo.5572490
+Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. United Nations Population Fund (UNFPA) and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, doi:10.5281/zenodo.5572490
 
 <br>
 

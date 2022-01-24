@@ -22,9 +22,6 @@ bibliography: references.bib
 ###LOAD WP LOGO##
 htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
-
-knitr::opts_chunk$set(fig.align = "center") 
-
 local({
   hook_output <- knitr::knit_hooks$get('warning')
   knitr::knit_hooks$set(warning = function(x, options) {
@@ -37,7 +34,11 @@ local({
 })
 ```
 
-![](../../assets/pic/wp_logotype_gray_low.png)
+```{r, echo=F, fig.show="hold", out.width="20%", warning=F, message=F}
+library(here)
+knitr::include_graphics(here('./assets/pic/wp_logotype_grey_hi.png'))
+knitr::include_graphics(here('./assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg'))
+```
 
 ```{r, class.source = 'fold-hide', warning=F, message=F}
 # 1 Set-up ----
@@ -53,6 +54,9 @@ library(plotly) # interactive plot
 # stan setup
 options(mc.cores = parallel::detectCores()-1)
 rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled model
+
+knitr::opts_chunk$set(fig.align = "center") 
+
 ```
 
 # Introduction

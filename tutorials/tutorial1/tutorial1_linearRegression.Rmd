@@ -24,9 +24,10 @@ bibliography: references.bib
 htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%"}
+knitr::include_graphics('../../assets/pic/wp_logotype_grey_hi.png')
+knitr::include_graphics('../../assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+```
 ```{r, include=F}
 # 1 Set-up ----
 
@@ -37,7 +38,6 @@ library(kableExtra) # visualising table
 library(here) # handling path
 library(rstan) # running Bayesian models
 ```
-
 # Introduction
 
 The first part of this tutorial will cover how to revamp a basic
