@@ -6,15 +6,11 @@ output:
     includes:
        in_header: wd/misc/clicky.html
 ---
-```{r logo, echo=FALSE}
-###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("./assets/pic/320px-UNFPA_logo.svg.png"),
-               alt = 'logo', style = 'position:absolute; top:60px; right:0; width: 25%; height: auto; padding:20px')
 
-```
 ```{r, echo=F, logo-side, fig.show="hold", out.width="20%"}
 knitr::include_graphics('assets/pic/wp_logotype_grey_hi.png')
 knitr::include_graphics('assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+knitr::include_graphics('assets/pic/320px-UNFPA_logo.svg.png')
 ```
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
