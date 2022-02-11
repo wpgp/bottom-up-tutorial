@@ -61,7 +61,7 @@ Tutorial 2 explored how to model large-scale spatial patterns:
 how population density differs per large grouping such as by region or
 settlement type. We integrated those large-scale variations in a
 Bayesian framework by using a hierarchical random intercept model for the population 
-density. More precisely 
+density.
 
 Tutorial 3 aims at integrating small-scale variations of population
 density that are linked to local context of human settlement. 
@@ -156,7 +156,7 @@ $\mu$ the median of the Lognormal distribution as follows:
 population 〜 Poisson( pop\_density * settled\_area) \\
 pop\_density 〜 Lognormal(\mu, \: \sigma) \\
 
-\mu = \alpha_{t,r} + \beta X \\[10pt]
+\mu = \alpha_{t,r} +  X \beta \\[10pt]
 
 \beta 〜 Normal(0,10)(\#eq:model1)
 

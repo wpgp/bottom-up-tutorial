@@ -283,7 +283,7 @@ div.tocify {
 <h1 class="title toc-ignore">Population modelling
 for census support</h1>
 <h3 class="subtitle">Tutorial 3: How to model small-scale spatial variations?</h3>
-<h4 class="date">Compiled on 24/01/2022</h4>
+<h4 class="date">Compiled on 11/02/2022</h4>
 
 </div>
 
@@ -309,7 +309,7 @@ rstan::rstan_options(auto_write = TRUE) # speed up running time of compiled mode
 how population density differs per large grouping such as by region or
 settlement type. We integrated those large-scale variations in a
 Bayesian framework by using a hierarchical random intercept model for the population
-density. More precisely</p>
+density.</p>
 <p>Tutorial 3 aims at integrating small-scale variations of population
 density that are linked to local context of human settlement.
 Figure
@@ -395,7 +395,7 @@ distribution for <span class="math inline">\(\alpha_{t,r}\)</span> for sake of r
 population 〜 Poisson( pop\_density * settled\_area) \\
 pop\_density 〜 Lognormal(\mu, \: \sigma) \\
 
-\mu = \alpha_{t,r} + \beta X \\[10pt]
+\mu = \alpha_{t,r} +  X \beta \\[10pt]
 
 \beta 〜 Normal(0,10)\tag{1}
 
