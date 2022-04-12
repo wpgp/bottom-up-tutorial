@@ -45,6 +45,8 @@ International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) 
 ```{r, echo=F, figures-side, fig.show="hold", out.width="20%"}
 knitr::include_graphics('assets/pic/320px-UNFPA_logo.svg.png')
 knitr::include_graphics('assets/pic/wp_logo_gray_low.png')
+knitr::include_graphics('assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+
 ```
 
 
