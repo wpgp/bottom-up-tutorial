@@ -1,0 +1,12 @@
+h1,
+h2,
+h3 {
+  color: #ff8000;
+}
+
+.question {
+  padding: 1em;
+  background: grey;
+  color: white;
+  border-radius: 10px;
+}

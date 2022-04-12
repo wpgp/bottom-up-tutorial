@@ -10,6 +10,8 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
+    includes:
+       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72
@@ -18,15 +20,15 @@ bibliography: references.bib
 
 ```{r logo, echo=FALSE}
 ###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("./assets/pic/320px-UNFPA_logo.svg.png"),
+htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
-
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%"}
+knitr::include_graphics('../../assets/pic/wp_logotype_grey_hi.png')
+knitr::include_graphics('../../assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+```
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
-# 1 Set-up ---
+# 1 Set-up ----
 
 # load libraries
 library(tidyverse) # managing data
@@ -49,7 +51,7 @@ population count as a **Poisson-Lognormal compound,** accounting for
 settled area. In Tutorial 2, we added a **hierarchical random intercept** 
 by settlement type and region, that differentiates parameter
 estimation by the natural clustering of the observations. In Tutorial 3
-we eventually modelled small-scale variations in population density by
+we modelled small-scale variations in population density by
 adding **a linear regression based on geospatial covariates**. We
 covered thus all the fundamental modelling blocks of WorldPop bottom-up
 population model, described in @leasure2020a.
@@ -116,8 +118,9 @@ Vignettes can be found here: [raster](https://rspatial.org/raster/1-introduction
 
 Before predicting population count for the entire study area we want to
 make sure that the model is correct. We thus perform additional checks:
-on the **model convergence** with traceplots and `stan` warnings, on the estimated parameters with a *posterior predictive check*
-and on the predicted population count at study site with a
+on the **model convergence** with traceplots and `stan` warnings,
+on the **estimated parameters** with a *posterior predictive check*
+and on the **predicted population count at study site** with a
 *cross-validation approach*.
 
 We will work with the first relevant population model that we built in Tutorial 1, 
@@ -141,6 +144,8 @@ pop\_density 〜 Lognormal( \mu, \sigma) \\
 We do some set-ups that should now be familiar.
 
 ```{r}
+# 1. Model diagnostics ----
+
 # load data
 data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
 data <- data %>% 
@@ -160,7 +165,7 @@ stan_data <- list(
   area = data$A)
 
 # set parameters to monitor
-pars <- c('mu','sigma', 'density_hat', 'population_hat')
+pars <- c('mu', 'sigma', 'density_hat', 'population_hat')
 ```
 
 
@@ -175,10 +180,13 @@ in which the sequences get closer to the mass of the distribution.
 We choose a warmup of 20 iterations (instead of 250).
 
 ```{r}
+# 1.1 Short warmup period ----
+
+# set short warmup
 warmup <- 20
 
 # mcmc
-fit_lowWarmup <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+fit_lowWarmup <- rstan::stan(file = file.path('../tutorial1/tutorial1_model2.stan'), 
                           data = stan_data,
                           iter = warmup + iter, 
                           chains = chains,
@@ -212,9 +220,12 @@ Typically we can declare a Uniform with stricter bounds for $\sigma$:
 We store the model under `tutorial4/tutorial1_model2_wrong.stan` and estimate it.
 
 ```{r}
+# 1.2 Wrong prior ----
+
 warmup <- 250
 
-fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_wrong.stan'), 
+# mcmc
+fit_wrong <- rstan::stan(file = file.path('tutorial1_model2_wrong.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,
@@ -223,8 +234,10 @@ fit_wrong <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2_
                    seed = seed)
 ```
 
-Many metrics detect a convergence issue. The most worrying one is the *divergent transitions* that are
-often related with issues in the model structure itself and not only with estimation process.
+Many metrics detect a convergence issue. 
+The most worrying one is the *divergent transitions* that are
+often related with issues in the model structure itself and not only 
+within the estimation process.
 
 ```{r}
 traceplot(fit_wrong, c('mu', 'sigma'))
@@ -238,8 +251,10 @@ shows clearly the issue in bounding with a ceiling at 1 that overly constrained 
 Let's come back to a correctly fit model.
 
 ```{r}
+# 2.3 Predicted posterior check ----
+
 # mcmc
-fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
+fit <- rstan::stan(file = file.path('../tutorial1/tutorial1_model2.stan'), 
                           data = stan_data,
                           iter = warmup + iter, 
                           chains = chains,
@@ -262,6 +277,7 @@ the `stanfit` object. We do it using the `extract` function from
 `rstan`.
 
 ```{r, }
+# extract estimated mu
 mus <- data.frame(
     # extract parameter
     posterior=extract(fit, pars='mu')$mu,
@@ -336,7 +352,7 @@ the model.
 **In-sample checks do not account for model overfitting.** Overfitting
 occurs when the model does not only reproduce the information from the
 observations but also the noise. We want the model to be able to
-accurately predict population also unknown new study sites. This
+accurately predict population also for unknown new study sites. This
 real-world scenario can be reproduced by keeping a percentage of the
 observations for model fitting and leaving the remaining study sites for
 predicting, a mechanism called **cross-validation.**
@@ -346,6 +362,8 @@ be used for fitting the model and a predicting set (30%) that will be
 used for model prediction:
 
 ```{r, message=F}
+# 2.4 Cross validation of predictions ----
+
 set.seed(2004)
 # sample observations
 train_size <-  round(nrow(data)*0.7)
@@ -363,7 +381,7 @@ by providing the testing dataset to the `generated quantities` modelling
 block. Because all variables have to be defined for each set, it lengthens
 substantively the code. 
 
-```{stan output.var="simpleCode", eval=F }
+```{stan output.var="simpleCode", eval=F, purl=F }
 data{
   
   int<lower=0> n_train; // number of microcensus clusters in training set
@@ -430,7 +448,7 @@ stan_data_xval <- list(
 pars <- c('mu','sigma', 'population_hat',  'density_hat')
 
 # mcmc
-fit_xval <- rstan::stan(file = file.path('tutorials/tutorial4/tutorial1_model2xval.stan'), 
+fit_xval <- rstan::stan(file = file.path('tutorial1_model2xval.stan'), 
                    data = stan_data_xval,
                    iter = warmup + iter, 
                    chains = chains,
@@ -501,12 +519,18 @@ optimistic goodness-of-fit metrics.
 # Gridded population prediction
 
 We will cover in this section **model predictions for the entire study
-area** at the grid cell level.
+area** at the grid cell level. Population can be predicted for any spatial unit as long as
+1. all the covariates and input data can be produced for the spatial unit
+2. the predicting spatial unit is not too different in size from the fitting spatial unit, such that the 
+estimated relationship between covariates and population density can still be applied.
 
-We will use our best population model, that is
+
+We will predict population for grid cell of 100m x 100m and use our best population model: model 2 from tutorial 3.
 
 ```{r}
-tutorial3_model2_fit <- readRDS("tutorials/tutorial3/tutorial3_model2_fit.rds")
+# 3. Population prediction ----
+
+tutorial3_model2_fit <- readRDS("../tutorial3/tutorial3_model2_fit.rds")
 ```
 
 
@@ -572,7 +596,7 @@ rasterlist <- list.files(wd_path,
 raster_df <- as_tibble(sapply(rasterlist, getRasterValues))
 ```
 
-```{r, echo=F, eval=FALSE}
+```{r, echo=F, eval=FALSE, purl=F}
 raster_df$gridcell_id <- 1:nrow(raster_df)
 
 a <- raster_df %>% filter(mastergrid.tif==1) %>% dplyr::select(starts_with('settlement'), gridcell_id) 
@@ -590,11 +614,11 @@ raster_df <- raster_df %>%
   mutate(mastergrid = ifelse(is.na(x1), 0, mastergrid),
          mastergrid = ifelse(settlementType==6, 0, mastergrid))
 
-write_csv(raster_df %>% filter(mastergrid==1)%>% head(n=10), 'wd/raster_predict_ex.csv')
+write_csv(raster_df %>% filter(mastergrid==1)%>% head(n=10), 'wd/misc/raster_predict_ex.csv')
 ```
 
-```{r, include=F, echo=F}
-raster_df <- read.csv('wd/raster_predict_ex.csv')
+```{r, include=F, echo=F, purl=F}
+raster_df <- read.csv('../../wd/misc/raster_predict_ex.csv')
 ```
 
 The raster table contains 671 110 rows and 10 columns. 95% of the rows
@@ -758,7 +782,7 @@ predictions <- as_tibble(mu_predicted) %>%
 cell. Let's see how does it look like for the 5 settled grid cells:
 
 ```{r, echo=F}
-predictions <-  readRDS('tutorials/data/gridded_pop_predicted.rds')
+predictions <-  readRDS('../data/gridded_pop_predicted.rds')
 ```
 
 ```{r}
@@ -821,7 +845,7 @@ Let's see how we can create a gridded population from our predictions.
 
 ```{r, echo=F,message=F,warning=F}
 library(raster)
-raster_df <- readRDS('wd/gridcell_id.rds')
+raster_df <- readRDS('../../wd/misc/gridcell_id.rds')
 ```
 
 We first compute the mean prediction for every grid cell:

@@ -11,6 +11,8 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
+    includes:
+       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72
@@ -22,9 +24,10 @@ bibliography: references.bib
 htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%"}
+knitr::include_graphics('../../assets/pic/wp_logotype_grey_hi.png')
+knitr::include_graphics('../../assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
+```
 ```{r, include=F}
 # 1 Set-up ----
 
@@ -35,17 +38,16 @@ library(kableExtra) # visualising table
 library(here) # handling path
 library(rstan) # running Bayesian models
 ```
-
 # Introduction
 
 The first part of this tutorial will cover how to revamp a basic
 frequentist model into a Bayesian model and will introduce some concepts
 such as Directed Acyclic Graph (DAG) and priors.
 
-The second part will be devoted to presenting the dataset we will be
-working with for the next three tutorials.
-
-We will present two simple population models:
+The second part will be devoted to introduce population modelling
+from sparse but representative study sites sample. We will present 
+the dataset we will be
+working with for the next three tutorials and build our first two population models:
 
 -   a model based on the Normal distribution
 

@@ -10,6 +10,8 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
+    includes:
+       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72
@@ -32,9 +34,11 @@ local({
   })
 })
 ```
-
-![](../../assets/pic/wp_logotype_gray_low.png)
-
+```{r, echo=F, fig.show="hold", out.width="20%", warning=F, message=F,}
+library(here)
+knitr::include_graphics(here('./assets/pic/wp_logotype_grey_hi.png'))
+knitr::include_graphics(here('./assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg'))
+```
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
 # 1 Set-up ----
 
@@ -57,7 +61,7 @@ Tutorial 2 explored how to model large-scale spatial patterns:
 how population density differs per large grouping such as by region or
 settlement type. We integrated those large-scale variations in a
 Bayesian framework by using a hierarchical random intercept model for the population 
-density. More precisely 
+density.
 
 Tutorial 3 aims at integrating small-scale variations of population
 density that are linked to local context of human settlement. 
@@ -152,7 +156,7 @@ $\mu$ the median of the Lognormal distribution as follows:
 population 〜 Poisson( pop\_density * settled\_area) \\
 pop\_density 〜 Lognormal(\mu, \: \sigma) \\
 
-\mu = \alpha_{t,r} + \beta X \\[10pt]
+\mu = \alpha_{t,r} +  X \beta \\[10pt]
 
 \beta 〜 Normal(0,10)(\#eq:model1)
 
@@ -453,8 +457,8 @@ prediction stage (in Tutorial 4).
 
 ```{r}
 # save scaling factor
-write_csv(covs_scaled, 'tutorials/data/covs_scaled.csv')
-write_csv(scale_factor, 'tutorials/data/scale_factor.csv')
+write_csv(covs_scaled, here('tutorials/data/covs_scaled.csv'))
+write_csv(scale_factor, here('tutorials/data/scale_factor.csv'))
 ```
 
 ## Implementing the model
@@ -562,22 +566,20 @@ which is forbidden.
 ### A note on initialisation
 
 This is an opportunity to discuss about **initialisation**. MCMC
-simulations,backbone of Bayesian estimation, need to start exploring 
-the parameter space at one value.
+simulations start exploring the parameter space from one initial value.
 
-This starting value is in `stan` controlled by the option `init` whose default is
+This initial value is controlled in `stan` by the option `init`. Its default is
 `random`, that is "*Let Stan generate random initial values for all
 parameters. The seed of the random number generator used by Stan can be
 specified via the seed argument. If the seed for Stan is fixed, the same
 initial values are used. The default is to randomly generate initial
 values between -2 and 2 on the unconstrained support".*
 
-Defining the starting values means helping the algorithm to start close to the region of interest
+Defining the starting values helps the algorithm to start close to the region of interest
 such that no time is lost in exploring an area of the parameter space that we know 
 doesn't fit the likely values and might run into parameters combination that is unfit to our model structure.
-
-We define the start of the estimation process based on our understanding of population distribution.
-let's state that initialisation is not constraining, it just gives a hint to the algorithm. 
+Note that the initialisation is not constraining, 
+it just gives a hint to the algorithm. 
 
 We initialise only *root parameters*. Root parameters are parameters that don't
 depend on other parameters. Dependent parameters will then inherit the initialisation.

@@ -3,14 +3,16 @@
   <head>
     <title>Statistical population modelling for census support</title>
     <meta charset="utf-8" />
-    <meta name="author" content="Edith Darin, Douglas Leasure" />
-    <meta name="date" content="2021-08-21" />
+    <meta name="author" content="Edith Darin" />
     <script src="day5_presentation_files/header-attrs/header-attrs.js"></script>
     <link href="day5_presentation_files/remark-css/default.css" rel="stylesheet" />
     <script src="day5_presentation_files/fabric/fabric.min.js"></script>
     <link href="day5_presentation_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
     <script src="day5_presentation_files/xaringanExtra-scribble/scribble.js"></script>
     <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script async src="//static.getclicky.com/101337718.js"></script>
+    <noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/101337718ns.gif" /></p></noscript>
+        
     <link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
     <link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
   </head>
@@ -20,52 +22,13 @@ class: center, middle, inverse, title-slide
 
 # Statistical population modelling for census support
 ## Conclusive remarks
-### Edith Darin, Douglas Leasure
-### 2021-08-21
+### Edith Darin
 
 ---
 
 
 
 
-
-
-
-
-
-<div>
-<style type="text/css">.xaringan-extra-logo {
-width: 110px;
-height: 128px;
-z-index: 0;
-background-image: url(../assets/pic/320px-UNFPA_logo.svg.png);
-background-size: contain;
-background-repeat: no-repeat;
-position: absolute;
-bottom:-3.5em;left:0.5em;
-}
-</style>
-<script>(function () {
-  let tries = 0
-  function addLogo () {
-    if (typeof slideshow === 'undefined') {
-      tries += 1
-      if (tries < 10) {
-        setTimeout(addLogo, 100)
-      }
-    } else {
-      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
-        .forEach(function (slide) {
-          const logo = document.createElement('div')
-          logo.classList = 'xaringan-extra-logo'
-          logo.href = null
-          slide.appendChild(logo)
-        })
-    }
-  }
-  document.addEventListener('DOMContentLoaded', addLogo)
-})()</script>
-</div>
 
 
 
@@ -73,22 +36,297 @@ bottom:-3.5em;left:0.5em;
 ---
 class: inverse, left, middle
 
-# Population modelling
+# What have we learned so far?
 
+
+
+---
+class: center, middle
+
+# Bayesian philosophy
+
+--
+#### A story
+
+--
+The prior
+
+--
+#### Observed data
+
+--
+The likelihood
+
+--
+
+#### Updated information
+--
+
+The posterior
 
 ---
 
-#Topics uncovered
+# Example
+
+*Suppose you have a globe representing the planet that you can 
+hold in the hand*
+
+.pull-left[
+Question: how much of the surface is covered by water?
+
+Experiment:
+1. Toss the globe in the air
+2. Catch it back
+3. Record the nature of the surface under your right finger
+
+Scenario example: WLWWLWWWLWLL
+]
+
+.pull-right[
+![](day5_presentation_files/pic/day5_globe.PNG)
+]
+
+.footnote[*Statistical Rethinking, A Bayesian Course with Examples in R and Stan* by Richard McElreath]
+
+---
+# Example
+
+.center[&lt;img src="day5_presentation_files/pic/day5_water.PNG" alt="drawing" width="350"/&gt;
+]
+.footnote[*Statistical Rethinking, A Bayesian Course with Examples in R and Stan* by Richard McElreath]
+
+---
+class: center, middle
+
+
+# MCMC estimation process
+
+--
+### Chains
+
+--
+
+### Initialisation
+
+--
+
+### Warmup
+
+--
+
+### Iterations
+
+---
+class: center, middle
+
+# Population model
+---
+
+
+### Population counts are discrete, positive
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag1.png)
+]
+.pull-right[
+`$$population \sim Poisson( \lambda )$$`
+]
 
 ---
 
-# Speed up running time
+### Population counts have overdispersion
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag2.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled) \\$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+]
+
+---
+
+### Population counts varie by region and type
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag3.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \alpha_{t,r}, \sigma)$$`
+
+&lt;br&gt;
+$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t) $$
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu) \\$$`
+]
+
+
+
+---
+### Population counts varie locally
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag4.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+`$$\mu = \alpha_{t,r} + \beta X \\[10pt]$$`
+
+&lt;br&gt;
+`$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t)$$`
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu)$$`
+]
+
+---
+### Local variations varie by settlement type
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag5.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+`$$\mu = \alpha_{t,r} + \beta_t X \\[10pt]$$`
+
+&lt;br&gt;
+`$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t)$$`
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu)$$`
+]
+
+
+---
+class: inverse, left, middle
+
+
+# What remains to be learned?
+
+---
+class: center, middle
+
+# Do your own model!
+
+---
+
+# Practice
+
+1. Defining models
+--
+
+2. Defining priors
+--
+
+3. Collecting covariates
+--
+
+4. Structuring the hierarchy
+
+
+
+---
+class: center, middle
+
+# Add additional submodels
+
+---
+# Modelling
+
+#### Hierarchical structure on the variance term
+
+&lt;br&gt;
+.pull-left[![](day5_presentation_files/pic/day5_variance.PNG)]
+
+--
+
+
+.pull-right[
+
+`$$pop \sim Poisson( pop\_density * settled)$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma_t)$$`
+
+]
+---
+# Modelling
+
+
+#### Missing households: **Measurement error model** on population count
+
+&lt;br&gt; 
+.pull-left[
+![](day5_presentation_files/pic/day5_missing.png)
+]
+
+--
+.pull-right[$$ N \sim Binomial (pop, \theta) $$
+`$$pop \sim Poisson( pop\_density * settled)$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+WorldPop.  2020. Bottom-up  gridded  population  estimates  for  Zambia. 
+https://dx.doi.org/10.5258/SOTON/WP00662]
+
+--
+
+&lt;br&gt;
+
+Other potential measurement error models: covariates, settlement...
+---
+# Modelling
+
+#### Complex sampling design: **Weighted likelihood**
+
+`$$pop_i \sim Poisson( pop\_density_i * settled_i)$$`
+`$$pop\_density_i  \sim Lognormal( \mu, \tau_i)$$`
+$$ \tau_i = \frac{w_i}{\sigma}$$
+
+---
+# Modelling
+
+#### Age and sex structure
+
+.pull-left[
+&lt;img src="day5_presentation_files/pic/day5_agesex3.png" alt="drawing" width="300"/&gt;
+&lt;img src="day5_presentation_files/pic/day5_agesex4.png" alt="drawing" width="300"/&gt;
+
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+
+&lt;br&gt;
+$$ pop_g \sim Multinomial( pop, \gamma)  $$
+$$ \gamma \sim Dirichlet(rep(1,g))$$]
+
+---
+class: center, middle
+
+# Gain programming expertise
+
+---
+# Programming
  
 
--   Vectorization
--   Linearisation (against the Neal's funnel issue)
+- Vectorisation
 
----
+--
+- Reparametrisation
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

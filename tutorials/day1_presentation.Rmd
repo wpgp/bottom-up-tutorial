@@ -5,6 +5,8 @@ author: "Edith Darin"
 output:
   xaringan::moon_reader:
     css: [css/xaringan-themer.css, css/presentation_custom.css, default]
+    includes:
+     in_header: ../wd/misc/clicky.html
 ---
 
 
