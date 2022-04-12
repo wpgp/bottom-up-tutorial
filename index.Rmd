@@ -7,7 +7,7 @@ output:
        in_header: wd/misc/clicky.html
 ---
 
-```{r, echo=F, logo-side, fig.show="hold", out.width="20%"}
+```{r, echo=F, logo-side, fig.show="hold", out.width="10%"}
 knitr::include_graphics('assets/pic/wp_logotype_grey_hi.png')
 ```
 ```{r setup, include=FALSE}
