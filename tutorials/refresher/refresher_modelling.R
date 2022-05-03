@@ -13,6 +13,8 @@ iter <- 500
 warmup <- 300
 seed <- 12345677
 
+observations <- read_csv(here('tutorials', 'refresher','observations.csv'),
+                         col_types = "nf")
 
 # Descriptive statistics --------------------------------------------------
 
@@ -23,8 +25,8 @@ hist(observations$pop)
 # Fit a Poisson model -----------------------------------------------------
 
 # Prior predictive check
-lambda_simulated <- abs(rnorm(1000, 500, 50))
-pop_poisson_simulated <- sapply(lambda_simulated, function(x) rpois(1, x))
+alpha_national_simulated <- abs(rnorm(1000, 500, 50))
+pop_poisson_simulated <- sapply(alpha_national_simulated, function(x) rpois(1, x))
 
 hist(pop_poisson_simulated)
 
@@ -65,7 +67,6 @@ ggplot(alpha_national, aes(x=value, fill=distribution))+
 
 # posterior predictive check
 
-# simple version
 pop_posterior <- tibble(
   source = factor(c(rep('predicted', iter*chains*input_data$n_obs), 
                     rep('observed', input_data$n_obs)), 
@@ -81,8 +82,8 @@ ggplot(pop_posterior, aes(x=value, fill=source, after_stat(density)))+
 # Fit a Poisson-Lognormal model -----------------------------------------------------
 
 # Prior predictive check
-alpha_simulated <- abs(rnorm(10000, log(500), 0.1))
-sigma_simulated <- abs(rnorm(10000, 0.3, 0.1))
+alpha_simulated <- abs(rnorm(1000, log(500), 0.1))
+sigma_simulated <- abs(rnorm(1000, 0.3, 0.1))
 lambda_simulated <- mapply( function(x,y) rlnorm(1, x, y), alpha_simulated, sigma_simulated )
 pop_lognormal_simulated <- sapply(lambda_simulated, function(x) rpois(1, x))
 hist(pop_lognormal_simulated)
@@ -95,7 +96,7 @@ comp_pop <- tibble(
 )
 
 ggplot(comp_pop, aes(x=value, fill=model))+
-  geom_histogram(bins = 100)+
+  geom_histogram(bins = 100,position='identity', alpha=0.8)+
   theme_minimal()
 
 # run the model
@@ -125,18 +126,17 @@ alpha_national <- tibble(
   pivot_longer(-iter, names_to = 'distribution')
 
 ggplot(alpha_national, aes(x=value, fill=distribution))+
-  geom_histogram(bins=100)+
+  geom_histogram(bins=100, position='identity', alpha=0.8)+
   theme_minimal()
 
 sigma <- tibble(
   posterior = samples_poisson_lognormal$sigma,
   prior = abs(rnorm(chains*iter, 0.3, 0.1)),
-  iter = 1:(chains*iter)
-) %>% 
+  iter = 1:(chains*iter)) %>% 
   pivot_longer(-iter, names_to = 'distribution')
 
 ggplot(sigma, aes(x=value, fill=distribution))+
-  geom_histogram(bins=100)+
+  geom_histogram(bins=100, position='identity', alpha=0.8)+
   theme_minimal()
 
 # posterior predictive check
@@ -160,34 +160,10 @@ ggplot(pop_posterior_lognormal, aes(x=value, fill=source, after_stat(density)))+
 
 # Fit a random slope model  --------------------------------------------------
 
+# Descriptive statistics 
+
 ggplot(observations, aes(x=pop, fill=settlement, after_stat(density)))+
-  geom_histogram(bins=50)+
-  theme_minimal()
-
-
-
-# Prior predictive check
-props_settlement <- table(observations$settlement)/nrow(observations)
-alpha_small_simulated <- abs(rnorm(10000*props_settlement[2], log(400), 0.1))
-alpha_large_simulated <- abs(rnorm(10000*props_settlement[1], log(500), 0.1))
-alpha_simulated <- c(alpha_small_simulated, alpha_large_simulated)
-sigma_simulated <- abs(rnorm(10000, 0.5, 0.1))
-lambda_simulated <- mapply( function(x,y) rlnorm(1, x, y), alpha_simulated, sigma_simulated )
-pop_hierarchical_simulated <- sapply(lambda_simulated, function(x) rpois(1, x))
-hist(pop_lognormal_simulated)
-
-
-comp_pop <- tibble(
-  model = factor(c(rep('Poisson', length(pop_poisson_simulated)), 
-                   rep('Poisson-Lognormal',length(pop_lognormal_simulated)),
-                   rep('Poisson-Lognormal-Hierarchical',length(pop_hierarchical_simulated))), 
-                 levels = c('Poisson-Lognormal-Hierarchical', 'Poisson-Lognormal', 'Poisson')),
-  value= c(pop_poisson_simulated,pop_lognormal_simulated, pop_hierarchical_simulated)
-)
-
-
-ggplot(comp_pop, aes(x=value, fill=model))+
-  geom_histogram(bins = 100)+
+  geom_histogram(bins=50, position='identity', alpha=0.8)+
   theme_minimal()
 
 
@@ -428,6 +404,7 @@ ggplot(comp_parametrization, aes(x=value, fill=parametrization))+
   geom_histogram(bins=100, position='identity', alpha=0.7)+
   theme_minimal()
 
+# posterior predictive check
 pop_posterior_lognormal_hierarchical <- tibble(
   source = factor(c(rep('predicted_poisson_lognormal_hierarchical_nclp', iter*chains*input_data$n_obs), 
                     rep('predicted_poisson_lognormal_hierarchical_cp', iter*chains*input_data$n_obs),
@@ -463,7 +440,7 @@ fit_poisson_lognormal_hierarchical_nclsp <- stan(
 
 samples_poisson_lognormal_hierarchical_nclsp<- rstan::extract(fit_poisson_lognormal_hierarchical_nclsp)
 
-
+# posterior predictive check
 pop_posterior_lognormal_hierarchical_param <- tibble(
   source = factor(c(rep('predicted_poisson_lognormal_hierarchical_nclsp', iter*chains*input_data$n_obs),
                     rep('predicted_poisson_lognormal_hierarchical_nclp', iter*chains*input_data$n_obs), 
@@ -491,7 +468,7 @@ ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, 
 # NB: not hierarchical
 
 pars_lognormal_hierarchical_var <- c('alpha_national','alpha_settlement', 
-                                       'sigma_settlement', 'pop_post_pred')
+                                     'sigma_settlement', 'pop_post_pred')
 
 fit_poisson_lognormal_hierarchical_var<- stan(
   file= here('tutorials', 'refresher','poisson_hierarchical_variance.stan'),
@@ -506,6 +483,7 @@ traceplot(fit_poisson_lognormal_hierarchical_var, pars = 'sigma_settlement')
 
 samples_poisson_lognormal_hierarchical_var<- rstan::extract(fit_poisson_lognormal_hierarchical_var)
 
+# prior checks
 comp_sigma <- as_tibble(samples_poisson_lognormal_hierarchical_var$sigma_settlement)
 colnames(comp_sigma) <- c('sigma_settlement_1', 'sigma_settlement_2')
 comp_sigma <- comp_sigma %>% 
@@ -525,7 +503,7 @@ ggplot(comp_sigma, aes(x=posterior, y=value, fill=model))+
   geom_boxplot()+
   theme_minimal()
 
-
+# posterior predictive check
 pop_posterior_lognormal_hierarchical_var<- tibble(
   source = factor(c(rep('predicted_poisson_lognormal_hierarchical_var', iter*chains*input_data$n_obs),
                     rep('predicted_poisson_lognormal_hierarchical_cp', iter*chains*input_data$n_obs),
