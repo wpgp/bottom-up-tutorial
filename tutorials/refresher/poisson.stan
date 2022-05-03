@@ -4,16 +4,16 @@ data {
 }
 
 parameters {
-  real<lower=0> lambda;     
+  real<lower=0> alpha_national;     
 }
 
 model {
   // Prior model
-  lambda ~ normal(500, 50);
+  alpha_national ~ normal(500, 50);
 
   // Observational model
   
-  pop ~ poisson(lambda);
+  pop ~ poisson(alpha_national);
 }
 
 // Simulate a full observation from the current value of the parameters
@@ -21,6 +21,6 @@ generated quantities {
   int pop_post_pred[n_obs]; 
   
   for(obs in 1:n_obs)
-    pop_post_pred[obs] = poisson_rng(lambda);
+    pop_post_pred[obs] = poisson_rng(alpha_national);
 }
 
