@@ -426,7 +426,8 @@ ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, 
 # New parametrization: non-centering the scale ---------------------------------
 
 
-pars_lognormal_hierarchical_nclsp <- c('alpha_national','delta_settlement', 
+pars_lognormal_hierarchical_nclsp <- c('alpha_national','u_delta_settlement', 
+                                       'eta_delta_settlement',
                                        'sigma', 'pop_post_pred')
 
 fit_poisson_lognormal_hierarchical_nclsp <- stan(
@@ -434,9 +435,15 @@ fit_poisson_lognormal_hierarchical_nclsp <- stan(
   data= input_data,
   iter = iter + warmup,
   warmup = warmup,
-  seed = seed,
+  seed = 1095856,
   pars = pars_lognormal_hierarchical_nclsp
 )
+
+
+traceplot(fit_poisson_lognormal_hierarchical_nclsp, 'alpha_national')
+traceplot(fit_poisson_lognormal_hierarchical_nclsp, 'u_delta_settlement')
+traceplot(fit_poisson_lognormal_hierarchical_nclsp, 'eta_delta_settlement')
+
 
 samples_poisson_lognormal_hierarchical_nclsp<- rstan::extract(fit_poisson_lognormal_hierarchical_nclsp)
 

@@ -10,9 +10,9 @@ parameters {
   real<lower=0> lambda[n_obs];   
   
   real alpha_national;  
-  vector[n_settlement] delta_settlement; 
   real<lower=0> u_delta_settlement;     
-  
+  vector[n_settlement] eta_delta_settlement;     
+
   real<lower=0> sigma;     
   
 }
@@ -20,14 +20,14 @@ parameters {
 transformed parameters {
   vector[n_settlement] mu;
   
-  mu = alpha_national + delta_settlement;
+  mu = alpha_national + u_delta_settlement * eta_delta_settlement;
 }
 
 model {
   // Prior model
   alpha_national ~ normal(log(500), 0.1);
-  delta_settlement ~ normal(0, u_delta_settlement);
   u_delta_settlement ~ normal(0,1);
+  eta_delta_settlement ~ normal(0,1);
   
   sigma ~ normal(0.3, 0.1);
   
@@ -45,7 +45,7 @@ generated quantities {
   
   
   for(obs in 1:n_obs){
-    lambda_post_pred[obs] = lognormal_rng(alpha_national + delta_settlement[obs_to_settlement[obs]], sigma);
+    lambda_post_pred[obs] = lognormal_rng(alpha_national + u_delta_settlement * eta_delta_settlement[obs_to_settlement[obs]], sigma);
     pop_post_pred[obs] = poisson_rng(lambda_post_pred[obs]);
   }
 }
