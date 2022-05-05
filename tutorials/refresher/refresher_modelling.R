@@ -293,7 +293,10 @@ comp_alpha %>%
   group_by(distribution) %>% 
   summarise(
     mean(value),
-    sd(value)
+    sd(value),
+    quantile(value, probs=0.025),
+    quantile(value, probs=0.975)
+    
   )
 
 
@@ -318,12 +321,12 @@ ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, 
 
 
 # New validation: cluster-based
-comp_obs <- as_tibble(samples_poisson_lognormal_hierarchical_cp$pop_post_pred) %>% 
+comp_obs_poisson_lognormal_hierarchical_cp <- as_tibble(samples_poisson_lognormal_hierarchical_cp$pop_post_pred) %>% 
   summarise(across(
-    everything(), ~ quantile(., probs=c(0.025, 0.5, 0.975))
+    everything(), ~ c(mean(.), quantile(., probs=c(0.025, 0.5, 0.975)))
   )) %>% 
   mutate(
-    metrics = paste0('q', c(0.025, 0.5, 0.975))
+    metrics = c('mean', paste0('q', c(0.025, 0.5, 0.975)))
   ) %>% 
   pivot_longer(
     -metrics
@@ -333,14 +336,120 @@ comp_obs <- as_tibble(samples_poisson_lognormal_hierarchical_cp$pop_post_pred) %
     obs = input_data$pop
   )
 
-ggplot(comp_obs, aes(x=obs, y=q0.5, ymin=q0.025, ymax=q0.975))+
-  geom_pointrange()+
+ggplot(comp_obs_poisson_lognormal_hierarchical_cp, aes(x=obs, y=q0.5, ymin=q0.025, ymax=q0.975))+
+  geom_pointrange(col='grey20')+
   theme_minimal()+
   labs(x='observations', y='predictions')+
   geom_abline(intercept=0, slope=1, size=1, color='orange')
 
+# Ft hierarchical model with independent variance --------------------------------------------
 
-# New parametrization: non-centering the location ---------------------------------
+# NB: not hierarchical
+
+pars_lognormal_hierarchical_var <- c('alpha_national','alpha_settlement', 
+                                     'sigma_settlement', 'pop_post_pred')
+
+fit_poisson_lognormal_hierarchical_var<- stan(
+  file= here('tutorials', 'refresher','poisson_hierarchical_variance.stan'),
+  data= input_data,
+  iter = iter + warmup,
+  warmup = warmup,
+  seed = seed,
+  pars = pars_lognormal_hierarchical_var
+)
+
+traceplot(fit_poisson_lognormal_hierarchical_var, pars = 'sigma_settlement')
+
+samples_poisson_lognormal_hierarchical_var<- rstan::extract(fit_poisson_lognormal_hierarchical_var)
+
+# prior checks
+comp_sigma <- as_tibble(samples_poisson_lognormal_hierarchical_var$sigma_settlement)
+colnames(comp_sigma) <- c('sigma_settlement_1', 'sigma_settlement_2')
+comp_sigma <- comp_sigma %>% 
+  pivot_longer(everything(),names_to = 'posterior') %>% 
+  mutate(model='independant sigma') 
+
+comp_sigma <- rbind(
+  comp_sigma,
+  tibble(
+    posterior = 'sigma_national',
+    value = samples_poisson_lognormal_hierarchical_cp$sigma,
+    model = 'fixed sigma'
+  )
+)
+
+ggplot(comp_sigma, aes(x=posterior, y=value, fill=model))+
+  geom_boxplot()+
+  theme_minimal()
+
+# posterior predictive check
+pop_posterior_lognormal_hierarchical_var<- tibble(
+  source = factor(c(rep('predicted_poisson_lognormal_hierarchical_var', iter*chains*input_data$n_obs),
+                    rep('predicted_poisson_lognormal_hierarchical_cp', iter*chains*input_data$n_obs),
+                    rep('observed', input_data$n_obs)), 
+                  levels = c('observed',
+                             'predicted_poisson_lognormal_hierarchical_var',
+                             'predicted_poisson_lognormal_hierarchical_cp')),
+  value= c(
+    as.vector(samples_poisson_lognormal_hierarchical_var$pop_post_pred),
+    as.vector(samples_poisson_lognormal_hierarchical_cp$pop_post_pred),
+    input_data$pop)
+)
+
+ggplotly(ggplot(pop_posterior_lognormal_hierarchical_var, aes(x=value, fill=source, after_stat(density)))+
+           geom_histogram(bins=30, position = 'identity', alpha=0.7)+
+           theme_minimal())
+
+# validation metrics based on residuals
+
+comp_obs_poisson_lognormal_hierarchical_var <- as_tibble(samples_poisson_lognormal_hierarchical_var$pop_post_pred) %>% 
+  summarise(across(
+    everything(), ~ c(mean(.), quantile(., probs=c(0.025, 0.5, 0.975)))
+  )) %>% 
+  mutate(
+    metrics = c('mean', paste0('q', c(0.025, 0.5, 0.975)))
+  ) %>% 
+  pivot_longer(
+    -metrics
+  ) %>% 
+  pivot_wider(names_from = metrics, values_from = value) %>% 
+  mutate(
+    obs = input_data$pop,
+    residual = mean-obs,
+    residual_perc = residual/mean*100
+  )
+
+comp_obs_poisson_lognormal_hierarchical_var %>% 
+  summarise(
+    `Bias`= mean(residual),
+    `Imprecision` = sd(residual),
+    `Inaccuracy` = mean(abs(residual)),
+    `Bias_std`= mean(residual_perc),
+    `Inaccuracy_std` = mean(abs(residual_perc)),
+    `Imprecision_std` = sd(residual_perc),
+    `In_IC` = mean(obs<q0.975&obs>q0.025)*100)
+
+
+comp_obs_poisson_lognormal_hierarchical_cp %>% 
+  mutate(
+    residual = mean-obs,
+    residual_perc = residual/mean*100
+  ) %>% 
+  summarise(
+    `Bias`= mean(residual),
+    `Imprecision` = sd(residual),
+    `Inaccuracy` = mean(abs(residual)),
+    `Bias_std`= mean(residual_perc),
+    `Inaccuracy_std` = mean(abs(residual_perc)),
+    `Imprecision_std` = sd(residual_perc),
+    `In_IC` = mean(obs<q0.975&obs>q0.025)*100)
+
+
+
+# BONUS: a tale of parametrisation ----------------------------------------
+
+
+# New hierarchy parametrisation: non-centering the location ---------------------------------
 
 
 pars_lognormal_hierarchical_nclp <- c('alpha_national','delta_settlement', 'u_delta_settlement', 
@@ -423,7 +532,7 @@ ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, 
            theme_minimal())
 
 
-# New parametrization: non-centering the scale ---------------------------------
+# New hierarchy parametrization: non-centering the scale ---------------------------------
 
 
 pars_lognormal_hierarchical_nclsp <- c('alpha_national','u_delta_settlement', 
@@ -445,85 +554,55 @@ traceplot(fit_poisson_lognormal_hierarchical_nclsp, 'u_delta_settlement')
 traceplot(fit_poisson_lognormal_hierarchical_nclsp, 'eta_delta_settlement')
 
 
-samples_poisson_lognormal_hierarchical_nclsp<- rstan::extract(fit_poisson_lognormal_hierarchical_nclsp)
-
-# posterior predictive check
-pop_posterior_lognormal_hierarchical_param <- tibble(
-  source = factor(c(rep('predicted_poisson_lognormal_hierarchical_nclsp', iter*chains*input_data$n_obs),
-                    rep('predicted_poisson_lognormal_hierarchical_nclp', iter*chains*input_data$n_obs), 
-                    rep('predicted_poisson_lognormal_hierarchical_cp', iter*chains*input_data$n_obs),
-                    rep('observed', input_data$n_obs)), 
-                  levels = c('observed',
-                             'predicted_poisson_lognormal_hierarchical_nclsp',
-                             'predicted_poisson_lognormal_hierarchical_nclp',
-                             'predicted_poisson_lognormal_hierarchical_cp')),
-  value= c(
-    as.vector(samples_poisson_lognormal_hierarchical_nclsp$pop_post_pred),
-    as.vector(samples_poisson_lognormal_hierarchical_nclp$pop_post_pred),
-    as.vector(samples_poisson_lognormal_hierarchical_cp$pop_post_pred),
-    input_data$pop)
-)
-
-ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, after_stat(density)))+
-           geom_histogram(bins=50, position = 'identity', alpha=0.7)+
-           theme_minimal())
+partition_div <- function(fit) {
+  nom_params <- rstan:::extract(fit, permuted=FALSE)
+  params <- as.data.frame(do.call(rbind, lapply(1:chains, function(n) nom_params[,n,])))
+  
+  sampler_params <- get_sampler_params(fit, inc_warmup=FALSE)
+  divergent <- do.call(rbind, sampler_params)[,'divergent__']
+  params$divergent <- divergent
+  
+  div_params <- params[params$divergent == 1,]
+  nondiv_params <- params[params$divergent == 0,]
+  
+  return(list(div_params, nondiv_params))
+}
 
 
+div_poisson_lognormal_hierarchical_nclsp<- partition_div(fit_poisson_lognormal_hierarchical_nclsp)
 
-# Bonus: independent variance --------------------------------------------
+div_samples_cp <- div_poisson_lognormal_hierarchical_nclsp[[1]]
+nondiv_samples_cp <- div_poisson_lognormal_hierarchical_nclsp[[2]]
 
-# NB: not hierarchical
+c_dark_trans <- c("#8F272780")
+c_green_trans <- c("#00FF0080")
 
-pars_lognormal_hierarchical_var <- c('alpha_national','alpha_settlement', 
-                                     'sigma_settlement', 'pop_post_pred')
+par(mfrow=c(1, 2))
+for (k in 1:input_data$n_settlement) {
+  name_x <- paste("eta_delta_settlement[", k, "]", sep='')
+  
+  plot(nondiv_samples_cp[name_x][,1], log(nondiv_samples_cp$u_delta_settlement),
+       col=c_dark_trans, pch=16, main="",
+       xlab=name_x, xlim=c(-5, 5), ylab="log(u_delta_settlement)", ylim=c(-5, 3))
+  points(div_samples_cp[name_x][,1], log(div_samples_cp$u_delta_settlement),
+         col=c_green_trans, pch=16)
+}
 
-fit_poisson_lognormal_hierarchical_var<- stan(
-  file= here('tutorials', 'refresher','poisson_hierarchical_variance.stan'),
-  data= input_data,
-  iter = iter + warmup,
-  warmup = warmup,
-  seed = seed,
-  pars = pars_lognormal_hierarchical_var
-)
+div_poisson_lognormal_hierarchical_nclp<- partition_div(fit_poisson_lognormal_hierarchical_cp)
+div_samples_nclsp <- div_poisson_lognormal_hierarchical_nclp[[1]]
+nondiv_samples_nclsp  <- div_poisson_lognormal_hierarchical_nclp[[2]]
 
-traceplot(fit_poisson_lognormal_hierarchical_var, pars = 'sigma_settlement')
+par(mfrow=c(1, 2))
+for (k in 1:input_data$n_settlement) {
+  name_x <- paste("alpha_settlement[", k, "]", sep='')
+  
+  plot(nondiv_samples_nclsp[name_x][,1], log(nondiv_samples_nclsp$u_alpha_settlement),
+       col=c_dark_trans, pch=16, main="",
+       xlab=name_x, xlim=c(5.9, 6.5), ylab="log(u_alpha_settlement)", ylim=c(-5, 3))
+  points(div_samples_nclsp[name_x][,1], log(div_samples_nclsp$u_alpha_settlement),
+         col=c_green_trans, pch=16)
+}
 
-samples_poisson_lognormal_hierarchical_var<- rstan::extract(fit_poisson_lognormal_hierarchical_var)
 
-# prior checks
-comp_sigma <- as_tibble(samples_poisson_lognormal_hierarchical_var$sigma_settlement)
-colnames(comp_sigma) <- c('sigma_settlement_1', 'sigma_settlement_2')
-comp_sigma <- comp_sigma %>% 
-  pivot_longer(everything(),names_to = 'posterior') %>% 
-  mutate(model='independant sigma') 
 
-comp_sigma <- rbind(
-  comp_sigma,
-  tibble(
-    posterior = 'sigma_national',
-    value = samples_poisson_lognormal_hierarchical_cp$sigma,
-    model = 'fixed sigma'
-  )
-)
 
-ggplot(comp_sigma, aes(x=posterior, y=value, fill=model))+
-  geom_boxplot()+
-  theme_minimal()
-
-# posterior predictive check
-pop_posterior_lognormal_hierarchical_var<- tibble(
-  source = factor(c(rep('predicted_poisson_lognormal_hierarchical_var', iter*chains*input_data$n_obs),
-                    rep('predicted_poisson_lognormal_hierarchical_cp', iter*chains*input_data$n_obs),
-                    rep('observed', input_data$n_obs)), 
-                  levels = c('observed',
-                             'predicted_poisson_lognormal_hierarchical_var',
-                             'predicted_poisson_lognormal_hierarchical_cp')),
-  value= c(
-    as.vector(samples_poisson_lognormal_hierarchical_var$pop_post_pred),
-    as.vector(samples_poisson_lognormal_hierarchical_cp$pop_post_pred),
-    input_data$pop)
-)
-
-ggplotly(ggplot(pop_posterior_lognormal_hierarchical_var, aes(x=value, fill=source, after_stat(density)))+
-           geom_histogram(bins=30, position = 'identity', alpha=0.7)+
-           theme_minimal())
