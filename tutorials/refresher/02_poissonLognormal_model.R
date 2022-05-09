@@ -228,6 +228,116 @@ ggplotly(ggplot(pop_posterior_lognormal_independent, aes(x=value, fill=source, a
            geom_histogram(bins=50, position='identity', alpha=0.5)+
            theme_minimal())
 
+# Fit a hierarchical model ------------------------------------------------
+
+
+pars_lognormal_hierarchical_cp <- c('alpha_national','alpha_settlement', 'u_alpha_settlement', 'sigma', 'pop_post_pred')
+
+fit_poisson_lognormal_hierarchical_cp <- stan(
+  file= here('tutorials', 'refresher','poisson_hierarchical_cp.stan'),
+  data= input_data,
+  iter = iter + warmup,
+  warmup = warmup,
+  seed = seed,
+  pars = pars_lognormal_hierarchical_cp
+)
+
+traceplot(fit_poisson_lognormal_hierarchical_cp, pars = 'alpha_settlement')
+traceplot(fit_poisson_lognormal_hierarchical_cp, pars = 'alpha_national')
+traceplot(fit_poisson_lognormal_hierarchical_cp, pars = 'u_alpha_settlement')
+traceplot(fit_poisson_lognormal_hierarchical_cp, pars = 'sigma')
+
+samples_poisson_lognormal_hierarchical_cp<- rstan::extract(fit_poisson_lognormal_hierarchical_cp)
+
+
+# prior retrodictive check
+alpha <- as_tibble(samples_poisson_lognormal_hierarchical_cp$alpha_settlement)
+colnames(alpha) <- c('posterior_alpha_settlement_1', 'posterior_alpha_settlement_2')
+
+alpha <- alpha %>% 
+  mutate (
+    posterior_alpha_national = samples_poisson_lognormal_hierarchical_cp$alpha_national,
+    prior = abs(rnorm(chains*iter, log(500), 0.1)),
+    iter = 1:(chains*iter)
+  ) %>% 
+  pivot_longer(-iter, names_to = 'distribution')
+
+ggplot(alpha, aes(x=value, fill=distribution))+
+  geom_histogram(bins=100,position='identity', alpha=0.7)+
+  theme_minimal()
+
+comp_alpha <- rbind(
+  alpha %>% 
+    mutate(
+      distribution = paste0(distribution, '_hierarchical'),
+      model= 'hierarchical'
+    ),
+  alpha_settlement %>% 
+    mutate(
+      distribution = paste0(distribution, '_independant'),
+      model = 'independant'
+    )
+)  %>% 
+  filter(!grepl('prior',distribution))
+
+
+ggplot(comp_alpha, aes(x=value, y=distribution, fill=model))+
+  geom_boxplot()+
+  theme_minimal()+
+  guides(fill='none')
+
+comp_alpha %>% 
+  group_by(distribution) %>% 
+  summarise(
+    mean(value),
+    sd(value),
+    quantile(value, probs=0.025),
+    quantile(value, probs=0.975)
+    
+  )
+
+
+pop_posterior_lognormal_hierarchical <- tibble(
+  source = factor(c( 
+    rep('predicted_poisson_lognormal_independent', iter*chains*input_data$n_obs),
+    rep('predicted_poisson_lognormal_hierarchical', iter*chains*input_data$n_obs),
+    rep('observed', input_data$n_obs)), 
+    levels = c('observed',
+               'predicted_poisson_lognormal_hierarchical',
+               'predicted_poisson_lognormal_independent')),
+  value= c(
+    as.vector(samples_poisson_lognormal_independent$pop_post_pred),
+    as.vector(samples_poisson_lognormal_hierarchical_cp$pop_post_pred),
+    input_data$pop)
+)
+
+
+ggplotly(ggplot(pop_posterior_lognormal_hierarchical, aes(x=value, fill=source, after_stat(density)))+
+           geom_histogram(bins=50, position='identity', alpha=0.5)+
+           theme_minimal())
+
+
+# New validation: cluster-based
+comp_obs_poisson_lognormal_hierarchical_cp <- as_tibble(samples_poisson_lognormal_hierarchical_cp$pop_post_pred) %>% 
+  summarise(across(
+    everything(), ~ c(mean(.), quantile(., probs=c(0.025, 0.5, 0.975)))
+  )) %>% 
+  mutate(
+    metrics = c('mean', paste0('q', c(0.025, 0.5, 0.975)))
+  ) %>% 
+  pivot_longer(
+    -metrics
+  ) %>% 
+  pivot_wider(names_from = metrics, values_from = value) %>% 
+  mutate(
+    obs = input_data$pop
+  )
+
+ggplot(comp_obs_poisson_lognormal_hierarchical_cp, aes(x=obs, y=q0.5, ymin=q0.025, ymax=q0.975))+
+  geom_pointrange(col='grey20')+
+  theme_minimal()+
+  labs(x='observations', y='predictions')+
+  geom_abline(intercept=0, slope=1, size=1, color='orange')
 
 # What about breaking down the variance? -----------------------------------
 
