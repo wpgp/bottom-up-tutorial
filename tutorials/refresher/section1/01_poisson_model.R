@@ -38,7 +38,7 @@ input_data <- list(
 pars_poisson <- c('alpha_national', 'pop_post_pred')
 
 fit_poisson <- stan(
-  file= here('tutorials', 'refresher','poisson.stan'),
+  file= here('tutorials', 'refresher', 'section1', 'poisson.stan'),
   data= input_data,
   iter = iter + warmup,
   warmup = warmup,
