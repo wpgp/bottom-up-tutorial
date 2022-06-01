@@ -40,6 +40,7 @@ The material has been used during a remote workshop with the Brazilian Stats Off
 -   [Tutorial 3](tutorials/tutorial3/tutorial3_covariates.html): How to model small-scale spatial variations? [Quiz](tutorials/quiz/mcq_tuto3.html)
 -   [Tutorial 4](tutorials/tutorial4/tutorial4_diagnosticsPrediction.html): Advanced model diagnostics and prediction
 -   [Conclusion](tutorials/day5_presentation.html)
+-   [Workflow refresher](tutorials/workflow/populationModel_workfow.html): Building a population model from start to end + a tale about hierarchical model parametrisation
 
 ## Raw code
 

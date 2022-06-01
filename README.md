@@ -23,6 +23,7 @@ It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de
 -   [Tutorial 3](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial3/): How to model small-scale spatial variations?
 -   [Tutorial 4](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/tutorial4/): Advanced model diagnostics and prediction
 -   [Conclusion](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/)
+-   [Workflow refresher](https://github.com/wpgp/bottom-up-tutorial/tree/main/tutorials/workflow/): Building a population model from start to end + a tale about hierarchical model parametrisation
 
 # Folder content
 
