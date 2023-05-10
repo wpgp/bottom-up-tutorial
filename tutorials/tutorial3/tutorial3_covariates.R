@@ -80,8 +80,8 @@ write_csv(scale_factor, here('tutorials/data/scale_factor.csv'))
 
 # mcmc settings
 chains <- 4
-warmup <- 500
-iter <- 500
+warmup <- 700
+iter <- 700
 seed <- 1789
 
 # prepare data for stan

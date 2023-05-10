@@ -5,8 +5,6 @@ author: "Edith Darin"
 output:
   xaringan::moon_reader:
     css: [css/xaringan-themer.css, css/presentation_custom.css, default]
-    includes:
-     in_header: ../wd/misc/clicky.html
 ---
 
 
@@ -26,8 +24,8 @@ xaringanExtra::use_scribble(
 
 ```{r xaringan-logo, echo=FALSE}
 xaringanExtra::use_logo(
-  image_url = "../assets/pic/320px-UNFPA_logo.svg.png",
-  position = xaringanExtra::css_position(bottom = "-3.5em", left = "0.5em")
+  image_url = "../assets/pic/funders_logo.png",
+  position = xaringanExtra::css_position(bottom = "-4.5em", left = "1em")
 )
 ```
 

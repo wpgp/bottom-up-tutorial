@@ -18,4 +18,5 @@ model{
 
   // rate
   lambda ~ uniform(0, 3000);
+  // lambda ~ gamma
 }

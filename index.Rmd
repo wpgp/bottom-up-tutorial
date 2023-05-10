@@ -7,9 +7,6 @@ output:
        in_header: wd/misc/clicky.html
 ---
 
-```{r, echo=F, logo-side, fig.show="hold", out.width="10%"}
-knitr::include_graphics('assets/pic/wp_logotype_grey_hi.png')
-```
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -66,5 +63,5 @@ Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census
 knitr::include_graphics('assets/pic/320px-UNFPA_logo.svg.png')
 knitr::include_graphics('assets/pic/wp_logo_gray_low.png')
 knitr::include_graphics('assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg')
-
+knitr::include_graphics('assets/pic/Ox_LCDS_logo_bw.png')
 ```

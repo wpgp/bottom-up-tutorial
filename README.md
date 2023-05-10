@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/383087930.svg)](https://zenodo.org/badge/latestdoi/383087930)
 
-This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton.
+This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton and the Leverhulme Center for Demographic Science.
 
 The repo consists in a series of tutorials in **Bayesian statistics for population modelling** with hands-on experience. It includes example code and other resources designed to expedite the learning curve.
 
@@ -64,4 +64,4 @@ Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census
 <br>
 
 
-![alt](assets/pic/320px-UNFPA_logo.svg.png) ![alt](assets/pic/wp_logo_gray_low.png)
+![alt](assets/pic/320px-UNFPA_logo.svg.png) ![alt](assets/pic/wp_logo_gray_low.png) ![alt](assets/pic/Ox_LCDS_logo_bw.png)

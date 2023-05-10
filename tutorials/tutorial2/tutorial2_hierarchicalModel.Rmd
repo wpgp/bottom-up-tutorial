@@ -10,8 +10,6 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
-    includes:
-       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72
@@ -38,6 +36,8 @@ local({
 library(here)
 knitr::include_graphics(here('./assets/pic/wp_logotype_grey_hi.png'))
 knitr::include_graphics(here('./assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg'))
+knitr::include_graphics('../../assets/pic/Ox_LCDS_logo_bw.png')
+
 ```
 
 ```{r, class.source = 'fold-hide', warning=F, message=F}

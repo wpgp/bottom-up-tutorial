@@ -10,9 +10,6 @@
     <link href="day1_presentation_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
     <script src="day1_presentation_files/xaringanExtra-scribble/scribble.js"></script>
     <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#408000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
-    <script async src="//static.getclicky.com/101337718.js"></script>
-    <noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/101337718ns.gif" /></p></noscript>
-        
     <link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
     <link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
   </head>
@@ -20,9 +17,15 @@
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
+.title[
 # Statistical population modelling for census support
+]
+.subtitle[
 ## Day 1
+]
+.author[
 ### Edith Darin
+]
 
 ---
 
@@ -39,11 +42,11 @@ class: center, middle, inverse, title-slide
 width: 110px;
 height: 128px;
 z-index: 0;
-background-image: url(../assets/pic/320px-UNFPA_logo.svg.png);
+background-image: url(../assets/pic/funders_logo.png);
 background-size: contain;
 background-repeat: no-repeat;
 position: absolute;
-bottom:-3.5em;left:0.5em;
+bottom:-4.5em;left:1em;
 }
 </style>
 <script>(function () {
@@ -713,6 +716,19 @@ if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
     deleted = true;
   });
 })();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
 (function() {
   "use strict"
   // Replace <script> tags in slides area to make them executable

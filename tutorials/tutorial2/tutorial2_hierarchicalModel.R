@@ -190,7 +190,7 @@ seed <- 1789
 pars <- c('alpha_t','sigma', 'population_hat', 'density_hat')
 
 # mcmc
-fit1 <- rstan::stan(file = file.path('tutorial2_model1.stan'), 
+fit1 <- rstan::stan(file = file.path('tutorials/tutorial2/tutorial2_model1.stan'), 
                    data = stan_data_model1,
                    iter = warmup + iter, 
                    chains = chains,
@@ -210,7 +210,7 @@ getPopPredictions <- function(model_fit,
                               estimate='population_hat',
                               obs='N', reference_data=data){
   # extract predictions
-  predicted_pop <- as_tibble(extract(model_fit, estimate)[[estimate]])
+  predicted_pop <- as_tibble(rstan::extract(model_fit, estimate)[[estimate]])
   colnames(predicted_pop) <- reference_data$id
   
   # summarise predictions
@@ -258,7 +258,7 @@ ggplot(
 pars <- c('alpha_t','alpha', 'nu_alpha', 'sigma', 'population_hat', 'density_hat')
 
 # mcmc
-fit2 <- rstan::stan(file = file.path('tutorial2_model2.stan'), 
+fit2 <- rstan::stan(file = file.path('tutorials/tutorial2/tutorial2_model2.stan'), 
                    data = stan_data_model1,
                    iter = warmup + iter, 
                    chains = chains,
@@ -294,7 +294,7 @@ ggplot(data_plot, aes(mean,param_, color=model, fill=model,label=labels))+
 # Complete pooling 
 
 # load previous model for complete pooling
-fit_tuto1_model2 <- readRDS('../tutorial1/tutorial1_model2_fit.rds')
+fit_tuto1_model2 <- readRDS('tutorials/tutorial1/tutorial1_model2.rds')
 
 # build comprehensive dataframe
 comparison_df <- rbind(
@@ -332,7 +332,7 @@ stan_data_model3 <- list(
 pars <- c('alpha','alpha_t','alpha_t_r','nu_alpha', 'sigma','population_hat',  'density_hat')
 
 # mcmc
-fit3 <- rstan::stan(file = file.path('tutorial2_model3.stan'), 
+fit3 <- rstan::stan(file = file.path('tutorials/tutorial2/tutorial2_model3.stan'), 
                    data = stan_data_model3,
                    iter = warmup + iter, 
                    chains = chains,
@@ -365,4 +365,4 @@ comparison_df %>%
 ) %>%  kbl(caption = 'Goodness-of-metrics comparison of the hierarchical models') %>% kable_minimal()
 
 ## # save model
-## saveRDS(fit3, 'tutorial2_model3_fit.rds')
+saveRDS(fit3, 'tutorials/tutorial2/tutorial2_model3_fit.rds')

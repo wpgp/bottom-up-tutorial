@@ -105,7 +105,7 @@ iter <- 500
 pars <- c('mu','sigma')
 
 # mcmc
-fit <- rstan::stan(file = file.path('tutorial1_model.stan'), 
+fit <- rstan::stan(file = file.path(here('tutorials','tutorial1', 'tutorial1_model.stan')), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,
@@ -119,12 +119,36 @@ stan_trace(fit, inc_warmup = T)
 # summarise estimated parameters
 estimated <- summary(fit, pars=pars)$summary
 
-estimated %>% kbl() %>% kable_minimal()
+samples <- rstan::extract(fit)
+
+mu <- tibble(
+  posterior = samples$mu,
+  prior = rnorm(chains*iter, 0, 100),
+  iter = 1:(chains*iter)
+)
+
+mu <- mu %>% 
+  pivot_longer(-iter, names_to = 'distribution')
+
+ggplot(mu, aes(x=value, color=distribution, fill=distribution))+
+  geom_density()+
+  theme_minimal()
 
 # plot estimated parameters
 mean_pop <- mean(data$y)
 sd_pop <- sd(data$y)
 
+# prior retrodective check
+mu <- tibble(
+  posterior = samples$mu,
+  prior = abs(rnorm(chains*iter, 0, 100)),
+  iter = 1:(chains*iter)
+) %>% 
+  pivot_longer(-iter, names_to = 'distribution')
+
+ggplot(mu, aes(x=value, fill=distribution))+
+  geom_histogram(binwidth = 5)+
+  theme_minimal()
 
 mu_plot <- stan_plot(fit, 'mu',fill_color='orange')+
   annotate('segment',x=mean_pop, xend=mean_pop, 
@@ -170,6 +194,7 @@ knitr::include_graphics("../../assets/pic/tuto1_nga_mez.PNG")
 
 #load data
 data <- readxl::read_excel(here('tutorials/data/nga_demo_data.xls'))
+
 # create unique cluster id
 data <- data %>% 
   mutate(
@@ -186,6 +211,7 @@ ggplot(data, aes(x=N))+
   labs(title = "", y='', x='Observed population count')+
   geom_vline(xintercept = mean(data$N), color='orange', size=1)+
   annotate('text', x=500, y=25, label=paste0('Observed mean: ', round(mean(data$N))), colour='orange', angle=90)
+
 
 
 # 4 Model1: Poisson distribution ----
@@ -226,7 +252,7 @@ stan_data <- list(
 pars <- c('lambda')
 
 # mcmc
-fit <- rstan::stan(file = file.path('tutorial1_model1.stan'), 
+fit <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model1.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,
@@ -248,12 +274,10 @@ stan_plot(fit, 'lambda',fill_color='orange')+
 
 
 
-
-
 pars <- c('lambda', 'population_hat')
 
 # mcmc
-fit_model1 <- rstan::stan(file = file.path('tutorial1_model1bis.stan'), 
+fit_model1 <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model1bis.stan'), 
                    data = stan_data,
                    iter = warmup + iter, 
                    chains = chains,
@@ -262,7 +286,7 @@ fit_model1 <- rstan::stan(file = file.path('tutorial1_model1bis.stan'),
                    seed = seed)
 
 # extract predictions
-predicted_pop_model1 <- as_tibble(extract(fit_model1, 'population_hat')$population_hat)
+predicted_pop_model1 <- as_tibble(rstan::extract(fit_model1, 'population_hat')$population_hat)
 
 colnames(predicted_pop_model1) <- data$id
 
@@ -312,6 +336,20 @@ comparison_df %>%
     `Correct credible interval (in %)` = round(sum(in_CI)/n()*100,1)
   ) %>% 
     kbl(caption = "Poisson model goodness-of-fit metrics") %>% kable_minimal()
+
+comparison_full <- tibble(
+  source = factor(c(rep('predicted', iter*chains*stan_data$n), 
+                    rep('Observed', stan_data$n)), 
+                  levels = c('predicted', 'Observed')),
+  value= c(as.vector(rstan::extract(fit_model1, 'population_hat')$population_hat),
+           stan_data$population)
+)
+
+
+ggplot(comparison_full, aes(x=value, fill=source, after_stat(density)))+
+  geom_histogram(binwidth=5, position='identity', alpha=0.7)+
+  theme_minimal()
+
 
 #plot overdispersion
 ggplot(data, aes(x=A, y=N))+
@@ -378,7 +416,7 @@ stan_data_model2 <- list(
 pars <- c('mu','sigma', 'population_hat', 'density_hat')
 
 # mcmc
-fit_model2 <- rstan::stan(file = file.path('tutorial1_model2.stan'), 
+fit_model2 <- rstan::stan(file = file.path('tutorials/tutorial1/tutorial1_model2.stan'), 
                    data = stan_data_model2,
                    iter = warmup + iter, 
                    chains = chains,
@@ -387,7 +425,38 @@ fit_model2 <- rstan::stan(file = file.path('tutorial1_model2.stan'),
                    seed = seed)
 
 # plot trace
-traceplot(fit_model2, c('mu', 'sigma'))
+traceplot(fit_model2, c('mu', 'sigma'), inc_warmup=T)
+
+# ASK FOR THE POSTERIOR vs PRIOR plot
+
+
+samples_lognormal <- rstan::extract(fit_model2)
+
+mu <- tibble(
+  posterior = samples_lognormal$mu,
+  prior = rnorm(chains*iter, 5, 4),
+  iter = 1:(chains*iter)
+)
+
+mu <- mu %>% 
+  pivot_longer(-iter, names_to = 'distribution')
+
+ggplot(mu, aes(x=value, color=distribution, fill=distribution))+
+  geom_histogram()+
+  theme_minimal()
+
+sigma <- tibble(
+  posterior = samples_lognormal$sigma,
+  prior = runif(chains*iter, 0, 4),
+  iter = 1:(chains*iter)
+)
+
+sigma <- sigma %>% 
+  pivot_longer(-iter, names_to = 'distribution')
+
+ggplot(sigma, aes(x=value, color=distribution, fill=distribution))+
+  geom_histogram()+
+  theme_minimal()
 
 # extract posterior predictions
 predicted_pop_model2 <- as_tibble(extract(fit_model2, 'population_hat')$population_hat)
@@ -445,4 +514,4 @@ comparison_df %>%
   ) %>% 
     kbl(caption = "Poisson-Lognormal model goodness-of-fit metrics") %>% kable_minimal()
 
-## saveRDS(fit_model2, 'tutorial1_model2_fit.rds')
+saveRDS(fit_model2, 'tutorial1_model2_fit.rds')

@@ -10,8 +10,6 @@ output:
     number_sections: false
     css: [../css/index_custom.css, ../css/tutorial_custom.css]
     code_folding: show
-    includes:
-       in_header: ../../wd/misc/clicky.html
 editor_options: 
   markdown: 
     wrap: 72
@@ -20,7 +18,7 @@ bibliography: references.bib
 
 ```{r logo, echo=FALSE, purl=F}
 ###LOAD WP LOGO##
-htmltools::img(src = knitr::image_uri("assets/pic/320px-UNFPA_logo.svg.png"),
+htmltools::img(src = knitr::image_uri("../../assets/pic/320px-UNFPA_logo.svg.png"),
                alt = 'logo', style = 'position:absolute; top:60px; right:0; padding:20px; width: 25%; height: auto')
 
 local({
@@ -38,6 +36,7 @@ local({
 library(here)
 knitr::include_graphics(here('./assets/pic/wp_logotype_grey_hi.png'))
 knitr::include_graphics(here('./assets/pic/USH0149_LOGO-2021_RGB_Neutral_Punched-AW.svg'))
+knitr::include_graphics('../../assets/pic/Ox_LCDS_logo_bw.png')
 ```
 ```{r, include=T, warning=F, message=F, class.source = 'fold-hide'}
 # 1 Set-up ----
@@ -234,7 +233,7 @@ specific to each country. Table \@ref(tab:review) offers an overview of
 the final covariates set selected for each model.
 
 ```{r review, purl=F, message=F, warning=F, class.source = 'fold-hide'}
-review_cov <- read_csv('tutorials/tutorial3/covs_review.csv')
+review_cov <- read_csv(here('./tutorials/tutorial3/covs_review.csv'))
 
 review_cov %>% arrange(Type) %>% kbl(caption='Review of covariates used in WorldPop bottom-up population models') %>% kable_minimal()
 ```
@@ -543,7 +542,7 @@ We add `beta` as parameter to monitor and run the model.
 pars <- c('alpha','sigma','beta','alpha_t', 'nu_alpha', 'nu_alpha_t', 'population_hat',  'density_hat')
 
 # mcmc
-fit1 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.stan'), 
+fit1 <- rstan::stan(file = file.path(here('./tutorials/tutorial3/tutorial3_model1.stan')), 
                    data = stan_data_model1,
                    iter = warmup + iter, 
                    chains = chains,
@@ -603,7 +602,7 @@ and add some random jittering.
 
 We run the estimation with these initialisation values.
 ```{r, max.height='150px'}
-fit1bis <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model1.stan'), 
+fit1bis <- rstan::stan(file = file.path(here('./tutorials/tutorial3/tutorial3_model1.stan')), 
                    data = stan_data_model1,
                    iter = warmup + iter, 
                    chains = chains,
@@ -633,7 +632,7 @@ We load Tutorial 2 model 3 to compare:
 
 ```{r, max.height='150px'}
 # load tutorial 2 final model
-fit0 <- readRDS('tutorials/tutorial2/tutorial2_model3_fit.rds')
+fit0 <- readRDS(here('./tutorials/tutorial2/tutorial2_model3_fit.rds'))
 ```
 
 We can then compute the predictions for every study site and compare the
@@ -839,7 +838,7 @@ for (c in 1:chains){
 }
 
 # mcmc
-fit2 <- rstan::stan(file = file.path('tutorials/tutorial3/tutorial3_model2.stan'), 
+fit2 <- rstan::stan(file = file.path(here('./tutorials/tutorial3/tutorial3_model2.stan')), 
                    data = stan_data_model2,
                    iter = warmup + iter, 
                    chains = chains,
@@ -892,7 +891,7 @@ in Tutorial 4.
 
 ```{r, eval=T}
 # save model
-saveRDS(fit2, 'tutorials/tutorial3/tutorial3_model2_fit.rds')
+saveRDS(fit2, here('./tutorials/tutorial3/tutorial3_model2_fit.rds'))
 ```
 
 # Acknowledgements
