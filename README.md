@@ -56,7 +56,7 @@ You are free to redistribute this document under the terms of a Creative Commons
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2023. Statistical population modelling for census support. United Nations Population Fund (UNFPA); Leverhulme Centre for Demographic Science, University of Oxford; and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, doi:10.5281/zenodo.5572490
+Darin E, Leasure DR, Tatem AJ. 2023. Statistical population modelling for census support. United Nations Population Fund (UNFPA); Leverhulme Centre for Demographic Science, University of Oxford; and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, [doi:10.5281/zenodo.7945266](https://doi.org/10.5281/zenodo.7945266)
 
 <br>
 
