@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+	<title>Modelización estadística de la población para apoyar los censos</title>
+	<link href="day1_presentation_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+	<script src="day1_presentation_files/xaringanExtra-scribble/scribble.js"></script>
+	<script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#408000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+	<script async src="//static.getclicky.com/101337718.js"></script>
+	<meta charset="utf-8" />
+	<meta name="author" content="Edith Darin" />
+	<script src="day1_presentation_files/header-attrs/header-attrs.js"></script>
+	<link href="day1_presentation_files/remark-css/default.css" rel="stylesheet" />
+	<script src="day1_presentation_files/fabric/fabric.min.js"></script>
+	<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/101337718ns.gif" /></p></noscript>
+
+	<link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
+	<link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
+</head>
+<body>
+	<textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Modelización estadística de la población para apoyar los censos
+## Día 1
+### Edith Darin
+
+---
+
+
+
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 120px;
+height: 148px;
+z-index: 0;
+background-image: url(../assets/pic/funders_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+bottom:-5.5em;left:1em;
+}
+.custom-slide-content {
+	font-size: 1.9rem !important;
+	font-weight: 600 !important;
+	color: #ff8000 !important;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+ 
+
+# Agenda del día
+
+
+--
+&lt;br&gt;
+
+
+### 1. Introducción global a la modelización de la población
+
+--
+&lt;br&gt;
+
+### 2. Presentación del tutorial 1: <em>¿cómo pensar en la población como un bayesiano?<em>
+
+---
+class: bottom, hide_logo
+
+# Esquema de la presentación
+
+--
+&lt;br&gt;
+
+### 1. Modelos de población en WorldPop
+
+--
+
+### 2. Por qué bayesiano
+
+--
+### 3. Fundamentos bayesianos
+
+--
+### 4. Estimación bayesiana de modelos
+
+--
+### 5. Esquema del curso
+
+--
+### 6. Material didáctico
+&lt;br&gt;
+
+---
+class: inverse, left, middle
+
+# Modelos de población en WorldPop
+
+---
+class: center, middle
+
+# Objetivo
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Estimación de la población local]
+
+---
+class: hide_logo
+
+# Cuadrícula de población
+
+![](day1_presentation_files/pic/griddedpop_ex.png)
+
+---
+
+# Ventajas de la cuadrícula de población
+
+.pull-left[
+### 1. Descripción de las variaciones espaciales finas
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_zoom.png)
+]
+---
+# Ventajas de la cuadrícula de población
+
+.pull-left[
+
+### 2. Formato coherente y comparable
+-    Tamaño idéntico
+-    Forma idéntica
+-    Constante en el tiempo
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/gridcell_world.png)
+
+![](day1_presentation_files/pic/gridcell.png)
+]
+
+---
+
+# Ventajas de la cuadrícula de población
+
+
+.pull-left[
+### 3. Agregación espacial personalizada
+
+- Alrededor de un punto*: centro de salud, escuela, centro de terremotos*
+
+- Alrededor de una línea*: río, bordes de carreteras*
+
+- En una zona*: pueblos, cuenca hidrográfica*
+]
+
+--
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_agreg_pts.png)
+![](day1_presentation_files/pic/griddedpop_agreg.png)
+]
+
+---
+
+# Ventajas de la cuadrícula de población
+
+
+.pull-left[
+### 4. Combinación flexible de datos
+
+]
+
+--
+
+.pull-right[
+![](day1_presentation_files/pic/griddedpop_use.png)
+
+]
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Dos tipos de modelo]
+
+---
+class: inverse, center, middle
+
+# Cuando se dispone de datos de población con cobertura **espacial completa**
+
+---
+class: center, middle
+
+# Modelo descendente
+
+---
+
+# Modelo descendente
+
+&lt;br&gt;
+&lt;br&gt;
+
+![](day1_presentation_files/pic/schema1. png.png)
+---
+# Tutorial R descendente
+
+![](day1_presentation_files/pic/topdown_tuto.PNG)
+
+
+https://htmlpreview.github.io/?https://github.com/wpgp/top-down-tutorial/blob/master/4_tutorial.html
+
+
+---
+class: inverse, center, middle
+
+# Cuando **no se** dispone de datos de población con cobertura espacial completa
+
+---
+class: center, middle
+
+![](day1_presentation_files/pic/issue_pop.png)
+
+---
+
+# Modelo ascendente
+&lt;br&gt;
+
+&lt;br&gt;
+
+![](day1_presentation_files/pic/schema2.jpg)
+
+---
+# Modelos disponibles
+
+![](day1_presentation_files/pic/current_pop.png)
+
+
+
+.center[https://wopr.worldpop.org/?/Population]
+
+---
+class: left, middle
+background-image: url(day1_presentation_files/pic/background_griddedpop.png) 
+
+## .bg-white[Característica común:  &amp;nbsp; ]
+## .bg-white[¡Todos son modelos bayesianos!  &amp;nbsp;]
+
+---
+
+
+class:inverse, left, middle
+
+# ¿Por qué la estadística bayesiana?
+
+---
+class: center, middle
+
+# Pero ¿qué es la estadística bayesiana?
+
+---
+class: center, middle
+
+### 1. La estadística bayesiana es un proceso de **construcción del conocimiento**
+---
+class: hide_logo
+
+# Un ejemplo de la vida cotidiana
+
+![](day1_presentation_files/pic/restaurant_diagram.png)
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+class: middle, hide_logo
+
+
+.pull-left[
+###Filosofía bayesiana: 
+1. disponer de información a *priori* sobre un fenómeno
+2. interpretar los datos entrantes a la luz de esta información a *priori*
+3. concluir con información actualizada o a *posteriori*]
+
+.pull-right[
+![](day1_presentation_files/pic/bayes_diagram.png)
+]
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+layout: true
+class: hide_logo
+
+# Pon a prueba tu pensamiento bayesiano
+
+---
+
+.center2[*Al lanzar una moneda al aire, decimos que “la probabilidad de que salga cara es de 0.5.’* 
+
+¿Cómo interpretas esta probabilidad?
+
+1. Si lanzo esta moneda una y otra vez, aproximadamente el 50 % de las veces saldrá cara.
+2. Cara y cruz son igualmente probables.]
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+
+.center2[*Se acercan unas elecciones y un encuestador afirma que “el candidato A tiene un 0,9 probabilidades de ganar.’* 
+
+¿Cómo interpretas esta probabilidad?
+
+1. Si observamos las elecciones una y otra vez, el candidato A ganará aproximadamente el 90 % de las veces.
+2. El candidato A tiene muchas más probabilidades de ganar que de perder.
+3. El cálculo del encuestador es erróneo. El candidato A ganará o perderá, por lo que su probabilidad de ganar solo puede ser 0 o 1.]
+
+
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+.center2[*Consideremos dos afirmaciones:* 
+
+*(1) Zuofu afirma que puede predecir el resultado del lanzamiento de una moneda. 
+Para probar su afirmación, lanzas una moneda al aire 10 veces y él predice correctamente las 10.* 
+
+*(2) Kavya afirma que puede distinguir los edulcorantes naturales de los artificiales. 
+Para probar su afirmación, le ofreces 10 muestras de edulcorantes y ella identifica correctamente cada uno de ellos* 
+
+¿Cuál es tu conclusión?
+
+1. Confías más en la afirmación de Kavya que en la de Zuofu.
+2. La evidencia que apoya la afirmación de Zuofu es tan fuerte como la evidencia que apoya la afirmación de Kavya.]
+
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+---
+layout:false
+class: center, middle
+
+### 2.  La estadística bayesiana es una **perspectiva** diferente **de la probabilidad**
+---
+class: hide_logo, middle
+# Definir la probabilidad
+
+.footnote[[Capítulo 1, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-1.html)]
+
+&lt;br&gt;
+&gt; ### **Filosofía bayesiana**: la *probabilidad* mide la verosimilitud *relativa* de un acontecimiento.
+
+--
+&gt; ### **Filosofía frecuentista**: la probabilidad mide la *frecuencia relativa a largo* plazo de un acontecimiento *repetible*.
+
+---
+class: center, middle
+
+### 3.  La estadística bayesiana es **transparente en cuanto a las hipótesis realizadas**
+
+---
+# Teorema de Bayes
+
+$$ \text{posterior} \quad = \quad \frac{\text{prior } \cdot \text{ likelihood}}{\text{normalizing constant}} \; $$
+
+&lt;br&gt; 
+**Modelo de probabilidad a priori** &lt;br /&gt;
+Refleja nuestra creencia sobre el fenómeno antes de ver cualquier dato.
+
+**Probabilidad**&lt;br /&gt;
+Representa el rango de valores de los parámetros acompañado de la probabilidad de que cada parámetro explique los datos que observamos.
+
+**Modelo de probabilidad a posteriori**&lt;br /&gt;
+Resume la verosimilitud de un fenómeno.
+
+
+---
+# Ejemplo ficticio
+
+#### Pregunta del modelador: *¿Lloverá mañana, 27 de septiembre de 2021, en el Reino Unido?*
+
+&lt;br&gt;
+--
+
+**Modelo de probabilidad a priori**: &lt;br /&gt;
+En septiembre llueve el 60 % del tiempo en el Reino Unido.
+
+--
+
+**Probabilidad**&lt;br /&gt;
+Hoy hay sol y los modelos climáticos dicen que el tiempo es estable en un 40 % de los casos.
+
+--
+
+**Modelo de probabilidad a posteriori** &lt;br /&gt;
+Conociendo el tiempo de hoy en el Reino Unido y los modelos climáticos, podemos actualizar la información a priori del tiempo para el 27 de septiembre en el Reino Unido.
+
+---
+# Equilibrio entre los datos y el conocimiento
+
+&lt;br&gt;
+&lt;br&gt;
+
+![](day1_presentation_files/pic/bayes-balance-1.png)
+
+&lt;br&gt; 
+
+--
+A medida que recopilamos más datos, los datos previos pierden su influencia.
+
+.footnote[Más detalles en [ el capítulo 2, Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/chapter-2.html)
+]
+---
+
+class: center, middle
+
+### 4.  La estadística bayesiana tiene en cuenta la **incertidumbre del modelo**
+---
+# Cuantificación de la incertidumbre
+
+--
+
+### Fuentes de incertidumbre &lt;br /&gt;
+- Indicadores faltantes
+--
+
+- Errores en la recolección de datos
+--
+
+- Representatividad imperfecta de la muestra
+--
+
+- Variación individual
+
+&lt;br&gt; 
+--
+
+#### **Los parámetros se consideran variables y, por lo tanto, tienen una distribución**
+
+--
+#### **Las predicciones se consideran variables y, por lo tanto, tienen una distribución**
+
+---
+class: center, middle
+
+### 5.  Los modelos bayesianos te hacen pensar en tu pregunta en términos de **distribuciones**
+
+---
+class: center, middle
+
+
+#¿Por qué la estadística bayesiana?
+
+--
+### Basada en principios
+
+--
+
+### Flexible
+
+--
+
+### Adecuada para datos faltantes
+
+--
+
+### Simple
+
+---
+class: inverse, middle, center
+
+# Estimación de modelos bayesianos
+---
+.custom-slide-content[Método de Monte Carlo basado en cadenas de Markov]
+
+#### **Objetivo**: Aproximación de la distribución a posteriori mediante simulación
+--
+
+**Monte Carlo** &lt;br /&gt;
+Estimación de un parámetro generando números aleatorios y comprobando si se corresponde con la estructura
+
+--
+.pull-right[
+![](day1_presentation_files/pic/monte_carlo.png)
+]
+
+---
+.custom-slide-content[Método de Monte Carlo basado en cadenas de Markov]
+
+#### **Objetivo**: Aproximación de la distribución a posteriori mediante simulación
+
+**Monte Carlo** &lt;br /&gt;
+Estimación de un parámetro generando números aleatorios y comprobando si se corresponde con la estructura
+
+**Cadena de Markov** &lt;br /&gt;
+Secuencias de muestras relacionadas probabilísticamente
+
+---
+.custom-slide-content[Método de Monte Carlo basado en cadenas de Markov]
+
+#### **Objetivo**: Aproximación de la distribución a posteriori mediante simulación
+
+**MCMC** &lt;br /&gt;
+1. Elige un valor de parámetro aleatorio
+2. Evalúa la probabilidad de que el valor explique los datos teniendo en cuenta la creencia a priori y el modelo
+3. Dibuja otro valor en función de la bondad del valor anterior
+
+--
+.pull-right[
+![](day1_presentation_files/pic/mcmc.png)
+]
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+[Introducción de cero matemáticas a los métodos MCMC](https://towardsdatascience.com/a-zero-math-introduction-to-markov-chain-monte-carlo-methods-dcba889e0c50)
+
+---
+# Stan
+
+
+[Stan](http://mc-stan.org/) es un lenguaje de programación probabilístico para la estimación bayesiana
+
+Modo administrador independiente del idioma y la plataforma con una **amplia gama de interfaces de usuario**:
+- Shell (“CmdStan”)
+- **R (“RStan”) **
+- Python (“PyStan”) 
+- Matlab (“MatlabStan”)
+- Stata (“StataStan”)
+- Julia (“JuliaStan”)
+
+Proceso de compilación en dos pasos: modelo en código `stan`, traducido a `C++` y compilado en un binario independiente
+
+&lt;br&gt;
+
+.footnote[Equipo de desarrollo de Stan. 2021. Guía del usuario y manual de referencia del lenguaje de modelización Stan, 2.27. https://mc-stan.org
+]
+---
+class: inverse, middle, center
+
+# Lecturas complementarias
+---
+
+# Lecturas complementarias
+
+1. [Bayes Rules! An Introduction to Bayesian Modeling with R ](https://www.bayesrulesbook.com/)
+by Alicia A. Johnson, Miles Ott, Mine Dogucu
+
+--
+
+2. [An Introduction to Bayesian Data Analysis for Cognitive Science](https://vasishth.github.io/bayescogsci/book/)
+by Bruno Nicenboim, Daniel Schad, and Shravan Vasishth
+
+--
+
+3. [Bayesian Data Analysis](http://www.stat.columbia.edu/~gelman/book/BDA3.pdf), by Andrew Gelman, John Carlin, Hal Stern,
+Donald Rubin, David Dunson, and Aki Vehtari
+
+--
+
+4. [Bayesian Data Analysis course](https://avehtari.github.io/BDA_course_Aalto/), by Aki Vehtari
+
+--
+
+5. [Bayesian workflow](http://www.stat.columbia.edu/~gelman/research/unpublished/Bayesian_Workflow_article.pdf), by Andrew Gelman et al
+
+---
+class: inverse, middle, center
+
+# Esquema del curso
+---
+
+## Tutorial 1: Cómo pensar en la población como un bayesiano
+
+--
+
+#### Modelo normal con datos simulados
+--
+
+#### Modelo de Poisson con datos reales
+
+.center[![](day1_presentation_files/pic/model_l1.PNG)]
+
+--
+
+#### Modelo lognormal con datos reales
+.center[![](day1_presentation_files/pic/model_l2.PNG)]
+---
+
+## Tutorial 2: ¿Cómo modelizar las variaciones espaciales a gran escala?
+
+--
+
+#### Modelo jerárquico con datos reales
+.center[![](day1_presentation_files/pic/model_l3.PNG)]
+
+---
+
+## Tutorial 3: ¿Cómo modelizar las variaciones espaciales a pequeña escala?
+
+--
+
+#### Modelo de covariables con datos reales
+
+.center[![](day1_presentation_files/pic/model_l4.PNG)]
+---
+## Tutorial 4: Diagnóstico y predicción avanzados de modelos
+
+---
+
+# Material didáctico
+
+- Toda la presentación del curso y el tutorial están disponibles en este sitio web:
+https://wpgp.github.io/bottom-up-tutorial/ 
+
+&lt;br&gt;
+
+--
+
+- El código en bruto puede encontrarse en Github: &lt;br /&gt;
+https://github.com/wpgp/bottom-up-tutorial
+
+&lt;br&gt;
+
+--
+
+- Flujo de trabajo del taller:
+--
+
+  -   Tutoriales guiados con presentación y revisión en directo
+--
+
+  -   Entre sesiones: GitHub Issues o correo electrónico: e.c.darin@soton.ac.uk
+--
+&lt;br&gt;
+
+- Taller de coconstrucción: **¡No dudes en hacernos llegar tus comentarios sobre el contenido!**
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+</body>
+</html>

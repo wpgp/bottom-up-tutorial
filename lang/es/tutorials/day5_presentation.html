@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Modelización estadística de la población para apoyar los censos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Edith Darin" />
+    <script src="day5_presentation_files/header-attrs/header-attrs.js"></script>
+    <link href="day5_presentation_files/remark-css/default.css" rel="stylesheet" />
+    <script src="day5_presentation_files/fabric/fabric.min.js"></script>
+    <link href="day5_presentation_files/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="day5_presentation_files/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30,"palette":[]}) })</script>
+    <script async src="//static.getclicky.com/101337718.js"></script>
+    <noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/101337718ns.gif" /></p></noscript>
+        
+    <link rel="stylesheet" href="css/xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="css/presentation_custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Modelización estadística de la población para apoyar los censos
+## Conclusiones
+### Edith Darin
+
+---
+
+
+
+
+
+
+
+# Introducción
+---
+class: inverse, left, middle
+
+# ¿Qué hemos aprendido hasta ahora?
+
+
+
+---
+class: center, middle
+
+# Filosofía bayesiana
+
+--
+#### Una historia
+
+--
+Distribución a priori
+
+--
+#### Datos observados
+
+--
+La probabilidad
+
+--
+
+#### Información actualizada
+--
+
+Distribución a posteriori
+
+---
+
+# Ejemplo
+
+*Supongamos que tienes un globo terráqueo que representa el planeta y que puedes sostener en la mano*
+
+.pull-left[
+Pregunta: ¿Qué parte de la superficie está cubierta por agua?
+
+Experimento:
+1. Lanza el globo al aire
+2. Atrápalo
+3. Registra la naturaleza de la superficie debajo de tu dedo derecho
+
+Ejemplo de situación: WLWWLWWWLWLL
+]
+
+.pull-right[
+![](day5_presentation_files/pic/day5_globe.PNG)
+]
+
+.footnote[*Replanteamiento estadístico, un curso bayesiano con ejemplos en R y Stan* por Richard McElreath]
+
+---
+# Example
+
+.center[&lt;img src="day5_presentation_files/pic/day5_water.PNG" alt="drawing" width="350"/&gt;
+]
+.footnote[*Replanteamiento estadístico, un curso bayesiano con ejemplos en R y Stan* por Richard McElreath]
+
+---
+class: center, middle
+
+
+# Proceso de estimación MCMC
+
+--
+### Cadenas
+
+--
+
+### Inicialización
+
+--
+
+### Calentamiento
+
+--
+
+### Iteraciones
+
+---
+class: center, middle
+
+# Modelo de población
+---
+
+
+### Los recuentos de población son discretos, positivos
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag1.png)
+]
+.pull-right[
+`$$population \sim Poisson( \lambda )$$`
+]
+
+---
+
+### Los recuentos de población tienen sobredispersión
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag2.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled) \\$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+]
+
+---
+
+### Los recuentos de población varían según la región y el tipo
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag3.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \alpha_{t,r}, \sigma)$$`
+
+&lt;br&gt;
+$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t) $$
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu) \\$$`
+]
+
+
+
+---
+### Los recuentos de población varían localmente
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag4.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+`$$\mu = \alpha_{t,r} + \beta X \\[10pt]$$`
+
+&lt;br&gt;
+`$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t)$$`
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu)$$`
+]
+
+---
+### Las variaciones locales varían según el tipo de asentamiento
+
+&lt;br&gt;
+.pull-left[
+![](day5_presentation_files/pic/day5_dag5.png)
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+`$$pop\_density \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+`$$\mu = \alpha_{t,r} + \beta_t X \\[10pt]$$`
+
+&lt;br&gt;
+`$$\alpha_{t,r} \sim Normal(\alpha_t, \nu_t)$$`
+&lt;br&gt;
+`$$\alpha_t \sim Normal( \alpha, \nu)$$`
+]
+
+
+---
+class: inverse, left, middle
+
+
+# ¿Qué queda por aprender?
+
+---
+class: center, middle
+
+# ¡Haz tu propio modelo!
+
+---
+
+# Práctica
+
+1. Definición de modelos
+--
+
+2. Definición de la distribución a priori
+--
+
+3. Recopilación de covariables
+--
+
+4. Estructuración de la jerarquía
+
+
+
+---
+class: center, middle
+
+# Añadir submodelos adicionales
+
+---
+# Modelización
+
+#### Estructura jerárquica del término de varianza
+
+&lt;br&gt;
+.pull-left[![](day5_presentation_files/pic/day5_variance.PNG)]
+
+--
+
+
+.pull-right[
+
+`$$pop \sim Poisson( pop\_density * settled)$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma_t)$$`
+
+]
+---
+# Modelización
+
+
+#### Hogares faltantes: **Modelo de error de medición en el** recuento de la población
+
+&lt;br&gt; 
+.pull-left[
+![](day5_presentation_files/pic/day5_missing.png)
+]
+
+--
+.pull-right[$$ N \sim Binomial (pop, \theta) $$
+`$$pop \sim Poisson( pop\_density * settled)$$`
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+&lt;br&gt;
+
+WorldPop. 2020. Estimaciones ascendentes de la población de Zambia en cuadrículas.
+https://dx.doi.org/10.5258/SOTON/WP00662]
+
+--
+
+&lt;br&gt;
+
+Otros posibles modelos de error de medición: covariables, asentamiento...
+---
+# Modelización
+
+#### Diseño de muestreo complejo: **Probabilidad ponderada**
+
+`$$pop_i \sim Poisson( pop\_density_i * settled_i)$$`
+`$$pop\_density_i  \sim Lognormal( \mu, \tau_i)$$`
+$$ \tau_i = \frac{w_i}{\sigma}$$
+
+---
+# Modelización
+
+#### Estructura por edad y sexo
+
+.pull-left[
+&lt;img src="day5_presentation_files/pic/day5_agesex3.png" alt="drawing" width="300"/&gt;
+&lt;img src="day5_presentation_files/pic/day5_agesex4.png" alt="drawing" width="300"/&gt;
+
+]
+.pull-right[
+`$$pop \sim Poisson( pop\_density * settled)$$`
+
+
+`$$pop\_density  \sim Lognormal( \mu, \sigma)$$`
+
+&lt;br&gt;
+$$ pop_g \sim Multinomial( pop, \gamma)  $$
+$$ \gamma \sim Dirichlet(rep(1,g))$$]
+
+---
+class: center, middle
+
+# Adquirir experiencia en programación
+
+---
+# Programación
+ 
+
+- Vectorización
+
+--
+- Reparametrización
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
