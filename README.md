@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/383087930.svg)](https://zenodo.org/badge/latestdoi/383087930)
 
-This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton and the Leverhulme Center for Demographic Science.
+This github repo contains the raw teaching materials for the [**Statistical Population Modelling for Census Support workshop,**](https://wpgp.github.io/bottom-up-tutorial/) funded by the [United Nations Population Fund](<https://www.unfpa.org/>). It has been developed by the [WorldPop Research Group](<https://www.worldpop.org/>), University of Southampton and the [Leverhulme Center for Demographic Science](https://www.demography.ox.ac.uk/).
 
 The repo consists in a series of tutorials in **Bayesian statistics for population modelling** with hands-on experience. It includes example code and other resources designed to expedite the learning curve.
 
@@ -13,7 +13,7 @@ The key concepts that are covered in the tutorial series include:
 4.  Quantifying and mapping uncertainties in population estimates and
 5.  Diagnostics to evaluate model performance (e.g. cross-validation).
 
-It has been first taught to the Brazilian Stats Office, [Instituto Brasileiro de Geografia e Estatística (IBGE)](https://www.ibge.gov.br/en/home-eng.html), in October 2021.
+The material has been used during an in-person workshop hosted by the Colombian National Administrative Department of Statistics in Bogota, Colombia in March 2023 and a remote workshop with the Brazilian Stats Office, Instituto Brasileiro de Geografia e Estatística (IBGE), in October 2021.
 
 # Tutorials outline
 
@@ -47,17 +47,16 @@ Southampton and Douglas Leasure from Leverhulme Centre for Demographic
 Science, University of Oxford, with supervision from Andrew Tatem, WorldPop, University of
 Southampton.
 
-Funding for the work was provided by the United Nations Population Fund.
+Funding for the work was provided by the United Nations Population Fund (UNFPA), the Leverhulme Trust (RC-2018-003) and ESRC Impact Acceleration Account at the University of Oxford (2209-KEA-835).
 
 # License
 
-You are free to redistribute this document under the terms of a Creative Commons Attribution-NoDerivatives 4.0
-International ([CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/)) license.
+You are free to redistribute this document under the terms of a Creative Commons Attribution ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) license.
 
 
 # Suggested citation
 
-Darin E, Leasure DR, Tatem AJ. 2021. Statistical population modelling for census support. United Nations Population Fund (UNFPA) and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, doi:10.5281/zenodo.5572490
+Darin E, Leasure DR, Tatem AJ. 2023. Statistical population modelling for census support. United Nations Population Fund (UNFPA); Leverhulme Centre for Demographic Science, University of Oxford; and WorldPop, University of Southampton. https://wpgp.github.io/bottom-up-tutorial/, doi:10.5281/zenodo.5572490
 
 <br>
 
